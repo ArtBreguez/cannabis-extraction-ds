@@ -1,0 +1,23 @@
+total de linhas: 6336
+linhas de CONCENTRADO/EXTRATO: 4140
+concentrados com total_terpenes preenchido: 3599
+
+=== label por regra de nome (concentrados) ===
+   4102  UNLABELED
+     19  live_rosin
+      7  badder
+      4  rosin
+      3  distillate
+      2  live_resin
+      1  wax
+      1  hash_rosin
+      1  bho
+
+=== confianca ===
+   4102  LOW
+     24  HIGH
+     14  MEDIUM
+
+SOLVENTLESS (rosin*)  = 24
+HYDROCARBON (bho/resin/shatter/badder/wax) = 11
+LABEL_DONE=0

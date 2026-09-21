@@ -1,0 +1,36 @@
+LINHAS DE DADOS (csv nativo): 6336
+linhas curtas/malformadas: 1
+colunas no header: 463
+
+=== product_type: top 30 ===
+   3133  concentrate, product inhalable
+    964  concentrate
+    705  flower
+    376  flower, inhalable
+    274  pre-roll
+    269  pre-roll product, product inhalable
+    226  infused flower/pre-roll, product inhalable
+     91  infused, solid edible
+     49  flower, pre-harvest hemp
+     41  pre-roll cannabis, product inhalable
+     36  infused, topical
+     35  infused, non-inhalable
+     22  other
+     21  infused, concentrated liquid edible
+     16  flower, hemp
+     15  infused, liquid edible
+     14  infused, hemp infused
+     13  infused, hemp
+     11  concentrate, colorado concentrate/extract
+      8  concentrate, hemp
+      3  infused, hemp topical
+      2  plant (flower - cured)
+      2  infused, colorado infused
+      2  concentrates & extracts (distillate)
+      2  terpenes, product inhalable
+      1  tincture
+      1  plant (enhanced/infused preroll)
+      1  ingestible (soft chew)
+      1  flower, non-inhalable
+      1  infused, liquid edible containing alcohol
+FULL_DONE=0
