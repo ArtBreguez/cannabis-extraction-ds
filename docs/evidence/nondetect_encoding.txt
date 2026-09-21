@@ -1,0 +1,51 @@
+labeled rows analysed: 37374
+
+=== HOW EACH ANALYTE IS ENCODED ===
+analyte                 numeric    empty    zero     ND   <LOQ   other
+total_thc                 33597     3760      17      0      0       0
+total_cbd                  7832     2457   27085      0      0       0
+total_terpenes            25600     4115    7659      0      0       0
+thca                      18339     2457   16578      0      0       0
+cbd                        6022     2457   28895      0      0       0
+cbda                       2245     2457   32672      0      0       0
+delta_9_thc               33576     2457    1341      0      0       0
+beta_myrcene              20363     7743    9268      0      0       0
+d_limonene                21351     7749    8274      0      0       0
+beta_caryophyllene        22817     7744    6813      0      0       0
+alpha_pinene              18234     7743   11397      0      0       0
+beta_pinene               16837    10929    9608      0      0       0
+alpha_terpinene               0    37374       0      0      0       0
+caryophyllene_oxide       12379     7743   17252      0      0       0
+
+=== COVERAGE BY CLASS (numeric share) ===
+analyte                 solventless  hydrocarbon
+total_thc                     97.0%        86.2%
+total_cbd                     19.9%        21.5%
+total_terpenes                56.9%        74.5%
+thca                          39.4%        54.1%
+cbd                           16.7%        15.8%
+cbda                           4.5%         6.8%
+delta_9_thc                   95.2%        87.0%
+beta_myrcene                  39.3%        62.4%
+d_limonene                    40.8%        65.6%
+beta_caryophyllene            47.1%        68.3%
+alpha_pinene                  34.3%        56.3%
+beta_pinene                   31.5%        52.1%
+alpha_terpinene                0.0%         0.0%
+caryophyllene_oxide           26.8%        36.4%
+
+=== PER-LAB ANALYTE COVERAGE ===
+a lab that never reports an analyte is 'not tested', not 'absent'
+lab                                   rows  analytes reported
+g3 labs llc                          15035            13/14
+nv cann labs llc                     12539            13/14
+purevita labs, llc                    3137             6/14
+db labs llc                           2156            13/14
+certified ag lab llc                  1808            13/14
+dpl nv llc                             820            13/14
+cannalytics ri, llc                    758             6/14
+374 labs llc                           560            13/14
+erp llc                                273            13/14
+lifted testing laboratories            120             6/14
+green peaks analytical                 100             6/14
+ma & associates llc                     68            13/14

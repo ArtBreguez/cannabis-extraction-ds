@@ -1,0 +1,148 @@
+"""Quantify how much lab identity confounds the extraction-method label.
+
+measure_nondetects.py surfaced a threat: terpene coverage differs sharply by
+class (e.g. d_limonene numeric in 40.8% of solventless rows vs 65.6% of
+hydrocarbon rows). If that gap comes from WHICH LAB tested the sample rather
+than from the extract itself, then a classifier can reach high accuracy by
+inferring the lab — and learn nothing about extraction method.
+
+This matters because the roadmap's Gate 4 is an unseen-brand test. A lab
+shortcut would sail through a naive split and collapse in the real world.
+
+Two things get measured here:
+
+1. Class mix per lab. If a lab tests almost exclusively one class, then
+   "which lab" nearly determines "which class" and the two are entangled.
+2. Whether the missingness pattern alone predicts the class. A trivial
+   rule built only on WHICH analytes are present — ignoring every measured
+   value — is the cheapest possible lab-shaped shortcut. Its accuracy is a
+   lower bound on how much leakage is available to a real model.
+
+This script only measures. It decides nothing.
+
+Output: docs/evidence/lab_confounding.txt
+"""
+from __future__ import annotations
+
+import csv
+import re
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+SRC = ROOT / "data/raw/cannlytics/all-results-latest.csv"
+
+NON_SOLVENT = re.compile(r"non[- ]?solvent")
+
+TERPENES = [
+    "beta_myrcene", "d_limonene", "beta_caryophyllene",
+    "alpha_pinene", "beta_pinene", "caryophyllene_oxide",
+]
+
+
+def is_numeric(raw: str) -> bool:
+    v = (raw or "").strip()
+    if not v:
+        return False
+    try:
+        float(v)
+    except ValueError:
+        return False
+    return True
+
+
+def main() -> int:
+    csv.field_size_limit(sys.maxsize)
+    rows = []
+    with open(SRC, newline="", encoding="utf-8", errors="replace") as fh:
+        reader = csv.reader(fh)
+        header = next(reader)
+        idx = {c: i for i, c in enumerate(header)}
+        for row in reader:
+            if len(row) < len(header):
+                continue
+            pt = (row[idx["product_type"]] or "").strip().lower()
+            if NON_SOLVENT.search(pt):
+                cls = "solventless"
+            elif "solvent based" in pt:
+                cls = "hydrocarbon"
+            else:
+                continue
+            lab = (row[idx["lab"]] or "").strip().lower() or "(blank)"
+            producer = (row[idx["producer"]] or "").strip().lower()
+            # The missingness fingerprint: which terpenes carry a number.
+            pattern = tuple(is_numeric(row[idx[t]]) for t in TERPENES)
+            rows.append((cls, lab, producer, pattern))
+
+    out = []
+    out.append(f"labeled rows: {len(rows)}")
+    total = Counter(c for c, _, _, _ in rows)
+    out.append(f"class balance: {dict(total)}")
+    majority = max(total.values()) / len(rows)
+    out.append(f"majority-class baseline: {100*majority:.1f}%")
+
+    out.append("")
+    out.append("=== CLASS MIX PER LAB ===")
+    out.append("a lab that tests only one class cannot be separated from it")
+    per_lab: dict[str, Counter] = defaultdict(Counter)
+    for cls, lab, _, _ in rows:
+        per_lab[lab][cls] += 1
+    out.append(f"{'lab':32} {'rows':>7} {'solventless':>12} {'hydro':>8} {'skew':>7}")
+    entangled = 0
+    for lab, c in sorted(per_lab.items(), key=lambda kv: -sum(kv[1].values())):
+        n = sum(c.values())
+        s, h = c["solventless"], c["hydrocarbon"]
+        skew = 100 * max(s, h) / n
+        if skew >= 90:
+            entangled += n
+        out.append(f"{lab[:31]:32} {n:>7} {s:>12} {h:>8} {skew:>6.1f}%")
+    out.append("")
+    out.append(f"rows in labs that are >=90% one class: {entangled} "
+               f"({100*entangled/len(rows):.1f}%)")
+
+    out.append("")
+    out.append("=== LEAKAGE PROBE: predict class from MISSINGNESS ALONE ===")
+    out.append("no measured value is used — only which terpenes were reported")
+    # Majority vote per missingness pattern. This is the crudest possible
+    # shortcut; whatever it scores is available to any model for free.
+    by_pattern: dict[tuple, Counter] = defaultdict(Counter)
+    for cls, _, _, pattern in rows:
+        by_pattern[pattern][cls] += 1
+    correct = sum(max(c.values()) for c in by_pattern.values())
+    out.append(f"distinct missingness patterns: {len(by_pattern)}")
+    out.append(f"accuracy from missingness alone: {100*correct/len(rows):.1f}%")
+    out.append(f"(majority-class baseline:         {100*majority:.1f}%)")
+    lift = 100 * correct / len(rows) - 100 * majority
+    out.append(f"lift over baseline:              {lift:+.1f} points")
+
+    out.append("")
+    out.append("=== SAME PROBE, USING LAB IDENTITY ===")
+    by_lab_pat: dict[tuple, Counter] = defaultdict(Counter)
+    for cls, lab, _, pattern in rows:
+        by_lab_pat[(lab,) + pattern][cls] += 1
+    correct_lab = sum(max(c.values()) for c in by_lab_pat.values())
+    out.append(f"accuracy from lab + missingness:  {100*correct_lab/len(rows):.1f}%")
+
+    out.append("")
+    out.append("=== PRODUCERS SPANNING BOTH CLASSES ===")
+    prod: dict[str, Counter] = defaultdict(Counter)
+    for cls, _, producer, _ in rows:
+        if producer:
+            prod[producer][cls] += 1
+    both = {p: c for p, c in prod.items() if len(c) == 2}
+    spanned = sum(sum(c.values()) for c in both.values())
+    out.append(f"producers in both classes: {len(both)} of {len(prod)}")
+    out.append(f"rows belonging to them:    {spanned} "
+               f"({100*spanned/len(rows):.1f}% of labeled data)")
+    out.append("this subset is where a model cannot win by memorising producer")
+
+    text = "\n".join(out)
+    print(text)
+    (ROOT / "docs/evidence/lab_confounding.txt").write_text(text + "\n",
+                                                            encoding="utf-8")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

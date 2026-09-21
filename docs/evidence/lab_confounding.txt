@@ -1,0 +1,36 @@
+labeled rows: 37374
+class balance: {'hydrocarbon': 24576, 'solventless': 12798}
+majority-class baseline: 65.8%
+
+=== CLASS MIX PER LAB ===
+a lab that tests only one class cannot be separated from it
+lab                                 rows  solventless    hydro    skew
+g3 labs llc                        15035         5608     9427   62.7%
+nv cann labs llc                   12539         4063     8476   67.6%
+purevita labs, llc                  3137          677     2460   78.4%
+db labs llc                         2156          469     1687   78.2%
+certified ag lab llc                1808          483     1325   73.3%
+dpl nv llc                           820          434      386   52.9%
+cannalytics ri, llc                  758          656      102   86.5%
+374 labs llc                         560          178      382   68.2%
+erp llc                              273            6      267   97.8%
+lifted testing laboratories          120           76       44   63.3%
+green peaks analytical               100          100        0  100.0%
+ma & associates llc                   68           48       20   70.6%
+
+rows in labs that are >=90% one class: 373 (1.0%)
+
+=== LEAKAGE PROBE: predict class from MISSINGNESS ALONE ===
+no measured value is used — only which terpenes were reported
+distinct missingness patterns: 5
+accuracy from missingness alone: 65.8%
+(majority-class baseline:         65.8%)
+lift over baseline:              +0.0 points
+
+=== SAME PROBE, USING LAB IDENTITY ===
+accuracy from lab + missingness:  67.8%
+
+=== PRODUCERS SPANNING BOTH CLASSES ===
+producers in both classes: 55 of 96
+rows belonging to them:    28927 (77.4% of labeled data)
+this subset is where a model cannot win by memorising producer
