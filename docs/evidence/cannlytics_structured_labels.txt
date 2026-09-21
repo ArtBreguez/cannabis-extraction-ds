@@ -1,0 +1,10 @@
+linhas lidas: 808407
+
+=== ROTULO ESTRUTURADO (product_type) ===
+non-solvent based (SOLVENTLESS): 12798
+   com terpenos: 11289 | produtores: 69 | labs: 12
+solvent based (HYDROCARBON):     24576
+   com terpenos: 21970 | produtores: 82 | labs: 11
+
+produtores em AMBAS as classes (risco de confounding baixo se alto): 55
+STRUCT_DONE=0

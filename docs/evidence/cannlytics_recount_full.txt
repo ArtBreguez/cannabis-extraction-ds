@@ -1,0 +1,38 @@
+LINHAS DE DADOS: 808407 | malformadas: 0
+CONCENTRADOS/EXTRATOS: 139714
+  com total_terpenes: 52952
+
+=== top 15 product_type ===
+ 128301  buds
+ 113323  flower
+  77421  buds (by strain)
+  71330  marijuana flowers/buds
+  68469  
+  34034  extracts
+  30586  concentrate, product inhalable
+  28178  shake/trim
+  26030  concentrate
+  23221  solvent based concentrate
+  20337  flower, inhalable
+  14153  shake/trim (by strain)
+  13730  edibles (each)
+  12800  infused edible
+  11210  non-solvent based concentrate
+
+=== rotulos por nome (concentrados) ===
+ 113765  UNLABELED
+  15416  distillate
+   3013  live_resin
+   1848  badder
+   1843  shatter
+   1501  live_rosin
+    791  rosin
+    677  bho
+    439  co2
+    271  wax
+    120  hash_rosin
+     30  ethanol
+
+SOLVENTLESS = 2412 | produtores distintos: 177
+HYDROCARBON = 7652 | produtores distintos: 271
+RECOUNT_DONE=0
