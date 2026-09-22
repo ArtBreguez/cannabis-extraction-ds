@@ -1,0 +1,23 @@
+rows: 37344   features: 19
+class balance: {'hydrocarbon': 24573, 'solventless': 12771}
+
+=== BASELINES (what 'learning nothing' looks like) ===
+most_frequent      balanced_acc= 50.0%
+stratified         balanced_acc= 50.7%
+
+=== THE TASK UNDER INCREASINGLY HONEST SPLITS ===
+random (optimistic) folds= 5  balanced_acc= 81.0% (+/-0.4)  macro_F1= 81.8%  recall[hydro=90.7% solventless=71.3%]
+                   confusion (rows=true hydro/solventless): [[22288, 2285], [3667, 9104]]
+unseen-producer    folds= 5  balanced_acc= 54.0% (+/-5.6)  macro_F1= 50.3%  recall[hydro=75.7% solventless=32.3%]
+                   confusion (rows=true hydro/solventless): [[16149, 5818], [7930, 3332]]
+unseen-lab         folds= 8  balanced_acc= 68.3% (+/-18.6)  macro_F1= 67.6%  recall[hydro=87.3% solventless=49.2%]
+                   confusion (rows=true hydro/solventless): [[19183, 5059], [6078, 6463]]
+
+=== DUAL-CLASS PRODUCERS ONLY ===
+producers that make BOTH classes: knowing the maker tells you
+nothing about the label, so any lift is chemistry
+producers: 53   rows: 27751
+class balance: {'hydrocarbon': 17312, 'solventless': 10439}
+(plain-accuracy majority here would be 62.4%, balanced-accuracy baseline is 50.0%)
+dual-class+unseen  folds= 5  balanced_acc= 54.6% (+/-2.6)  macro_F1= 50.7%  recall[hydro=69.9% solventless=39.3%]
+                   confusion (rows=true hydro/solventless): [[11678, 5634], [6617, 3822]]

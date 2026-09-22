@@ -1,0 +1,18 @@
+rows (conflicts excluded): 37344
+analyte features used:     19
+features: alpha_bisabolol, alpha_humulene, alpha_pinene, beta_caryophyllene, beta_myrcene, beta_pinene, caryophyllene_oxide, cbd, cbda, cbn, d_limonene, delta_8_thc, delta_9_thc, linalool, terpinolene, thca, total_cbd, total_terpenes, total_thc
+
+=== ALARM MODELS: chemistry -> metadata ===
+a wide lift means the profile fingerprints that field, and any
+later method result would be suspect until proven otherwise
+
+lab        classes=  11 rows= 37276  acc= 55.6% (+/-11.0)  baseline= 40.3%  lift= +15.3pts  [ALARM]
+producer   classes=  33 rows= 30416  acc= 24.3% (+/-22.4)  baseline= 14.4%  lift=  +9.9pts  [watch]
+
+=== REFERENCE: the actual task, naive split ===
+not a result — just the number an alarm would have to explain
+label      rows= 37344  balanced_acc= 79.6% (+/-0.4)  majority= 65.8%
+
+A random-split score is optimistic by construction: the same
+producer appears in train and test. Phase 4 replaces it with
+GroupKFold and an unseen-brand split.
