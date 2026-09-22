@@ -1,0 +1,62 @@
+=== REPORTING UNITS PER LAB ===
+probe: total_thc in structured-labeled concentrates
+a concentrate is ~40-99% THC: median near 70 => percent, near 700 => mg/g
+lab                                    n    median      p05      p95  unit
+g3 labs llc                        14367     86.35    70.47    97.36  percent
+nv cann labs llc                   12083     82.27    58.58    91.90  percent
+db labs llc                         2135     83.60    42.79    94.62  percent
+certified ag lab llc                1806     76.59    40.81    87.47  percent
+dpl nv llc                           820     87.99    74.93    94.55  percent
+purevita labs, llc                   662     68.93    29.60    82.93  percent
+cannalytics ri, llc                  656     69.44    26.89    86.25  percent
+374 labs llc                         555     80.48    61.49    89.21  percent
+erp llc                              273     75.97    65.05    88.73  percent
+green peaks analytical               100     72.25    30.50    88.98  percent
+lifted testing laboratories           72     75.24    31.95    92.30  percent
+ma & associates llc                   68     77.78    67.06    86.05  percent
+
+distinct units in use: ['percent']
+
+=== TOTAL_TERPENES SANITY ===
+terpene totals in concentrates run ~0.5-15%
+g3 labs llc                        10913 median=    2.59 p95=    5.68
+nv cann labs llc                    9726 median=    4.38 p95=    8.87
+db labs llc                         1662 median=    2.91 p95=    9.93
+certified ag lab llc                1647 median=    2.03 p95=    6.38
+dpl nv llc                           794 median=    2.11 p95=    7.80
+374 labs llc                         526 median=    3.98 p95=    9.10
+erp llc                              264 median=    3.35 p95=    6.38
+ma & associates llc                   68 median=    0.20 p95=    6.82
+
+=== LABEL AGREEMENT: structured vs product-name regex ===
+rows carrying BOTH labels: 4284
+  agree:      4254 (99.3%)
+  disagree:     30 (0.7%)
+structured label only: 33090
+name label only (no structured): {'hydrocarbon': 3829, 'solventless': 1951}
+
+=== PER-RULE RELIABILITY ===
+which regex rules are trustworthy, measured not assumed
+rule             agree  disagree  accuracy
+live_resin        1561        12     99.2%
+shatter           1005         6     99.4%
+badder             656         9     98.6%
+bho                564         0    100.0%
+live_rosin         231         2     99.1%
+rosin              144         1     99.3%
+hash_rosin          83         0    100.0%
+wax                 10         0    100.0%
+
+=== SAMPLE DISAGREEMENTS ===
+  struct=solventless  name=hydrocarbon  rule=live_resin  cement shoes live resin crumble
+  struct=solventless  name=hydrocarbon  rule=badder      gelato 33 badder bho100223
+  struct=solventless  name=hydrocarbon  rule=live_resin  two wave hold down #4 live resin
+  struct=solventless  name=hydrocarbon  rule=live_resin  pineapple haze - panna - live resin distillate
+  struct=solventless  name=hydrocarbon  rule=live_resin  lemon og haze - panna - live resin distillate
+  struct=solventless  name=hydrocarbon  rule=live_resin  blueberry kush - panna - live resin distillate
+  struct=solventless  name=hydrocarbon  rule=live_resin  lemon og haze - panna - live resin distillate
+  struct=solventless  name=hydrocarbon  rule=live_resin  gelato - panna - live resin distillate
+  struct=solventless  name=hydrocarbon  rule=live_resin  blueberry kush - panna - live resin distillate
+  struct=solventless  name=hydrocarbon  rule=live_resin  bounti - live resin autumn wind - bulk oil
+  struct=solventless  name=hydrocarbon  rule=live_resin  bounti - live resin durban poison - bulk oil
+  struct=solventless  name=hydrocarbon  rule=live_resin  bounti - live resin nepalese kush - bulk oil
