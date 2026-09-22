@@ -1,0 +1,23 @@
+rows with a usable strain key: 32627
+distinct strain keys: 7319
+top strain keys:
+   2889  oil
+   1543  thc
+   1057  lab sample
+    875  acres
+    323  ethanol
+    293  acres solvent based
+    253  terpene free non solvent
+    153  raw
+
+=== ALARM: chemistry -> strain key (>=30 samples) ===
+strains=109 rows=12829  acc=19.5%  baseline=22.5%  lift=-3.0pts
+
+=== METHOD TASK, GROUPED BY STRAIN KEY ===
+unseen-strain (all)    folds=5  balanced_acc= 66.2% (+/-1.6)  macro_F1= 65.0%
+
+=== STRAINS SPANNING BOTH CLASSES ===
+same cultivar made both ways: strain cannot encode the label
+dual-class strains: 214   rows: 9598
+class balance: {'hydrocarbon': 4889, 'solventless': 4709}
+dual-strain+unseen     folds=5  balanced_acc= 56.9% (+/-11.4)  macro_F1= 42.8%
