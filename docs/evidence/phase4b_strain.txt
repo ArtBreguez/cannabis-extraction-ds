@@ -21,3 +21,4 @@ same cultivar made both ways: strain cannot encode the label
 dual-class strains: 214   rows: 9598
 class balance: {'hydrocarbon': 4889, 'solventless': 4709}
 dual-strain+unseen     folds=5  balanced_acc= 56.9% (+/-11.4)  macro_F1= 42.8%
+P4B_EXIT=0

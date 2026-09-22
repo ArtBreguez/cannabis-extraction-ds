@@ -1,0 +1,14 @@
+samples: 162   features: ['CBD', 'CBG', 'CBN', 'THC']
+methods: {'Maceracion': 54, 'Supercritico': 54, 'Ultrasonido': 54}
+varieties: {'Cherry Bubblegum': 27, 'Cherry Oregon': 27, 'EM16': 27, 'EM19': 27, 'Lemonge': 27, 'Titan': 27}
+missing per feature: {'CBD': 0, 'CBG': 0, 'CBN': 0, 'THC': 0}
+
+classes: 3  majority baseline (plain acc): 33.3%  balanced-acc chance: 33.3%
+
+=== METHOD CLASSIFICATION ===
+random 5-fold            folds= 5  balanced_acc= 56.7% (+/-9.2)  macro_F1= 55.7%
+leave-one-variety-out    folds= 6  balanced_acc= 38.9% (+/-12.6)  macro_F1= 35.9%
+
+=== ALARM: does chemistry predict the VARIETY? ===
+variety from chemistry   folds= 5  balanced_acc= 60.7% (+/-8.3)  macro_F1= 59.3%
+(variety majority baseline: 16.7%, chance: 16.7%)
