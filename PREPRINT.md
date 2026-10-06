@@ -1,4 +1,4 @@
-# Group-aware validation collapses extraction-method classification in cannabis chemical data
+# Group-aware validation collapses extraction-category classification in cannabis chemical data
 
 **Arthur Gonçalves Breguez**
 Independent researcher
@@ -514,28 +514,38 @@ one draw: its five folds score 48.6, 57.6, 46.7, 55.7 and 61.5, a 95% interval
 of [46.3, 61.8] over folds that share training data (one-sample t against
 chance, p = 0.22), and pooling its predictions gives 51.6%. Two analyses put the
 question at the level where the data are independent, the producer. Twenty
-random reassignments of producers to folds give means from 51.3% to 56.6%
-(median 53.8%, sd 1.7), none at or below 50.0%. A bootstrap that resamples the
-96 producers with replacement gives the pooled balanced accuracy a 95% interval
-of [47.3, 56.6], with 23.2% of draws at or below chance. The grouped score is
-therefore a few points above 50 on most partitions but not distinguishable from
-chance at the producer level, and 24 to 27 points below the random split.
-Laboratory identity alone, as a lookup under the same folds, scores 43.6%, so
-those few points are not a laboratory prior.
+random reassignments of producers to folds (Figure 1b) give means from 51.3% to
+56.6% (median 53.8%, sd 1.7), none at or below 50.0%. A bootstrap that resamples
+the 96 producers with replacement gives the pooled balanced accuracy a 95%
+interval of [47.3, 56.6], with 23.2% of draws at or below chance. The grouped
+score is therefore a few points above 50 on most partitions but not
+distinguishable from chance at the producer level, and 24 to 27 points below the
+random split. Laboratory identity alone, as a lookup under the same folds,
+scores 43.6%, so those few points are not a laboratory prior.
 
 The gap is stable under reseeding of the random split: three further seeds give
 protocol-only gaps of 24.6, 24.5 and 24.6 points. It grows with model capacity
-while the grouped score does not move: at 50, 100, 200 and 400 boosting
-iterations the same-sample random split scores 74.3%, 76.6%, 78.5% and 80.1% and
-the grouped one 53.2%, 53.8%, 54.0% and 54.0%, so the gap runs from 21.1 to 26.1
-points and the 24.4 reported here is one point on that curve. A standardised
-logistic regression, which has far less capacity to memorise producers, scores
-65.3% on the same-sample random split and 54.3% grouped: a gap of 11.0 points
-around the same grouped score. Dropping the 1,813 duplicate rows of 2.1 gives
-80.8% for the random split and 55.2% grouped, a gap of 25.6 points. A temporal
-split, training on the earliest 80% of dated rows, scores 73.4% with 99.3% of
-its test rows from producers seen in training, so time alone costs far less than
-holding out the producer.
+while the grouped score does not move (Figure 1a): at 50, 100, 200 and 400
+boosting iterations the same-sample random split scores 74.3%, 76.6%, 78.5% and
+80.1% and the grouped one 53.2%, 53.8%, 54.0% and 54.0%, so the gap runs from
+21.1 to 26.1 points and the 24.4 reported here is one point on that curve. A
+standardised logistic regression, which has far less capacity to memorise
+producers, scores 65.3% on the same-sample random split and 54.3% grouped: a gap
+of 11.0 points around the same grouped score. Dropping the 1,813 duplicate rows
+of 2.1 gives 80.8% for the random split and 55.2% grouped, a gap of 25.6 points.
+A temporal split, training on the earliest 80% of dated rows, scores 73.4% with
+99.3% of its test rows from producers seen in training, so time alone costs far
+less than holding out the producer.
+
+![Figure 1](reports/figures/fig1_validation_gap.svg)
+
+**Figure 1.** Balanced accuracy on the market data. (a) Random split on the
+producer rows and producer-held-out score, for a standardised logistic
+regression and for gradient boosting at four iteration counts. (b) Mean score of
+each of twenty random assignments of producers to folds, for all producers and
+for the dual-class subset, with the producer-cluster bootstrap 95% interval of
+the pooled score on the reported partition. Every plotted value is parsed from
+the evidence logs by `src/evaluation/make_figure.py`.
 
 Two narrower definitions of the label behave the same way with a larger
 residual. On the 19,166 producer rows not named distillate, the random split
@@ -859,13 +869,23 @@ dataset figure in this manuscript directly from the labelled dataset, and
 against either that recomputation or the committed log, failing on any
 disagreement.
 
+## Author contributions
+
+A.G.B. is the sole author and is responsible for the conceptualisation, data
+curation, formal analysis, methodology, software, validation, visualisation and
+writing of this work. The assistance of AI tools is described below.
+
+## Funding
+
+This work received no funding.
+
 ## Competing interests
 
 The author produces cannabis-related content on social media under the handle
 @HiddenTerps and has a commercial interest in the solventless extract category.
 This work reports a negative result about distinguishing that category from
 hydrocarbon extracts, which runs against that interest rather than supporting
-it. No funding was received.
+it.
 
 ## Use of AI tools
 

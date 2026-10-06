@@ -914,6 +914,30 @@ check("[11] is not credited with the earliest demonstration",
 check("the abstract gives the same-sample range of the inflation",
       "we measure 24 to 27 points of inflation" in FLAT)
 
+# ---------- figure 1 is drawn from the logs ----------
+import json as _json
+sys.path.insert(0, str(ROOT))
+from src.evaluation.make_figure import parse as _fig_parse  # noqa: E402
+_fig_json = ROOT / "reports/figures/fig1_validation_gap.json"
+_fig_svg = ROOT / "reports/figures/fig1_validation_gap.svg"
+check("figure 1 exists and is embedded",
+      _fig_svg.exists() and "![Figure 1](reports/figures/fig1_validation_gap.svg)" in TEXT
+      and "**Figure 1.**" in TEXT and FLAT.count("(Figure 1a)") == 1 and FLAT.count("(Figure 1b)") == 1)
+_fp = _fig_parse()
+check("figure 1 plots exactly the logged values",
+      _fig_json.exists() and _json.loads(_fig_json.read_text()) == _json.loads(_json.dumps(_fp)),
+      "stale figure: rerun src/evaluation/make_figure.py")
+_svg = _fig_svg.read_text() if _fig_svg.exists() else ""
+check("figure 1 labels match the text",
+      all(f">{v}<" in _svg for v in (f"{cap[3][1]}", f"{cap[0][1]}", f"{cap[3][2]}", f"{cap[0][2]}", c1r.group(1), c1g.group(1)))
+      and f"{uA.group(1)} to {uA.group(3)}" in _svg and f"interval {uB.group(1)} to {uB.group(2)}" in _svg
+      and f"{dA.group(1)} to {dA.group(3)}" in _svg and f"interval {dB.group(1)} to {dB.group(2)}" in _svg)
+check("title names the declared category",
+      TEXT.startswith("# Group-aware validation collapses extraction-category classification"))
+check("author contributions and funding are stated in their own sections",
+      "## Author contributions" in TEXT and "## Funding" in TEXT
+      and "This work received no funding." in FLAT)
+
 # ---------- references ----------
 refs = TEXT.split("## References")[1]
 for n in range(1, 13):

@@ -44,6 +44,12 @@ AUTHOR_M = re.search(r"^\*\*(.+?)\*\*$", text, re.M)
 if not AUTHOR_M:
     raise SystemExit("author line not found in PREPRINT.md")
 AUTHOR = AUTHOR_M.group(1)
+# The document title comes from the manuscript's own H1, so renaming the paper
+# cannot leave a stale title in the PDF metadata.
+TITLE_M = re.search(r"^# (.+)$", text, re.M)
+if not TITLE_M:
+    raise SystemExit("title (H1) not found in PREPRINT.md")
+TITLE = TITLE_M.group(1).strip()
 html_body = re.sub(
     rf"<p><strong>{re.escape(AUTHOR)}</strong>\s*(.*?)</p>",
     lambda m: (
@@ -121,20 +127,26 @@ li { margin-bottom: 3pt; text-align: justify; }
 strong { font-weight: bold; }
 em { font-style: italic; }
 hr { display: none; }
+/* Figures: full text width, never split from the caption that follows */
+img { width: 100%; height: auto; display: block; margin: 8pt 0 3pt 0; }
+p:has(> img) { margin: 0; page-break-after: avoid; page-break-inside: avoid; }
+p:has(> img) + p { font-size: 9.5pt; line-height: 1.4; text-align: left;
+                   page-break-inside: avoid; margin-bottom: 10pt; }
 /* Keep the reference list compact and unjustified */
 h2#references ~ p { text-align: left; font-size: 9.5pt; margin-bottom: 5pt; }
 """
 
 HTML_DOC = f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
-<title>Group-aware validation collapses extraction-method classification in
-cannabis chemical data</title>
+<title>{TITLE}</title>
 <meta name="author" content="{AUTHOR}">
 <meta name="citation_author" content="{AUTHOR}">
 <meta name="citation_author_orcid" content="0009-0005-8551-731X">
 </head><body>{html_body}</body></html>"""
 
-HTML(string=HTML_DOC).write_pdf(OUT, stylesheets=[CSS(string=CSS_TEXT)])
+# base_url lets the Markdown image path (reports/figures/...) resolve.
+HTML(string=HTML_DOC, base_url=str(ROOT) + "/").write_pdf(
+    OUT, stylesheets=[CSS(string=CSS_TEXT)])
 print(f"  wrote {OUT}  ({OUT.stat().st_size:,} bytes)")
 
 # Verify: page count, and that the text actually made it in
