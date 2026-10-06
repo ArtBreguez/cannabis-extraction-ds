@@ -15,7 +15,7 @@ from pathlib import Path
 # repo root, resolved from this file so the scripts work in any clone
 ROOT = Path(__file__).resolve().parents[2]
 PDF = ROOT / "reports/preprint.pdf"
-MD = ROOT / "PREPRINT.md"
+SI_PDF = ROOT / "reports/supporting_information.pdf"
 
 try:
     import fitz  # pymupdf
@@ -24,11 +24,14 @@ except ImportError:
     sys.exit(2)
 
 doc = fitz.open(PDF)
-print(f"  pages: {doc.page_count}")
+si = fitz.open(SI_PDF)
+print(f"  pages: {doc.page_count}  (Supporting Information: {si.page_count})")
 print(f"  page size: {doc[0].rect.width:.0f} x {doc[0].rect.height:.0f} pt")
 
-full = "\n".join(p.get_text() for p in doc)
-print(f"  extracted characters: {len(full):,}")
+main_text = "\n".join(p.get_text() for p in doc)
+si_text = "\n".join(p.get_text() for p in si)
+full = main_text + "\n" + si_text
+print(f"  extracted characters: {len(main_text):,} + {len(si_text):,}")
 
 # --- does every headline number survive into the PDF? ---
 must = ["37,374", "37,344", "81.0%", "54.0%", "54.6%", "68.3%", "18.6",
@@ -43,12 +46,20 @@ must = ["37,374", "37,344", "81.0%", "54.0%", "54.6%", "68.3%", "18.6",
         "80th percentile", "p = 0.11", "88.3%",
         "[47.3, 56.6]", "ethanol or CO2", "46.3%", "Cannabis Compliance Board",
         "Figure 1.", "Score against model capacity", "Author contributions",
-        "extraction-category", "Table 10.", "Table 11.", "0.610 [0.535, 0.698]",
+        "extraction-category", "Table 4.", "Table 5.", "0.610 [0.535, 0.698]",
         "about 30%", "1,303 samples", "positive control"]
 missing = [m for m in must if m not in full]
 print(f"\n  key strings present: {len(must)-len(missing)}/{len(must)}")
 if missing:
     print(f"    MISSING: {missing}")
+
+# --- the two documents hold what they should ---
+si_must = ["Supporting Information", "S1.", "S8.", "Table S1.", "Table S8.", "3,332 / 11,262", "1,813"]
+si_missing = [m for m in si_must if m not in si_text]
+main_only = [m for m in ("Table S1.", "## S", "1,813") if m in main_text]
+print(f"  SI strings present: {len(si_must)-len(si_missing)}/{len(si_must)}"
+      + (f"  MISSING: {si_missing}" if si_missing else "")
+      + (f"  LEAKED INTO MAIN: {main_only}" if main_only else ""))
 
 # --- did the ASCII tables keep their alignment? ---
 print("\n  === ASCII table integrity ===")

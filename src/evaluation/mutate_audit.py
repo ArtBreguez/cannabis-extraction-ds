@@ -28,7 +28,10 @@ REPO = Path(__file__).resolve().parents[2]
 SANDBOX = Path("/tmp/mutation-sandbox")
 PY = REPO / ".venv/bin/python"
 
-ORIGINAL = (REPO / "PREPRINT.md").read_text()
+# The manuscript is two files. Mutations are planted in their concatenation
+# and the sandbox gets both files back, split at the marker.
+SEP = "\n\n<<<SUPPORTING-INFORMATION>>>\n\n"
+ORIGINAL = (REPO / "PREPRINT.md").read_text() + SEP + (REPO / "SUPPORTING_INFORMATION.md").read_text()
 
 
 def build_sandbox():
@@ -47,7 +50,9 @@ def build_sandbox():
 
 
 def run_audit(text):
-    (SANDBOX / "PREPRINT.md").write_text(text)
+    main, si = text.split(SEP)
+    (SANDBOX / "PREPRINT.md").write_text(main)
+    (SANDBOX / "SUPPORTING_INFORMATION.md").write_text(si)
     r = subprocess.run(
         [str(PY), str(SANDBOX / "src/evaluation/audit_preprint.py")],
         capture_output=True, text=True, timeout=600)
@@ -266,7 +271,7 @@ MUTATIONS = [
     ("P13 'includes 50%' flipped", "has an interval that includes 50%", "has an interval that excludes 50%"),
     ("P13 dual-class 'no model' flipped", "no model's pooled balanced accuracy has an interval that excludes 50%",
      "every model's pooled balanced accuracy has an interval that excludes 50%"),
-    ("P13 cross-reference back to Table 2", "changed within the period (Table 5)", "changed within the period (Table 2)"),
+    ("P13 cross-reference back to Table 2", "changed within the period (Table S4)", "changed within the period (Table 2)"),
     ("P13 'confounder' reinstated", "with the held-out group changed from producer", "with the confounder changed from producer"),
     ("P13 keyword back to certificates", "laboratory testing data, model validation",
      "certificates of analysis, model validation"),
@@ -288,8 +293,27 @@ MUTATIONS = [
      "is the highest score any model reaches"),
     ("P14 protocol of [3] asserted again", "the performance figures of [1] and [2] are obtained",
      "the reported performance figures are obtained"),
-    ("P14 figure caption points at Table 12 again", "the held-out fold spreads of the reported and logistic models are in Table 10",
+    ("P14 figure caption points at Table 12 again", "the held-out fold spreads of the reported and logistic models are in Table 4",
      "with fold spreads in Tables 10 and 12"),
+    # ---- pass sixteen: the split into main text and Supporting Information ----
+    ("P16 funnel share 73.3 -> 72.3", "Most concentrate rows, 73.3% of them,", "Most concentrate rows, 72.3% of them,"),
+    ("P16 class share 65.8 -> 66.8 in the restatement", "24,573 declared solvent-based (65.8%)",
+     "24,573 declared solvent-based (66.8%)"),
+    ("P16 producer count 96 -> 95 in the restatement", "name one of 96 producers", "name one of 95 producers"),
+    ("P16 pattern count Seven -> Six", "Seven of the 13 missingness patterns", "Six of the 13 missingness patterns"),
+    ("P16 pattern coverage 11.04 -> 12.04", "they cover 11.04% of the usable rows", "they cover 12.04% of the usable rows"),
+    ("P16 pooled recall 29.6 -> 30.6 in the restatement", "its solventless recall is 29.6%", "its solventless recall is 30.6%"),
+    ("P16 junk-key share 22.6 -> 23.6 in the restatement", "22.6% of the keys that parse", "23.6% of the keys that parse"),
+    ("P16 split-record count 1,303 -> 1,304 in the restatement",
+     "1,303 samples from the producer-less laboratories are stored as two adjacent rows each, 1,071",
+     "1,304 samples from the producer-less laboratories are stored as two adjacent rows each, 1,071"),
+    ("P16 a main table cites a missing SI table", "(Section S5, Table S6)", "(Section S5, Table S9)"),
+    ("P16 an SI section heading removed", "## S6. Learning rate of the alarm probes", "## Learning rate of the alarm probes"),
+    ("P16 SI table numbered like a main table", "**Table S7.** Pooled confusion matrix", "**Table 7.** Pooled confusion matrix"),
+    ("P16 cross-reference to the wrong main table", "Table 6 varies what could be suspected", "Table 5 varies what could be suspected"),
+    ("P16 figure caption cites the wrong table", "logistic models are in Table 4.", "logistic models are in Table 5."),
+    ("P16 learning-rate summary reverted", "so they are fitted at 0.05, where their fold scores are stable",
+     "so they are fitted at 0.1, where their fold scores are stable"),
     ("reference [1] journal reverted",
      "*European Archives of Psychiatry and\nClinical Neuroscience*",
      "*Journal of\nCannabis Research*"),
@@ -382,6 +406,6 @@ else:
     print("    no survivors: every planted error was detected")
 
 # restore, paranoia: the real file must be untouched
-assert (REPO / "PREPRINT.md").read_text() == ORIGINAL, \
+assert (REPO / "PREPRINT.md").read_text() + SEP + (REPO / "SUPPORTING_INFORMATION.md").read_text() == ORIGINAL, \
     "the real manuscript was modified, which must never happen"
 print("\n  real manuscript verified unchanged")

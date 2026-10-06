@@ -13,7 +13,12 @@ from pathlib import Path
 
 # repo root, resolved from this file so the scripts work in any clone
 ROOT = Path(__file__).resolve().parents[2]
-TEXT = (ROOT / "PREPRINT.md").read_text()
+# The manuscript is two files: the main text and the Supporting Information.
+# Every claim is checked against the union, and the structural checks at the
+# end look at each file on its own.
+MAIN = (ROOT / "PREPRINT.md").read_text()
+SI = (ROOT / "SUPPORTING_INFORMATION.md").read_text()
+TEXT = MAIN + "\n\n" + SI
 EV = ROOT / "docs/evidence"
 
 csv.field_size_limit(10_000_000)
@@ -60,9 +65,11 @@ check("lab fill row anchored",
 n = len(rows)
 
 lab = Counter((r.get("label") or "").strip() for r in rows)
-check("hydrocarbon 24,573", lab["hydrocarbon"] == 24573 and "24,573" in TEXT,
+check("hydrocarbon 24,573", lab["hydrocarbon"] == 24573
+      and f"hydrocarbon   {lab['hydrocarbon']:,}   {100*lab['hydrocarbon']/n:.1f}%" in TEXT,
       lab["hydrocarbon"])
-check("solventless 12,771", lab["solventless"] == 12771 and "12,771" in TEXT,
+check("solventless 12,771", lab["solventless"] == 12771
+      and f"solventless   {lab['solventless']:,}   {100*lab['solventless']/n:.1f}%" in TEXT,
       lab["solventless"])
 maj = 100 * max(lab.values()) / n
 check("majority 65.8%", abs(maj - 65.8) < 0.1 and "65.8" in TEXT, f"{maj:.1f}")
@@ -713,8 +720,7 @@ check("pure-stratum count anchored",
       bool(pp) and f"{pp.group(1)} of {pp.group(2)}" in TEXT,
       pp.group(0) if pp else None)
 check("pure-stratum coverage anchored",
-      bool(pr) and pr.group(1) in TEXT.replace(",", "")
-      and f"{pr.group(2)}%" in TEXT,
+      bool(pr) and f"rows they cover:                  {pr.group(1)} ({pr.group(2)}%)" in TEXT,
       pr.group(0) if pr else None)
 check("pure strata attributed to reporting convention",
       "laboratory reporting convention" in FLAT)
@@ -1138,15 +1144,64 @@ check("author contributions and funding are stated in their own sections",
       and "This work received no funding." in FLAT)
 
 _dw = re.findall(r"^(boosting|logistic), class-weighted.*?\n\s+held out, pooled AUC [\d.]+\s+producer bootstrap 95% \[([\d.]+), ([\d.]+)\]", _dblk, re.M)
-_caps = [int(n_) for n_ in re.findall(r"^\*\*Table (\d+)\.\*\*", TEXT, re.M)]
+# ---------- two-file structure: main text and Supporting Information ----------
+_caps = [int(n_) for n_ in re.findall(r"^\*\*Table (\d+)\.\*\*", MAIN, re.M)]
+_scaps = [int(n_) for n_ in re.findall(r"^\*\*Table S(\d+)\.\*\*", SI, re.M)]
 _ps = TEXT.split("\n\n")
-check("tables are numbered consecutively and each is a code block",
-      _caps == list(range(1, len(_caps) + 1)) and len(_caps) == 16
+check("main tables are numbered consecutively and each is a code block",
+      _caps == list(range(1, len(_caps) + 1)) and len(_caps) == 8
+      and "**Table S" not in MAIN
       and all(_ps[k_ + 1].startswith("```") for k_, par_ in enumerate(_ps[:-1]) if par_.startswith("**Table ")), _caps)
+check("SI tables are numbered S1 onwards and each is a code block",
+      _scaps == list(range(1, len(_scaps) + 1)) and len(_scaps) == 8
+      and not re.search(r"^\*\*Table \d+\.\*\*", SI, re.M), _scaps)
+_MF, _SF = " ".join(MAIN.split()), " ".join(SI.split())
+_ment = re.findall(r"Tables? (S?\d+)(?: and (S?\d+))?", TEXT)
+_ment = {m_ for pair_ in _ment for m_ in pair_ if m_}
+_exist = {str(k_) for k_ in _caps} | {f"S{k_}" for k_ in _scaps}
+check("every table mentioned exists, and every table is mentioned in the main text",
+      _ment <= _exist and all(re.search(rf"Tables? (?:S?\d+ and )?{k_}\b", _MF) for k_ in _exist), (_ment - _exist, _exist))
+_lab2 = Counter((r.get("label") or "").strip() for r in rows)
+_pf2 = sum(1 for r in rows if (r.get("producer") or "").strip())
+_np2 = len({(r.get("producer") or "").strip() for r in rows if (r.get("producer") or "").strip()})
+_sref = set(re.findall(r"Section (S\d+)", FLAT))
+_shead = set(re.findall(r"^## (S\d+)\.", SI, re.M))
+check("every Supporting Information section cited in the main text exists",
+      _sref <= _shead and _sref == _shead and _shead == {f"S{i_}" for i_ in range(1, 10)}, (_sref, _shead))
 check("table cross-references point at the right tables",
-      "changed within the period (Table 5)" in FLAT and "Table 4 counts them" in FLAT
-      and "Table 12 varies what could be suspected" in FLAT and "(Table 2)" not in FLAT
-      and "the held-out fold spreads of the reported and logistic models are in Table 10" in FLAT)
+      "changed within the period (Table S4)" in _MF and "(133 of 146; Table S4 in Section S3)" in _MF and "Table 1 counts them" in _MF
+      and "Table 6 varies what could be suspected" in _MF
+      and "Table 4 adds ROC AUC and class weighting, and Table 5 gives the pooled scores" in _MF
+      and "the held-out fold spreads of the reported and logistic models are in Table 4" in _MF
+      and "(Section S1, Table S1)" in _MF and "(Tables S2 and S3)" in _MF and "computed in Table S5" in _MF
+      and "(Section S5, Table S6)" in _MF and "(Section S7, Table S7)" in _MF and "(Table S8)" in _MF)
+check("the SI says what its section numbers refer to",
+      SI.startswith("# Supporting Information: Group-aware validation sharply reduces")
+      and "refer to the main text" in _SF and "Sections S1 to S9 and Tables S1 to S8" in _SF)
+# The main text restates a few SI figures in one sentence each; each restatement
+# is anchored to the same source as the SI table it summarises.
+check("funnel summary in the main text matches Table S1",
+      f"Most concentrate rows, {100*c_und/139714:.1f}% of them, carry no such declaration" in _MF
+      and "Section S1, Table S1" in _MF, f"{100*c_und/139714:.1f}")
+check("class counts restated in the main text",
+      f"{_lab2['hydrocarbon']:,} declared solvent-based ({100*_lab2['hydrocarbon']/len(rows):.1f}%) and {_lab2['solventless']:,} declared non-solvent ({100*_lab2['solventless']/len(rows):.1f}%)" in _MF,
+      dict(_lab2))
+check("grouping variables restated in the main text",
+      f"Of these, {_pf2:,} ({100*_pf2/len(rows):.1f}%) name one of {_np2} producers, every row names one of 12 laboratories and none carries a strain name" in _MF, (_pf2, _np2))
+check("split, terpene-only and spelling records summarised in the main text",
+      "1,303 samples from the producer-less laboratories are stored as two adjacent rows each, 1,071 rows that name a producer report nothing but a `total_terpenes` of zero, and two of the 96 producer strings are spellings of one company (Section S2)" in _MF
+      and "1,813 usable rows (4.9%) repeat another row" in _SF and "1,813" not in _MF)
+check("missingness summary in the main text matches the log",
+      bool(pp) and bool(pr) and f"Seven of the {pp.group(2)} missingness patterns" in _MF and pp.group(1) == "7"
+      and f"they cover {pr.group(2)}% of the usable rows" in _MF)
+check("pooled solventless recall restated in the main text",
+      bool(po) and f"its solventless recall is {po.group(1)}%" in _MF and "3,332 / 11,262" in _SF)
+check("strain junk-key share restated in the main text",
+      bool(sj) and f"{sj.group(2)}% of the keys that parse are packaging or process words" in _MF
+      and "nearly a quarter of the keys" not in _MF)
+check("the probes' learning rate summarised in the main text",
+      "so they are fitted at 0.05, where their fold scores are stable" in _MF
+      and "at scikit-learn's default learning rate of 0.1: the laboratory probe's" in _SF)
 check("keywords agree with the data description",
       "certificates of analysis" not in TEXT.split("**Keywords:**")[1].split("---")[0]
       and "extraction category, laboratory testing data" in FLAT)
@@ -1168,7 +1223,7 @@ check("repository tag stated", "tagged `preprint-v1`" in FLAT)
 # ---------- pass fourteen: one-line errors a sixth referee found ----------
 _n_int = 2 * sum(len(v) for v in _p11.values()) + 2
 check("the number of producer bootstrap intervals is stated correctly",
-      _n_int == 18 and "We report eighteen such intervals, sixteen pooled (Table 11) and two on the fold mean" in FLAT, _n_int)
+      _n_int == 18 and "We report eighteen such intervals, sixteen pooled (Table 5) and two on the fold mean" in FLAT, _n_int)
 _pd = [(r.get("date_tested") or "")[:4] for r in rows if (r.get("producer") or "").strip() and (r.get("date_tested") or "").strip()]
 check("the period of the producer rows is stated correctly",
       min(_pd) == "2020" and max(_pd) == "2023"
@@ -1216,6 +1271,9 @@ check("references are numbered in order of first citation", _first == list(range
 
 # ---------- prose hygiene ----------
 body = re.sub(r"```[\s\S]*?```", "", TEXT)
+_mw = len(re.findall(r"\b\w+\b", re.sub(r"```[\s\S]*?```", "", MAIN.split("## References")[0])))
+_sw = len(re.findall(r"\b\w+\b", re.sub(r"```[\s\S]*?```", "", SI)))
+print(f"  main text before the references: {_mw} words; Supporting Information: {_sw} words")
 check("no em-dash outside code", "\u2014" not in body,
       body.count("\u2014"))
 check("no semicolon outside code", True)  # semicolons are fine in a paper

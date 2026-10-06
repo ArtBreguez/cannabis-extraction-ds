@@ -124,34 +124,9 @@ concentrate`. This is a source-declared label, not an inference from a
 commercial product name. Rows whose `product_type` is only `concentrate` remain
 unlabelled and are never assigned to a class. The analyses run on the 37,344
 labelled rows that survive the consistency check described below, which we call
-the usable rows.
-
-Most concentrate rows carry no such declaration and are therefore dropped at
-this step, which is where the bulk of the reduction happens:
-
-**Table 1.** From concentrate rows to labelled rows.
-
-```
-concentrate or extract rows                     139,714
-  product_type declares the extraction family    37,310   (26.7%)
-  product_type does not                         102,404   (73.3%)
-
-labelled rows outside that subset                    64
-total labelled rows                              37,374
-```
-
-The discarded majority is dominated by values that name a format rather than a
-method: `extracts` (34,034 rows), `concentrate, product inhalable` (30,586),
-bare `concentrate` (26,030) and `marijuana extract for inhalation` (3,901).
-These are not missing labels to be recovered, since the extraction family was
-never recorded, so imputing one would invent the dependent variable. Matching is
-by regular expression (`non[- ]?solvent`) rather than exact string, which also
-admits regional variants such as `non-solvent concentrate` (1,445 rows) and, in
-64 cases, `infused pre-rolls (non-solvent)`. Those 64 rows are the reason the
-labelled total slightly exceeds the declared count within the concentrate
-subset; they are solventless by declaration but are pre-rolls rather than
-concentrates, they are 0.17% of the labelled data, and none names a producer, so
-they are outside the headline comparison.
+the usable rows. Most concentrate rows, 73.3% of them, carry no such declaration
+and are dropped, which is where the bulk of the reduction from 139,714
+concentrate rows to 37,374 labelled rows happens (Section S1, Table S1).
 
 A secondary labelling path applies regular expressions to `product_name` (`hash
 rosin`, `live rosin`, `rosin` for solventless; `bho`, `butane`, `hydrocarbon`,
@@ -164,24 +139,10 @@ row: it only cross-checks the declared label, so every labelled row carries a
 
 The resulting labelled dataset is 37,374 rows, of which 30 carry contradictory
 labels and are excluded from every analysis, leaving **37,344 rows** that all
-figures below are computed on unless stated otherwise:
-
-**Table 2.** Class counts on the usable rows.
-
-```
-hydrocarbon   24,573   65.8%
-solventless   12,771   34.2%
-```
-
-Grouping variables are populated as follows:
-
-**Table 3.** Grouping variables on the usable rows.
-
-```
-producer      33,229 rows (89.0%)   96 distinct
-lab           37,344 rows (100.0%)  12 distinct
-strain_name        0 rows (0.0%)     0 distinct
-```
+figures below are computed on unless stated otherwise: 24,573 declared
+solvent-based (65.8%) and 12,771 declared non-solvent (34.2%). Of these, 33,229
+(89.0%) name one of 96 producers, every row names one of 12 laboratories and
+none carries a strain name (Tables S2 and S3).
 
 Every usable row that carries a `lab_state` is from Nevada: seven laboratories
 and 31,422 of the usable rows (84.1%, and 94.6% of the rows that name a
@@ -193,22 +154,16 @@ below does not govern their 4,115 rows. Tests are dated 2020-01-02 to 2024-03-29
 on the 33,765 rows that carry a date; the producer-less rows are all dated from
 December 2022 on.
 
-Rows are not samples. 1,813 usable rows (4.9%) repeat another row on product
-name, laboratory, producer and all 19 analyte values, but only 419 of them name
-a producer; the other 1,394 are producer-less rows, which have no name and match
-on a handful of analyte values. Separately, 1,303 samples from the producer-less
-laboratories are stored as two adjacent rows each, with the same laboratory and
-date and complementary analytes (`delta_9_thc` in one; `cbd`, `cbda`, `thca` and
-`total_cbd` in the other), so those laboratories' 4,115 rows describe 2,812
-samples. Among the rows that name a producer, 1,071 report nothing but a
-`total_terpenes` of zero, in both classes, and two of the 96 producer strings
-are spellings of one company (260 rows). We keep the rows as stored, since
-nothing marks which copy is the record, and 3.2 reports the headline pair
-without the duplicates, without the terpene-only rows and with the two spellings
-merged. The split pairs lie outside the 33,229 rows that name a producer, on
-which the headline comparison runs. Those rows are very unequally spread: the
-largest producer holds 13.2% of them, the five largest 42.3%, and the median
-producer 64 rows.
+Rows are not samples. Some repeat another row exactly, 1,303 samples from the
+producer-less laboratories are stored as two adjacent rows each, 1,071 rows that
+name a producer report nothing but a `total_terpenes` of zero, and two of the 96
+producer strings are spellings of one company (Section S2). We keep the rows as
+stored, since nothing marks which copy is the record, and 3.2 reports the
+headline pair without the duplicates, without the terpene-only rows and with the
+two spellings merged. The split pairs lie outside the 33,229 rows that name a
+producer, on which the headline comparison runs. Those rows are very unequally
+spread: the largest producer holds 13.2% of them, the five largest 42.3%, and
+the median producer 64 rows.
 
 **What the label means.** The two categories are regulatory, not chemical.
 Nevada's rule separates the same pair, and in its versions of July 2022 and
@@ -222,11 +177,11 @@ pair of definitions, and the 2018 rule it replaced named CO2 only, so at least
 the first six months of the data, which precede the adoption of the current
 regulations in July 2020, fall under the older wording. Under the current
 definition the non-solvent category spans mechanical separation, ethanol and
-CO2, and the product names are consistent with that. Table 4 counts them over
+CO2, and the product names are consistent with that. Table 1 counts them over
 the rows that carry a name, which are the 33,229 rows with a producer; a name
 may hit several families.
 
-**Table 4.** Product-name word families in each declared category, over the
+**Table 1.** Product-name word families in each declared category, over the
 33,229 named rows. Each family is a regular expression in
 `src/evaluation/label_composition.py`; besides the words listed, the hydrocarbon
 family matches `hydrocarbon` and `batter`, the mechanical one `solventless`, the
@@ -255,18 +210,8 @@ categories; it cannot count mislabelled rows.
 Neither the wording of the rule nor practice was constant over the period, and
 they did not change together. Product names that say ethanol are almost all
 solvent-based through 2022 (201 of 211) and mostly non-solvent in 2023 (133 of
-146; Table 5), so the meaning of the label drifts within the data.
-
-**Table 5.** Rows whose product name says ethanol, by year of test and declared
-category. Dated rows only: 20 of the 163 non-solvent rows carry no date.
-
-```
-year    solvent-based   non-solvent
-2020          82             9
-2021          21             1
-2022          98             0
-2023          13           133
-```
+146; Table S4 in Section S3), so the meaning of the label drifts within the
+data.
 
 The task this paper tests is therefore the regulator's category as the
 laboratories applied it over the four years, 2020 to 2023, that the rows naming
@@ -311,69 +256,28 @@ are never dropped for having gaps. The classifier receives the 19 value columns
 with empty cells left missing, which the estimator routes natively at each
 split, so the tested-versus-untested distinction reaches the model through
 missingness rather than through the mask columns. The mask columns drive the
-coverage figures below and the pre-check in 2.3.
+coverage figures of Table S5 and the pre-check in 2.3.
 
-This distinction produces two different and both meaningful coverage figures,
-which we separate explicitly because conflating them is easy:
+The distinction produces two different coverage figures, computed in Table S5 on
+the rows that name a producer. Terpene panels are requested at similar rates for
+both classes, a gap of 0 to 5 points. The large gap, 19 to 27 points, is in
+*detection*: hydrocarbon extracts report a non-zero terpene value far more
+often. That gap is in what is reported once a panel is run, not in which test
+was ordered, and with 51.5% of the named non-solvent rows being distillates,
+refining is a likelier cause than the extraction category itself. The panel is
+not constant over time either. Nevada listed terpene analysis among the required
+tests for both categories in the text effective November 2020 and no longer does
+in the July 2022 text [11], and among the rows that name a producer the share
+with a terpene panel falls from 96.2% in 2020 and 96.5% in 2021 to 85.8% in 2022
+and 72.0% in 2023.
 
-**Table 6.** Share of the rows that name a producer with the analyte tested and
-with a non-zero value, by class.
-
-```
-analyte               tested (flag)          detected (value > 0)
-                   solventless  hydro      solventless  hydro
-d_limonene              85.8%   90.7%           46.1%   73.4%
-beta_caryophyllene      85.8%   90.8%           53.3%   76.4%
-alpha_pinene            85.8%   90.8%           38.8%   63.0%
-total_terpenes         100.0%  100.0%           64.4%   83.4%
-```
-
-Terpene panels are requested at similar rates for both classes, a gap of 0 to 5
-points. The large gap, 19 to 27 points, is in *detection*: hydrocarbon extracts
-report a non-zero terpene value far more often. That gap is in what is reported
-once a panel is run, not in which test was ordered, and with 51.5% of the named
-non-solvent rows being distillates, refining is a likelier cause than the
-extraction category itself. The panel is not constant over time either. Nevada
-listed terpene analysis among the required tests for both categories in the text
-effective November 2020 and no longer does in the July 2022 text [11], and among
-the rows that name a producer the share with a terpene panel falls from 96.2% in
-2020 and 96.5% in 2021 to 85.8% in 2022 and 72.0% in 2023.
-
-Two properties of these columns are worth stating because they bound what the
-features can mean.
-
-First, `total_terpenes` is not an independent measurement. It is a near-exact
-sum of the ten terpenes that survive the empty-column drop (R² = 0.984 against
-their sum, Pearson r = 0.992), so it is collinear with features already in the
-matrix and any per-feature importance attributed to it is split credit rather
-than chemistry. Its residual against that sum is laboratory-specific: `CERTIFIED
-AG LAB` reports an exact sum (within 10⁻⁶) on 99.7% of rows, `MA & ASSOCIATES`
-on none, which makes the residual a laboratory fingerprint in its own right.
-`total_thc` and `total_cbd` are derived columns of the same kind, each a fixed
-combination of its acid and neutral forms. Dropping the column costs 0.3 points
-of balanced accuracy under the all-rows random split, so nothing in this paper
-depends on keeping it; we keep it because the published literature does.
-
-Second, whether `total_terpenes` is populated at all is a laboratory
-convention, not a per-sample decision. Every laboratory is at 0% or 100%, with
-no intermediate value, and the populated set is *exactly* the set of rows that
-carry a producer:
-
-```
-total_terpenes populated == producer present:  33,229 / 33,229 rows, no exceptions
-laboratories at 100%:  G3, NV CANN, DB, CERTIFIED AG, DPL NV, ERP, 374, MA
-laboratories at   0%:  PureVita, Cannalytics RI, Lifted Testing, Green Peaks
-```
-
-So `total_terpenes` being blank is an exact in-model indicator of "this row will
-be dropped by the unseen-producer scheme". That coupling is why the headline
-comparison in 3.2 is made on the rows that name a producer.
-
-Finally, 101 rows carry a `total_thc` above 100%, which is impossible as a
-percentage; the largest is 686,400, a milligram figure in a percent column.
-Ninety-four come from a single laboratory. They are 0.27% of the corpus and we
-leave them in place rather than silently editing source measurements, but they
-are unit artefacts rather than chemistry and no claim here rests on them.
+One column couples the features to the grouping. `total_terpenes` is populated
+for a row exactly when the row names a producer, a laboratory convention and not
+a per-sample decision, so a blank value marks, inside the model, the rows that
+the unseen-producer scheme must drop. That coupling is why the headline
+comparison in 3.2 is made on the rows that name a producer. Section S4 documents
+it, together with the collinearity of `total_terpenes` with the ten terpenes and
+the unit artefacts in `total_thc`.
 
 ### 2.3 The leakage pre-check
 
@@ -391,41 +295,14 @@ Those are in-sample figures for the lookup. Cross-validated, the probe scores
 for the main model under a random split, so on the rows as stored the shortcut
 is 4.0 of 18.3 points on one metric and 6.8 of 31.0 on the other.
 
-That 4.1-point lift is not spread evenly. The 19 columns take only 13 distinct
-missingness patterns, and 7 of them are **100% one class**:
-
-**Table 7.** Missingness patterns that contain a single class, rows as stored;
-the three largest of the seven are listed.
-
-```
-patterns that are 100% one class: 7 of 13
-rows they cover:                  4123 (11.04%)
-  n= 1495  all solventless (6 of 19 analytes reported)
-  n= 1303  all hydrocarbon (1 of 19 analytes reported)
-  n= 1303  all hydrocarbon (4 of 19 analytes reported)
-```
-
-For 11% of the usable rows the label is recoverable with certainty from which
-cells are blank, before any number is read. Almost all of these rows, 4,115 of
-4,123, come from four laboratories (`PureVita`, `Cannalytics RI`, `Lifted
-Testing`, `Green Peaks`) that report a restricted analyte panel and record no
-producer, so the shortcut is a laboratory reporting convention and not
-chemistry. Much of it is an artefact of the split records of 2.1: the rows
-reporting one analyte and the rows reporting four are the two halves of the same
-1,303 samples (1,230 of them at `PureVita`), all solvent-based, while the rows
-reporting six are all non-solvent. With each pair merged the columns take 12
-patterns, 6 of them pure, covering 2,820 rows (7.82%), and the in-sample lookup
-scores 68.8% against a 64.6% majority. The remaining 8 rows sit in three rare
-patterns from other laboratories and do carry a producer; 14 of the pure rows
-report no analyte at all and stay in the data. The 4,115 producer-less rows are
-also the rows the unseen-producer scheme must drop, which is why the headline
-comparison in 3.2 is made without them.
-
-Laboratory and class are not degenerate, though they are far from independent.
-Only 373 rows, 1.0%, sit in laboratories that are more than 90% one class, and
-the two largest laboratories, 15,018 and 12,531 rows, both sit close to the
-overall 65.8/34.2 split; across all twelve the hydrocarbon share runs from 0.0%
-to 97.8%, and 3.2 gives the range for the eight largest.
+That lift is concentrated. Seven of the 13 missingness patterns the 19 columns
+take contain a single class, and they cover 11.04% of the usable rows, nearly
+all from the four laboratories that report a restricted analyte panel and record
+no producer. The shortcut is therefore a laboratory reporting convention and not
+chemistry, and much of it is an artefact of the split records of 2.1 (Section
+S5, Table S6). Those producer-less rows are also the rows the unseen-producer
+scheme must drop, which is why the headline comparison in 3.2 is made without
+them.
 
 The cheapest shortcut therefore buys about 4 points, concentrated in 11% of the
 rows and attributable to reporting convention. That is small enough that a model
@@ -500,7 +377,7 @@ Producer-level intervals are percentile intervals over 2,000 bootstrap draws of
 producers, computed from the held-out predictions of the reported partition
 without refitting. A draw that contains one class only is skipped, and for a
 fold-mean statistic a fold that loses a class in a draw is left out of that
-draw's mean. We report eighteen such intervals, sixteen pooled (Table 11) and
+draw's mean. We report eighteen such intervals, sixteen pooled (Table 5) and
 two on the fold mean (3.2, Figure 1b), without a multiplicity correction and
 call a bound within two points of chance marginal. Two baselines are computed
 explicitly: most-frequent (balanced accuracy 50.0%) and stratified random (50.7%
@@ -535,21 +412,16 @@ matters for a split that shares laboratories; 2.3 measures the reporting
 convention on its own, and 3.1 reports a missingness-only laboratory probe
 beside the chemical one.
 
-The probes are multi-class, 11 and 33 classes, and the softmax boosting diverges
-on them at scikit-learn's default learning rate of 0.1: the laboratory probe's
-five folds score 40.6 to 69.4 and the producer probe's 10.4 to 68.7. At a
-learning rate of 0.05 the fold scores span 0.6 points for the laboratory and 1.6
-for the producer, and those are the figures reported in 3.1. The binary
-extraction task is less sensitive and keeps the default: on all usable rows its
-random split scores 81.0% at the default rate and 79.0% at 0.05, with fold
-spreads of 0.4 and 0.5, and on the producer rows the held-out score is 54.0% and
-54.1%.
+The probes have 11 and 33 classes, and the softmax boosting diverges on them at
+scikit-learn's default learning rate of 0.1, so they are fitted at 0.05, where
+their fold scores are stable. The binary extraction task is insensitive to the
+rate and keeps the default (Section S6).
 
 ## 3. Results
 
 ### 3.1 The profiles identify the laboratory and the producer
 
-**Table 8.** Alarm probes: predicting metadata from the 19 analyte columns,
+**Table 2.** Alarm probes: predicting metadata from the 19 analyte columns,
 random five-fold.
 
 ```
@@ -574,7 +446,7 @@ probe is unchanged at 92.3%, on ten laboratories and a 41.9% baseline.
 
 ### 3.2 Market data: 78.5% becomes 54.0%
 
-**Table 9.** The reported model under each split scheme. `random (optimistic)`
+**Table 3.** The reported model under each split scheme. `random (optimistic)`
 and the two baselines run on all usable rows; the row below it repeats the
 random split on the rows that name a producer.
 
@@ -600,11 +472,11 @@ twice (2.1); with those pairs merged it is 80.4%.
 How far above chance the held-out score sits depends on how it is measured. The
 reported model is unweighted and the classes are roughly 1:2, so held out it
 answers mostly with the majority class, and balanced accuracy at the default
-threshold understates what its scores contain. Table 10 adds ROC AUC and class
-weighting, and Table 11 gives the pooled scores with their producer bootstrap
+threshold understates what its scores contain. Table 4 adds ROC AUC and class
+weighting, and Table 5 gives the pooled scores with their producer bootstrap
 intervals.
 
-**Table 10.** Four models on the rows that name a producer: fold means under the
+**Table 4.** Four models on the rows that name a producer: fold means under the
 random split and with the producer held out.
 
 ```
@@ -616,7 +488,7 @@ logistic, unweighted        65.3%  0.753    54.3% (+/-6.2)  0.634
 logistic, class-weighted    69.4%  0.752    61.1% (+/-5.1)  0.636
 ```
 
-**Table 11.** Producer held out: scores pooled over the held-out predictions of
+**Table 5.** Producer held out: scores pooled over the held-out predictions of
 the reported partition, with producer bootstrap 95% intervals.
 
 ```
@@ -667,13 +539,13 @@ above chance are not a laboratory prior.
 models. (a) Random split and producer-held-out score, for a standardised
 logistic regression and for gradient boosting at four iteration counts; fold
 means; the held-out fold spreads of the reported and logistic models are in
-Table 10. (b) Mean score of each of twenty random assignments of producers to
+Table 4. (b) Mean score of each of twenty random assignments of producers to
 folds, for all producers and for the dual-class subset; the bar is the producer
 bootstrap 95% interval of the fold-mean score on the reported partition and the
 tick is that score. Every plotted value is parsed from the evidence logs by
 `src/evaluation/make_figure.py`.
 
-**Table 12.** Robustness of the gap. Balanced accuracy of the reported model;
+**Table 6.** Robustness of the gap. Balanced accuracy of the reported model;
 gap in points on unrounded means. The last row replaces the target (2.4).
 
 ```
@@ -693,7 +565,7 @@ rows named for a process (4,345)            77.0%    60.3%     16.8
 positive control: named distillate or not   89.6%    76.4%     13.2
 ```
 
-Table 12 varies what could be suspected of producing the gap. It is stable under
+Table 6 varies what could be suspected of producing the gap. It is stable under
 reseeding of the random split. It grows with model capacity while the held-out
 score does not move (Figure 1a), so 24.4 is one point on a curve from 21.1 to
 26.1. Duplicate rows, rows that report only a zero terpene total and the two
@@ -726,44 +598,26 @@ The strictest test agrees on the size of the loss. The dual-class subset scores
 twenty reassignments give means from 48.8% to 56.8% (median 54.0%), two of them
 at or below 50.0%. On this subset no model's pooled balanced accuracy has an
 interval that excludes 50%, and only the class-weighted models' pooled AUC
-intervals exclude 0.5, marginally (Table 11). Laboratory identity alone scores
+intervals exclude 0.5, marginally (Table 5). Laboratory identity alone scores
 40.8% under the same folds. Macro F1 is 50.3% (+/-4.3) and 50.7% (+/-3.1) on the
 two schemes, against 39.8% and 38.4% for the majority predictor and 49.6% and
 49.4% for a stratified shuffle on each scheme's own rows, so on that thresholded
 metric neither beats a stratified guess.
 
-The confusion matrix shows where the apparent skill was concentrated:
-
-**Table 13.** Pooled confusion matrix of the reported model, producer held out.
-
-```
-unseen-producer     true hydrocarbon: 16,149 correct /  5,818 wrong
-                    true solventless:  3,332 correct /  7,930 wrong
-```
-
-Solventless recall is **32.3%** as the mean of the five per-fold recalls and
-3,332 / 11,262 = **29.6%** pooled. The two differ because the folds carry very
-unequal numbers of solventless rows, from 951 to 4,413, and the fold with the
-fewest has the highest recall (48.5% against 25.3% in the fold with the most).
-The pooled matrix gives a balanced accuracy of 51.6%. For comparison, the
-per-class recalls are 89.8% and 67.1% under the random split on the same rows,
-and 69.9% and 39.3% on the dual-class subset grouped by producer. The model
-mostly answers with the majority class, and its residual skill lives on the easy
-side.
+Held out, the reported model mostly answers with the majority class: pooled over
+the held-out producers its solventless recall is 29.6%, and its residual skill
+lives on the easy side (Section S7, Table S7).
 
 **Holding out the laboratory.** The `unseen-lab` scheme has the highest mean of
 the three group-held-out schemes, 68.3%, and a fold-to-fold standard deviation
-of **18.6 points**: the score depends on which laboratory is held out. Across
-the eight held-out laboratories the hydrocarbon share ranges from 13.5%
-(`Cannalytics RI`, 758 rows) to 78.4% (`PureVita`, 3,137 rows), against an
-overall 65.8%, so holding out a laboratory shifts the test-set prior as well as
-the instrument, and the two effects cannot be separated with these data. With
-the split pairs of 2.1 merged the scheme scores 67.4% (+/-19.3). We report it
-for completeness and do not rest any conclusion on it.
+of **18.6 points**: the score depends on which laboratory is held out, because
+holding out a laboratory shifts the test-set class prior as well as the
+instrument, and the two effects cannot be separated with these data (Section
+S9). We report it for completeness and do not rest any conclusion on it.
 
 ### 3.3 Controlled experiment: the same direction, an estimator-dependent size
 
-**Table 14.** Controlled experiment, gradient boosting.
+**Table 7.** Controlled experiment, gradient boosting.
 
 ```
 split scheme              balanced_acc    macro_F1   folds
@@ -780,7 +634,7 @@ is not the same: the design is balanced and has no replicates, so nothing leaks
 across a random split here, and what the variety hold-out measures is a shift
 between varieties. Nor does the drop survive a change of estimator intact:
 
-**Table 15.** Controlled experiment, logistic regression.
+**Table 8.** Controlled experiment, logistic regression.
 
 ```
 logistic regression       balanced_acc
@@ -880,7 +734,7 @@ source-declared and agree with the name-derived path on 99.3% of the 11.5% of
 rows where both exist; that check covers eleven name patterns only, three for
 rosin and eight for hydrocarbon products. Product names cannot count mislabelled
 rows (2.1), and the treatment of ethanol extracts changed within the period
-(Table 5). What the labels mean is the regulator's category as applied (2.1),
+(Table S4). What the labels mean is the regulator's category as applied (2.1),
 which is wider than the rosin-and-hash reading of "solventless": 3.2 gives the
 result on the rows that come closest to rosin against BHO, and a reader who
 wants that comparison specifically should rely on those and not on the headline.
@@ -889,7 +743,7 @@ wants that comparison specifically should rely on those and not on the headline.
 excludes 0.5 for all four models, and the pooled balanced-accuracy interval
 excludes 50% only for the class-weighted ones. On the dual-class subset no
 balanced-accuracy interval excludes chance, and only the class-weighted models'
-AUC intervals do (Table 11). Several of these bounds are marginal. The claim is
+AUC intervals do (Table 5). Several of these bounds are marginal. The claim is
 about the size of the inflation, not that nothing transfers.
 
 **Not** a joint hold-out. No scheme here holds out the producer and the
@@ -913,33 +767,11 @@ which cultivar was used, and cultivar drives terpene profile directly.
 We could not test it cleanly. The `strain_name` and `strain_type` columns exist
 in the source file but are populated for **0 of 37,344** usable rows. The only
 cultivar signal left is in `product_name`, and a strain key extracted from it is
-too dirty to carry a confounder probe:
-
-**Table 16.** What a strain key extracted from product names contains.
-
-```
-usable rows                                     37,344
-  no cultivar key extractable at all             4,717   (12.6%)
-  key extracted                                 32,627   (87.4%)
-    of those, an obvious non-cultivar word       7,386   (22.6% of keys)
-    (oil, thc, lab sample, acres, ethanol, raw)
-rows yielding no usable cultivar signal         12,103   (32.4% of usable)
-```
-
-The 4,717 rows with no key are the 4,115 producer-less rows, which have no
-product name, and 602 named ones; nearly a quarter of the keys that do parse are
-packaging or process words rather than cultivar names.
-
-For completeness: grouping the method task by strain key gives 66.2% balanced
-accuracy (+/-1.6), against 79.2% for a random split on the keyed rows, and
-restricting to the 214 keys that appear in both classes, 9,598 rows, gives 56.9%
-(+/-11.4), against 83.6%, with a macro F1 of 42.8%. An alarm probe in the sense
-of 2.6, predicting the key from chemistry on the 109 keys with at least 30 rows
-(12,829 rows), gives 32.4% against a 22.5% baseline, a lift of 9.9 points, where
-the majority key is the non-cultivar word `oil`. We rest no conclusion on any of
-the three: a 22.6%-contaminated grouping key makes the fold composition partly
-arbitrary. The strain question is open and cannot be answered with this corpus
-alone.
+too dirty to carry a confounder probe: 22.6% of the keys that parse are
+packaging or process words, not cultivar names (Table S8). Section S8 reports
+the three analyses we ran on that key, among them the alarm probe cited in 4.1,
+and we rest no conclusion on any of them. The strain question is open and cannot
+be answered with this corpus alone.
 
 ### 4.4 Recommendations
 
@@ -1020,6 +852,10 @@ src/models/         the four split schemes and the alarm probes
 src/evaluation/     recomputation and audit of every figure reported here
 docs/evidence/      raw stdout of each run, committed unedited
 ```
+
+A Supporting Information file accompanies this manuscript, with Sections S1 to
+S9 and Tables S1 to S8; its source is `SUPPORTING_INFORMATION.md` in the same
+repository and it is audited by the same script.
 
 A single script, `src/evaluation/rederive_paper_numbers.py`, recomputes every
 dataset figure in this manuscript directly from the labelled dataset, and
