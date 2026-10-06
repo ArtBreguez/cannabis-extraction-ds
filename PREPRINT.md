@@ -445,10 +445,9 @@ CC-BY-4.0 and are retrieved by the ingestion scripts described below, which
 verify the downloaded size against the figure declared by the host API.
 
 All analysis code and the raw evidence log for every run described in this
-manuscript are held in a repository, `cannabis-extraction-ds`, that will be
-published alongside this preprint; the archived version and its DOI will be
-added to this section on posting. Pending that, the code and logs are available
-from the author on request. The structure is:
+manuscript are public at
+`https://github.com/ArtBreguez/cannabis-extraction-ds` (code MIT, manuscript
+CC-BY-4.0). The structure is:
 
 ```
 src/ingestion/      retrieval with download-integrity verification
