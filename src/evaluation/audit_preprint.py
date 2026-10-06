@@ -543,7 +543,8 @@ check("headline AUC figures anchored, each paired with its own interval",
       bool(_pauc)
       and f"a ROC AUC of {_bu[1]:.2f} under random five-fold" in FLAT
       and f"leaves {gb[1]}% and {_bu[3]:.2f}." in FLAT
-      and FLAT.count(f"AUC is {float(_pauc.group(1)):.2f}, with a producer-level bootstrap interval of {_bu[4]:.2f} to {_bu[5]:.2f}") == 2
+      and FLAT.count(f"AUC is {float(_pauc.group(1)):.2f}, with a producer-level bootstrap interval of {_bu[4]:.3f} to {_bu[5]:.3f}") == 2
+      and "0.54 to 0.70" not in FLAT
       and f"an AUC of {_bu[3]:.2f} against {_bu[1]:.2f} under a random split" in FLAT
       and f"an AUC of {_bu[1]:.2f}; holding out" in FLAT
       and f"{_bu[1]-_bu[3]:.2f} of AUC for the reported model" in FLAT
@@ -1170,7 +1171,8 @@ check("the number of producer bootstrap intervals is stated correctly",
       _n_int == 18 and "We report eighteen such intervals, sixteen pooled (Table 11) and two on the fold mean" in FLAT, _n_int)
 _pd = [(r.get("date_tested") or "")[:4] for r in rows if (r.get("producer") or "").strip() and (r.get("date_tested") or "").strip()]
 check("the period of the producer rows is stated correctly",
-      min(_pd) == "2020" and max(_pd) == "2023" and "over four years (2020 to 2023)" in FLAT, (min(_pd), max(_pd)))
+      min(_pd) == "2020" and max(_pd) == "2023"
+      and "over the four years, 2020 to 2023, that the rows naming a producer cover" in FLAT, (min(_pd), max(_pd)))
 check("methods define the reassignments, the temporal split and the positive control",
       "`GroupKFold(5, shuffle=True)` with seeds 0 to 19" in FLAT
       and "fits once on the earliest 80% and tests on the rest, without grouping" in FLAT
@@ -1178,6 +1180,16 @@ check("methods define the reassignments, the temporal split and the positive con
 check("nothing is claimed about the protocol of [3]",
       "the performance figures of [1] and [2] are obtained under validation that leaves group structure intact" in FLAT
       and "We could not establish the protocol of [3] from its abstract." in FLAT)
+
+# ---------- pass fifteen: three one-line errors from a seventh referee pass ----------
+_ing = sorted(f.name for f in (ROOT / "src/ingestion").glob("*.py") if f.name != "__init__.py")
+check("data availability describes the ingestion code that exists",
+      _ing == ["fetch_cannlytics.py"] and "`src/ingestion/fetch_cannlytics.py`, which verifies the downloaded size" in FLAT
+      and "the Zenodo file was downloaded by hand" in FLAT and "ingestion scripts described below" not in FLAT, _ing)
+_m19 = re.search(r"of those also hitting a mechanical word \(excluded from the named subset\): (\d+)", log12)
+check("the rows left out of the named subset are described as coded",
+      bool(_m19) and f"(leaving out the {_m19.group(1)} solvent-based rows that also hit a mechanical word)" in FLAT
+      and "that hit both)" not in FLAT, _m19.group(1) if _m19 else None)
 
 # ---------- references ----------
 refs = TEXT.split("## References")[1]

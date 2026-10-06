@@ -42,6 +42,8 @@ def build_sandbox():
     for f in ("audit_preprint.py", "make_figure.py", "__init__.py"):
         shutil.copy(REPO / "src/evaluation" / f, SANDBOX / "src/evaluation" / f)
     shutil.copy(REPO / "src/__init__.py", SANDBOX / "src/__init__.py")
+    # the audit lists src/ingestion to check the data-availability statement
+    (SANDBOX / "src/ingestion").symlink_to(REPO / "src/ingestion")
 
 
 def run_audit(text):
@@ -214,8 +216,16 @@ MUTATIONS = [
     ("P12 temporal split 58.3 -> 59.3", "scores 58.3% with an AUC of 0.754", "scores 59.3% with an AUC of 0.754"),
     ("P12 abstract held-out AUC 0.62 -> 0.72", "leaves 54.0% and 0.62.", "leaves 54.0% and 0.72."),
     ("P12 abstract pooled AUC 0.61 -> 0.71", "the pooled held-out AUC is 0.61,", "the pooled held-out AUC is 0.71,"),
-    ("P12 conclusion AUC interval 0.54 -> 0.44", "interval of 0.54 to 0.70 that excludes chance",
-     "interval of 0.44 to 0.70 that excludes chance"),
+    ("P15 conclusion AUC interval 0.535 -> 0.435", "interval of 0.535 to 0.698 that excludes chance",
+     "interval of 0.435 to 0.698 that excludes chance"),
+    ("P15 interval rounded back to 0.54 to 0.70", "interval of 0.535 to 0.698 that excludes chance",
+     "interval of 0.54 to 0.70 that excludes chance"),
+    ("P15 Zenodo retrieval claim reinstated", "the Zenodo file was downloaded by hand",
+     "the Zenodo file is retrieved by the same script"),
+    ("P15 excluded rows described as 'hit both'", "(leaving out the 19 solvent-based rows that also hit a mechanical word)",
+     "(leaving out 19 that hit both)"),
+    ("P15 period without its row set", "over the four years, 2020 to 2023, that the rows naming a producer cover",
+     "over more than four years"),
     ("P12 terpene share 72.0 -> 82.0", "72.0% in 2023", "82.0% in 2023"),
     ("P12 largest producer 13.2 -> 14.2", "the largest producer holds 13.2%", "the largest producer holds 14.2%"),
     ("P12 title reverted to 'collapses'", "sharply reduces the apparent accuracy of", "collapses"),
@@ -274,7 +284,6 @@ MUTATIONS = [
     ("P14 unweighted logistic share 0.134 -> 0.184", "0.134 and 0.104 of 0.253", "0.184 and 0.104 of 0.253"),
     ("P14 class-weighted logistic share 54 to 64 -> 44 to 54", "the class-weighted one 54 to 64%",
      "the class-weighted one 44 to 54%"),
-    ("P14 period back to 'more than four years'", "over four years (2020 to 2023)", "over more than four years"),
     ("P14 'highest score any model reaches' reinstated", "is the highest fold-mean score of the four models",
      "is the highest score any model reaches"),
     ("P14 protocol of [3] asserted again", "the performance figures of [1] and [2] are obtained",

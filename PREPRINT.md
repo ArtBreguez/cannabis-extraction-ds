@@ -23,10 +23,10 @@ nearly all from Nevada, each with a source-declared extraction category
 (non-solvent against solvent-based), a gradient-boosted classifier scores 78.5%
 balanced accuracy and a ROC AUC of 0.89 under random five-fold cross-validation.
 Holding out the producer leaves 54.0% and 0.62. A signal survives: the pooled
-held-out AUC is 0.61, with a producer-level bootstrap interval of 0.54 to 0.70.
-But the reported model's pooled balanced accuracy does not separate from chance
-(51.6%, interval 47.3 to 56.6); it keeps about 30% of its above-chance AUC, and
-an unweighted logistic regression 41 to 53%.
+held-out AUC is 0.61, with a producer-level bootstrap interval of 0.535 to
+0.698. But the reported model's pooled balanced accuracy does not separate from
+chance (51.6%, interval 47.3 to 56.6); it keeps about 30% of its above-chance
+AUC, and an unweighted logistic regression 41 to 53%.
 
 A designed experiment shows the same direction: with the random split averaged
 over 200 seeds, 162 HPLC-assayed samples fall from 54.3% to 38.9% under
@@ -268,9 +268,10 @@ year    solvent-based   non-solvent
 ```
 
 The task this paper tests is therefore the regulator's category as the
-laboratories applied it over four years (2020 to 2023), mechanical, ethanol or
-CO2 extraction against the remaining solvents, and not rosin against BHO
-specifically; 3.2 reports the headline pair on two narrower subsets.
+laboratories applied it over the four years, 2020 to 2023, that the rows naming
+a producer cover, mechanical, ethanol or CO2 extraction against the remaining
+solvents, and not rosin against BHO specifically; 3.2 reports the headline pair
+on two narrower subsets.
 
 **Controlled data.** Zenodo record 13823859 [13] is a designed experiment rather
 than market data: six named varieties of non-psychoactive, CBD-type cannabis,
@@ -701,10 +702,11 @@ and 30.5 on those tested in 2023. Two narrower definitions of the label keep
 more when held out, near 60% on a single partition each with fold spreads of 8.7
 and 6.2: the rows not named distillate, and the rows whose names hit the
 mechanical family in the non-solvent class or the hydrocarbon family in the
-solvent-based class (leaving out 19 that hit both), the closest this corpus
-comes to rosin against BHO. The positive control shows that the hold-out does
-not destroy a score by itself: whether a row is named distillate, a target with
-a known chemical signature, is recovered at 76.4% for unseen producers.
+solvent-based class (leaving out the 19 solvent-based rows that also hit a
+mechanical word), the closest this corpus comes to rosin against BHO. The
+positive control shows that the hold-out does not destroy a score by itself:
+whether a row is named distillate, a target with a known chemical signature, is
+recovered at 76.4% for unseen producers.
 
 Time has a cost of its own. Training on the earliest 80% of the dated producer
 rows and testing on the latest 20%, with 95.3% of the test rows from producers
@@ -978,7 +980,7 @@ public laboratory results for an unseen producer. On the rows that name a
 producer, a random split reports 78.5% balanced accuracy and an AUC of 0.89;
 holding out the producer leaves 54.0% (51 to 57% across twenty fold assignments)
 and 0.62. Pooled over held-out producers the AUC is 0.61, with a producer-level
-bootstrap interval of 0.54 to 0.70 that excludes chance, while the reported
+bootstrap interval of 0.535 to 0.698 that excludes chance, while the reported
 model's pooled balanced accuracy, 51.6%, does not. A designed HPLC experiment
 shows the same direction when variety is held out, and the same profiles
 identify the producer and the laboratory far above their baselines.
@@ -999,10 +1001,11 @@ validation is not a refinement here. It changes the size of the result by 8 to
 
 Source data are public and are not redistributed here. The Cannlytics
 `cannabis_results` corpus [12] and Zenodo record 13823859 [13] are both
-CC-BY-4.0 and are retrieved by the ingestion scripts described below, which
-verify the downloaded size against the figure declared by the host API; an early
-download truncated to 7% of its size, 177.9 MB of 2,534.8 MB, opened without
-error and was caught only by that check.
+CC-BY-4.0. The corpus is retrieved by `src/ingestion/fetch_cannlytics.py`, which
+verifies the downloaded size against the figure declared by the host API; the
+Zenodo file was downloaded by hand. The check matters: an early download
+truncated to 7% of its size, 177.9 MB of 2,534.8 MB, opened without error and
+was caught only by that check.
 
 All analysis code and the raw evidence log for every run described in this
 manuscript are public at
