@@ -850,7 +850,7 @@ check("4.1 scopes the cultivar claim to the controlled data",
       "datasets disagree on the evidence" in FLAT
       and "we do not claim it for the market corpus" in FLAT)
 check("4.1 quotes the strain-probe lift",
-      bool(sa) and f"{sa.group(3).lstrip('+')} points above its baseline (4.3)" in FLAT
+      bool(sa) and f"{sa.group(3).lstrip('+')} points above its baseline (4.3, Section S8)" in FLAT
       and "a fifth of the laboratory" not in FLAT)
 check("4.1 supports producer dominance with both figures",
       bool(r7_pid and c9) and f"reaches {r7_pid.group(1)}% and the chemistry {c9.group(2)}%" in FLAT)
@@ -1160,7 +1160,9 @@ _ment = re.findall(r"Tables? (S?\d+)(?: and (S?\d+))?", TEXT)
 _ment = {m_ for pair_ in _ment for m_ in pair_ if m_}
 _exist = {str(k_) for k_ in _caps} | {f"S{k_}" for k_ in _scaps}
 check("every table mentioned exists, and every table is mentioned in the main text",
-      _ment <= _exist and all(re.search(rf"Tables? (?:S?\d+ and )?{k_}\b", _MF) for k_ in _exist), (_ment - _exist, _exist))
+      _ment <= _exist and all(re.search(rf"Tables? (?:S?\d+ and )?{k_}\b", _MF) for k_ in _exist)
+      and all(re.search(rf"(?<!\*\*)Tables? (?:S?\d+ and )?{k_}\b", re.sub(r"\*\*Table \S+\.\*\*", "", " ".join(TEXT.split()))) for k_ in _exist),
+      (_ment - _exist, _exist))
 _lab2 = Counter((r.get("label") or "").strip() for r in rows)
 _pf2 = sum(1 for r in rows if (r.get("producer") or "").strip())
 _np2 = len({(r.get("producer") or "").strip() for r in rows if (r.get("producer") or "").strip()})
@@ -1190,7 +1192,8 @@ check("grouping variables restated in the main text",
       f"Of these, {_pf2:,} ({100*_pf2/len(rows):.1f}%) name one of {_np2} producers, every row names one of 12 laboratories and none carries a strain name" in _MF, (_pf2, _np2))
 check("split, terpene-only and spelling records summarised in the main text",
       "1,303 samples from the producer-less laboratories are stored as two adjacent rows each, 1,071 rows that name a producer report nothing but a `total_terpenes` of zero, and two of the 96 producer strings are spellings of one company (Section S2)" in _MF
-      and "1,813 usable rows (4.9%) repeat another row" in _SF and "1,813" not in _MF)
+      and "1,813 usable rows (4.9%) repeat another row" in _SF and "1,813" not in _MF
+      and "419 of the rows that name a producer repeat another row exactly" in _MF and "but only 419 of them name a producer" in _SF)
 check("missingness summary in the main text matches the log",
       bool(pp) and bool(pr) and f"Seven of the {pp.group(2)} missingness patterns" in _MF and pp.group(1) == "7"
       and f"they cover {pr.group(2)}% of the usable rows" in _MF)
@@ -1201,7 +1204,11 @@ check("strain junk-key share restated in the main text",
       and "nearly a quarter of the keys" not in _MF)
 check("the probes' learning rate summarised in the main text",
       "so they are fitted at 0.05, where their fold scores are stable" in _MF
-      and "at scikit-learn's default learning rate of 0.1: the laboratory probe's" in _SF)
+      and "at scikit-learn's default learning rate of 0.1: the laboratory probe's" in _SF
+      and "far less sensitive to the rate, its held-out score moving by 0.1 points" in _MF and "insensitive" not in _MF)
+check("pointers that the split left behind were redirected",
+      "9.9 points above its baseline (4.3, Section S8)" in _MF and "the probe itself in Section S8" in _MF
+      and "S9 gives the range for the eight held-out laboratories" in _SF and "3.2 gives the range" not in _SF)
 check("keywords agree with the data description",
       "certificates of analysis" not in TEXT.split("**Keywords:**")[1].split("---")[0]
       and "extraction category, laboratory testing data" in FLAT)

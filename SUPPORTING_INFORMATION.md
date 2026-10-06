@@ -182,7 +182,7 @@ Laboratory and class are not degenerate, though they are far from independent.
 Only 373 rows, 1.0%, sit in laboratories that are more than 90% one class, and
 the two largest laboratories, 15,018 and 12,531 rows, both sit close to the
 overall 65.8/34.2 split; across all twelve the hydrocarbon share runs from 0.0%
-to 97.8%, and 3.2 gives the range for the eight largest.
+to 97.8%, and S9 gives the range for the eight held-out laboratories.
 
 ## S6. Learning rate of the alarm probes
 

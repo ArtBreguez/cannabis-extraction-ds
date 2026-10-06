@@ -154,16 +154,16 @@ below does not govern their 4,115 rows. Tests are dated 2020-01-02 to 2024-03-29
 on the 33,765 rows that carry a date; the producer-less rows are all dated from
 December 2022 on.
 
-Rows are not samples. Some repeat another row exactly, 1,303 samples from the
-producer-less laboratories are stored as two adjacent rows each, 1,071 rows that
-name a producer report nothing but a `total_terpenes` of zero, and two of the 96
-producer strings are spellings of one company (Section S2). We keep the rows as
-stored, since nothing marks which copy is the record, and 3.2 reports the
-headline pair without the duplicates, without the terpene-only rows and with the
-two spellings merged. The split pairs lie outside the 33,229 rows that name a
-producer, on which the headline comparison runs. Those rows are very unequally
-spread: the largest producer holds 13.2% of them, the five largest 42.3%, and
-the median producer 64 rows.
+Rows are not samples. 419 of the rows that name a producer repeat another row
+exactly, 1,303 samples from the producer-less laboratories are stored as two
+adjacent rows each, 1,071 rows that name a producer report nothing but a
+`total_terpenes` of zero, and two of the 96 producer strings are spellings of
+one company (Section S2). We keep the rows as stored, since nothing marks which
+copy is the record, and 3.2 reports the headline pair without the duplicates,
+without the terpene-only rows and with the two spellings merged. The split pairs
+lie outside the 33,229 rows that name a producer, on which the headline
+comparison runs. Those rows are very unequally spread: the largest producer
+holds 13.2% of them, the five largest 42.3%, and the median producer 64 rows.
 
 **What the label means.** The two categories are regulatory, not chemical.
 Nevada's rule separates the same pair, and in its versions of July 2022 and
@@ -396,7 +396,8 @@ identifies the laboratory is a profile that partially encodes instrumentation,
 calibration and reporting convention, which would compromise any score obtained
 while train and test share laboratories. A third target, cultivar, has no
 reliable field in this corpus and could only be probed on a key reconstructed
-from product names; that probe and its limits are reported in 4.3.
+from product names; the limits of that probe are reported in 4.3 and the probe
+itself in Section S8.
 
 Each probe keeps only classes with enough rows to be estimable, since a class
 with 20 members contributes noise rather than signal: at least 100 rows for the
@@ -414,8 +415,9 @@ beside the chemical one.
 
 The probes have 11 and 33 classes, and the softmax boosting diverges on them at
 scikit-learn's default learning rate of 0.1, so they are fitted at 0.05, where
-their fold scores are stable. The binary extraction task is insensitive to the
-rate and keeps the default (Section S6).
+their fold scores are stable. The binary extraction task is far less sensitive
+to the rate, its held-out score moving by 0.1 points, and keeps the default
+(Section S6).
 
 ## 3. Results
 
@@ -430,19 +432,20 @@ lab           11  37,276  92.3% (+/-0.2)    40.3%  +52.0 pts  76.3% (9.1%)
 producer      33  30,416  67.1% (+/-0.6)    14.4%  +52.7 pts  53.4% (3.0%)
 ```
 
-The chemical profile identifies the testing laboratory on 92.3% of rows, 52.0
-points above the majority baseline, and the producer on 67.1%, 52.7 points above
-its own. Part of the laboratory signal is the reporting panel: a lookup table on
-the 13 missingness patterns alone, with no measured value, reaches 57.3% on the
-same folds, so the measured values add a further 35 points. The fingerprint is
-not producer memorisation either: grouped by producer on the seven laboratories
-with at least 100 rows that record one (33,161 rows), the laboratory probe
-scores 85.4% (+/-3.3) against a 45.3% baseline. This is expected, since
-instruments, calibration, reporting conventions and clientele all differ between
-laboratories, and this probe cannot separate them. The consequence is that any
-score obtained while train and test share laboratories is partly reading a
-laboratory-specific signal. With the split pairs of 2.1 merged the laboratory
-probe is unchanged at 92.3%, on ten laboratories and a 41.9% baseline.
+The chemical profile identifies the testing laboratory on 92.3% of rows (Table
+2), 52.0 points above the majority baseline, and the producer on 67.1%, 52.7
+points above its own. Part of the laboratory signal is the reporting panel: a
+lookup table on the 13 missingness patterns alone, with no measured value,
+reaches 57.3% on the same folds, so the measured values add a further 35 points.
+The fingerprint is not producer memorisation either: grouped by producer on the
+seven laboratories with at least 100 rows that record one (33,161 rows), the
+laboratory probe scores 85.4% (+/-3.3) against a 45.3% baseline. This is
+expected, since instruments, calibration, reporting conventions and clientele
+all differ between laboratories, and this probe cannot separate them. The
+consequence is that any score obtained while train and test share laboratories
+is partly reading a laboratory-specific signal. With the split pairs of 2.1
+merged the laboratory probe is unchanged at 92.3%, on ten laboratories and a
+41.9% baseline.
 
 ### 3.2 Market data: 78.5% becomes 54.0%
 
@@ -461,11 +464,11 @@ unseen-lab                   68.3% (+/-18.6)  67.6%      8
 dual-class + unseen          54.6% (+/-2.6)   50.7%      5
 ```
 
-The `random (optimistic)` row runs on all 37,344 usable rows and the two
-producer schemes only on rows that name a producer, so 81.0% and 54.0% are not
-like with like. On the same 33,229 rows the random split scores 78.5%, and that
-pair, 78.5% against 54.0%, a gap of **24.4 points** on the unrounded means, is
-the headline of this paper. The 81.0% includes the 4,115 producer-less rows,
+The `random (optimistic)` row of Table 3 runs on all 37,344 usable rows and the
+two producer schemes only on rows that name a producer, so 81.0% and 54.0% are
+not like with like. On the same 33,229 rows the random split scores 78.5%, and
+that pair, 78.5% against 54.0%, a gap of **24.4 points** on the unrounded means,
+is the headline of this paper. The 81.0% includes the 4,115 producer-less rows,
 which carry the reporting-panel shortcut of 2.3 and the 1,303 samples stored
 twice (2.1); with those pairs merged it is 80.4%.
 
@@ -626,13 +629,14 @@ random 5-fold                  56.7% (+/-9.2)   55.7%      5
 leave-one-variety-out          38.9% (+/-12.6)  35.9%      6
 ```
 
-With gradient boosting, a random split suggests method is somewhat separable at
-56.7%, and holding out an entire variety gives **38.9%**, 5.6 points above
-chance with a fold spread of 12.6 that straddles it. That is the market-data
-pattern with the held-out group changed from producer to variety. The mechanism
-is not the same: the design is balanced and has no replicates, so nothing leaks
-across a random split here, and what the variety hold-out measures is a shift
-between varieties. Nor does the drop survive a change of estimator intact:
+With gradient boosting (Table 7), a random split suggests method is somewhat
+separable at 56.7%, and holding out an entire variety gives **38.9%**, 5.6
+points above chance with a fold spread of 12.6 that straddles it. That is the
+market-data pattern with the held-out group changed from producer to variety.
+The mechanism is not the same: the design is balanced and has no replicates, so
+nothing leaks across a random split here, and what the variety hold-out measures
+is a shift between varieties. Nor does the drop survive a change of estimator
+intact:
 
 **Table 8.** Controlled experiment, logistic regression.
 
@@ -642,13 +646,13 @@ random 5-fold                  54.3% (+/-2.5)
 leave-one-variety-out          46.3% (+/-10.2)
 ```
 
-A standardised logistic regression on the same folds drops 8.0 points instead of
-17.8, which is inside its fold spread of 10.2, to a score that is above chance:
-1 of 1,000 label shuffles reaches 46.3% (p = 0.002). Four features and about 130
-training samples are a setting where a boosted ensemble can overfit each variety
-and a linear model cannot, so part of the boosted collapse belongs to the
-estimator. What both estimators agree on is the direction, and that the method
-signal which transfers across varieties is modest.
+A standardised logistic regression on the same folds (Table 8) drops 8.0 points
+instead of 17.8, which is inside its fold spread of 10.2, to a score that is
+above chance: 1 of 1,000 label shuffles reaches 46.3% (p = 0.002). Four features
+and about 130 training samples are a setting where a boosted ensemble can
+overfit each variety and a linear model cannot, so part of the boosted collapse
+belongs to the estimator. What both estimators agree on is the direction, and
+that the method signal which transfers across varieties is modest.
 
 The variety is easier to read than the method:
 
@@ -700,7 +704,8 @@ datasets disagree on the evidence and we do not claim it for the market corpus:
 in the controlled experiment the four cannabinoids read variety at 60.7% against
 16.7% chance while reading method at 38.9% against 33.3% (46.9% and 46.3% with
 logistic regression), whereas in the market data the chemistry reads our
-reconstructed strain key only weakly, 9.9 points above its baseline (4.3).
+reconstructed strain key only weakly, 9.9 points above its baseline (4.3,
+Section S8).
 
 The **methodological claim** is general and, we think, the more useful one.
 Cannabis chemical data has group structure, and the validation protocols in use
