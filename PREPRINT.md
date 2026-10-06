@@ -259,11 +259,13 @@ rows they cover:                  4123 (11.03%)
 ```
 
 For 11% of the corpus the label is recoverable with certainty from which cells
-are blank, before any number is read. These rows come from four laboratories
-(`PureVita`, `Cannalytics RI`, `Lifted Testing`, `Green Peaks`) that report a
-restricted analyte panel and no producer at all, so the shortcut is a
-laboratory reporting convention and not chemistry. They are also exactly the
-rows that the unseen-producer scheme must drop, which is why the same-sample
+are blank, before any number is read. Almost all of these rows, 4,115 of 4,123,
+come from four laboratories (`PureVita`, `Cannalytics RI`, `Lifted Testing`,
+`Green Peaks`) that report a restricted analyte panel and record no producer,
+so the shortcut is a laboratory reporting convention and not chemistry. The
+remaining 8 rows sit in three sparsely-populated patterns from other
+laboratories and do carry a producer. Those 4,115 rows are therefore also the
+rows the unseen-producer scheme must drop, which is why the same-sample
 comparison in 3.2 matters.
 
 Laboratory and class are also not entangled. Only 373 rows, 1.0%, sit in
@@ -331,8 +333,9 @@ Before the main task, two probes asked whether the chemistry predicts metadata
 it should not: the testing laboratory and the producer. A profile that
 identifies the laboratory is a profile that partially encodes instrumentation,
 calibration and reporting convention, which would compromise any score obtained
-while train and test share laboratories. A third target, cultivar, could not be
-probed and is treated separately in 4.3.
+while train and test share laboratories. A third target, cultivar, has no
+reliable field in this corpus and could only be probed on a key reconstructed
+from product names; that probe and its limits are reported in 4.3.
 
 Each probe keeps only classes with enough rows to be estimable, since a class
 with 20 members contributes noise rather than signal: at least 100 rows for the

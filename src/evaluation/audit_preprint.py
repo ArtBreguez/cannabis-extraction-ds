@@ -418,6 +418,34 @@ check("no AI tool in the author block",
 check("competing interests declared", "## Competing interests" in TEXT)
 check("data availability declared", "## Data and code availability" in TEXT)
 
+# ---------- 2.3 pure-stratum attribution must not overclaim ----------
+# An earlier draft said the pure-stratum rows "come from four laboratories"
+# with "no producer at all" and were "exactly" the dropped rows. Measured:
+# 4,115 of 4,123 fit that description; 8 rows sit in other laboratories and
+# do carry a producer. The counts are now asserted against the data.
+_pat = {}
+for r in rows:
+    key = tuple(1 if (r.get(a) or "").strip() else 0 for a in sorted(usable))
+    _pat.setdefault(key, []).append((r.get("label") or "").strip())
+_pure = [k for k, v in _pat.items() if len(set(v)) == 1]
+_pure_rows = sum(len(_pat[k]) for k in _pure)
+_pure_noprod = sum(
+    1 for r in rows
+    if tuple(1 if (r.get(a) or "").strip() else 0 for a in sorted(usable)) in set(_pure)
+    and not (r.get("producer") or "").strip())
+check("pure-stratum total matches the data",
+      f"{_pure_rows:,} of" in TEXT or str(_pure_rows) in TEXT, str(_pure_rows))
+check("the producer-less majority is counted, not generalised",
+      f"{_pure_noprod:,} of {_pure_rows:,}" in TEXT, f"{_pure_noprod}/{_pure_rows}")
+check("the 8-row exception is disclosed",
+      f"remaining {_pure_rows - _pure_noprod} rows" in TEXT,
+      str(_pure_rows - _pure_noprod))
+check("no 'exactly the rows' overclaim",
+      "exactly the\nrows that the unseen-producer" not in TEXT
+      and "no producer at all" not in TEXT)
+check("2.6 and 4.3 agree that the cultivar probe ran",
+      "could not be\nprobed" not in TEXT and "could only be probed" in TEXT)
+
 # ---------- prose hygiene ----------
 body = re.sub(r"```[\s\S]*?```", "", TEXT)
 check("no em-dash outside code", "\u2014" not in body,
