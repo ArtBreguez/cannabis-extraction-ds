@@ -1,8 +1,8 @@
 # Group-aware validation collapses extraction-method classification in cannabis chemical data
 
-**Arthur Breguez**
+**Arthur Gonçalves Breguez**
 Independent researcher
-ORCID: pending
+ORCID: 0009-0005-8551-731X
 Correspondence: arthurbreguez@gmail.com
 
 Preprint. Code and evidence logs: `cannabis-extraction-ds`.
@@ -64,12 +64,13 @@ same entity, a random split lets the model recognise the entity instead of
 learning the property of interest, and the reported score measures memorisation.
 
 This failure mode is established in the general methodological literature
-[4, 5, 6, 7] and has been described specifically for chemometrics, where
-Kiraly and Toth show that the Kennard-Stone selection algorithm and the
+[4, 5, 6, 7], with the earliest quantitative demonstration in genomics more
+than two decades ago [11], and has been described specifically for chemometrics,
+where Kiraly and Toth show that the Kennard-Stone selection algorithm and the
 inappropriate handling of repeated measurements both introduce train/test
 leakage [8]. The cannabis applications cited above use precisely these
 procedures. Reference [2] grows 88 genotypes cloned in triplicate to obtain 264
-plants, then partitions with Kennard-Stone without grouping the clones;
+plants, then partitions with Kennard-Stone [8] without grouping the clones;
 reference [1] draws a random 80% for training and evaluates with plain accuracy
 on a 149/40 class split, where always answering the majority class already
 scores 78.8%.
@@ -438,13 +439,30 @@ not a refinement here. It changes the conclusion.
 
 ## Data and code availability
 
-All code, including the scripts that produce every number above, and the raw
-evidence logs for each run, are in the `cannabis-extraction-ds` repository.
-Source data: Cannlytics `cannabis_results` [9] (CC-BY-4.0) and Zenodo 13823859
-[10] (CC-BY-4.0). Neither dataset is redistributed; both are retrieved by
-scripts in `src/ingestion/`. A single script,
-`src/evaluation/rederive_paper_numbers.py`, recomputes the dataset facts in
-this manuscript directly from the labelled dataset.
+Source data are public and are not redistributed here. The Cannlytics
+`cannabis_results` corpus [9] and Zenodo record 13823859 [10] are both
+CC-BY-4.0 and are retrieved by the ingestion scripts described below, which
+verify the downloaded size against the figure declared by the host API.
+
+All analysis code and the raw evidence log for every run described in this
+manuscript are held in a repository, `cannabis-extraction-ds`, that will be
+published alongside this preprint; the archived version and its DOI will be
+added to this section on posting. Pending that, the code and logs are available
+from the author on request. The structure is:
+
+```
+src/ingestion/      retrieval with download-integrity verification
+src/preprocessing/  labelling, unit checks, non-detect encoding
+src/models/         the four split schemes and the alarm probes
+src/evaluation/     recomputation and audit of every figure reported here
+docs/evidence/      raw stdout of each run, committed unedited
+```
+
+A single script, `src/evaluation/rederive_paper_numbers.py`, recomputes every
+dataset figure in this manuscript directly from the labelled dataset, and
+`src/evaluation/audit_preprint.py` checks each claimed number in this text
+against either that recomputation or the committed log, failing on any
+disagreement.
 
 ## Competing interests
 

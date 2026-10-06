@@ -37,10 +37,16 @@ html_body = markdown.markdown(
 # The author block is written as consecutive Markdown lines, which collapse
 # into one paragraph. Split it back out so affiliation and contact sit on
 # their own lines, as a manuscript requires and as metadata extraction expects.
+# The name is read from the manuscript rather than hardcoded here, so the
+# renderer cannot drift out of sync with the source.
+AUTHOR_M = re.search(r"^\*\*(.+?)\*\*$", text, re.M)
+if not AUTHOR_M:
+    raise SystemExit("author line not found in PREPRINT.md")
+AUTHOR = AUTHOR_M.group(1)
 html_body = re.sub(
-    r"<p><strong>Arthur Breguez</strong>\s*(.*?)</p>",
+    rf"<p><strong>{re.escape(AUTHOR)}</strong>\s*(.*?)</p>",
     lambda m: (
-        '<p class="authors"><strong>Arthur Breguez</strong></p>'
+        f'<p class="authors"><strong>{AUTHOR}</strong></p>'
         '<p class="affil">'
         + re.sub(r"\s*(ORCID:|Correspondence:)", r"<br>\1", m.group(1)).strip()
         + "</p>"),
@@ -122,7 +128,9 @@ HTML_DOC = f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <title>Group-aware validation collapses extraction-method classification in
 cannabis chemical data</title>
-<meta name="author" content="Arthur Breguez">
+<meta name="author" content="{AUTHOR}">
+<meta name="citation_author" content="{AUTHOR}">
+<meta name="citation_author_orcid" content="0009-0005-8551-731X">
 </head><body>{html_body}</body></html>"""
 
 HTML(string=HTML_DOC).write_pdf(OUT, stylesheets=[CSS(string=CSS_TEXT)])

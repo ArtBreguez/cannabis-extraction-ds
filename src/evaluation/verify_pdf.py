@@ -32,7 +32,8 @@ print(f"  extracted characters: {len(full):,}")
 # --- does every headline number survive into the PDF? ---
 must = ["37,374", "81.0%", "54.0%", "54.6%", "68.3%", "18.6", "56.7%",
         "38.9%", "60.7%", "15.3", "32.3%", "28,927", "77.4%", "99.3%",
-        "Arthur Breguez", "arthurbreguez@gmail.com", "Competing interests",
+        "Arthur Gonçalves Breguez", "0009-0005-8551-731X",
+        "arthurbreguez@gmail.com", "Competing interests",
         "Kennard-Stone", "HiddenTerps", "1.50%", "13.5%", "78.4%"]
 missing = [m for m in must if m not in full]
 print(f"\n  key strings present: {len(must)-len(missing)}/{len(must)}")
