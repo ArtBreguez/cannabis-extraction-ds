@@ -170,10 +170,10 @@ the extracts or of their reporting, not of which test was ordered.
 
 ### 2.3 The leakage pre-check
 
-A coverage gap of that size is a candidate shortcut. If the pattern of which
-terpenes were reported tracked the class, a classifier could score well while
-reading the reporting convention rather than the chemistry. We measured this
-before modelling rather than assuming it away.
+A detection gap of 18 to 25 points is a candidate shortcut. If the pattern of
+which terpenes were reported, or reported as non-zero, tracked the class, a
+classifier could score well while reading the reporting convention rather than
+the chemistry. We measured this before modelling rather than assuming it away.
 
 A classifier given **only the missingness pattern**, with every measured value
 discarded, reaches 65.8% accuracy against a 65.8% majority-class baseline: a
@@ -201,7 +201,12 @@ Four split schemes are compared on the market data:
    literature;
 2. **unseen-producer**: `GroupKFold` grouped by producer, so no producer
    appears in both train and test;
-3. **unseen-lab**: grouped by laboratory, eight folds;
+3. **unseen-lab**: leave-one-lab-out. Each fold holds out one entire
+   laboratory. Only laboratories with at least 500 rows are eligible to be
+   held out, because a fold testing on a 100-row laboratory estimates nothing;
+   8 of the 12 laboratories clear that floor and all 8 contain both classes,
+   giving 8 folds. The 4 excluded laboratories hold 561 rows, 1.50% of the
+   data, and they are still present in every training set;
 4. **dual-class + unseen**: restricted to the 55 producers that make *both*
    classes, grouped by producer.
 
@@ -226,10 +231,12 @@ of the problem the model actually solves.
 
 ### 2.6 Alarm models
 
-Before the main task, three probes asked whether the chemistry predicts metadata
-it should not. A profile that identifies the laboratory is a profile that
-partially encodes instrumentation, calibration and reporting convention, which
-would compromise any score obtained while train and test share laboratories.
+Before the main task, two probes asked whether the chemistry predicts metadata
+it should not: the testing laboratory and the producer. A profile that
+identifies the laboratory is a profile that partially encodes instrumentation,
+calibration and reporting convention, which would compromise any score obtained
+while train and test share laboratories. A third target, cultivar, could not be
+probed and is treated separately in 4.3.
 
 ## 3. Results
 
@@ -289,6 +296,13 @@ That is the signature of a model keyed to laboratory convention rather than to a
 stable chemical difference, and it is consistent with the alarm in 3.1. A study
 reporting only the mean of this scheme would claim 68.3% for something that is
 not reproducible across laboratories.
+
+The per-laboratory class balance shows why the spread is so large. Across the
+eight held-out laboratories the hydrocarbon share ranges from 13.5%
+(`Cannalytics RI`, 758 rows) to 78.4% (`PureVita`, 3,137 rows), against an
+overall 65.8%. Holding out a laboratory therefore shifts the test-set prior as
+well as the instrument, and the two effects cannot be separated with this data.
+We report the scheme for completeness and do not rest any conclusion on it.
 
 ### 3.3 Controlled experiment: the same collapse
 
