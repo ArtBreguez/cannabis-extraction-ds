@@ -24,7 +24,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO = Path("/home/arthur/cannabis-extraction-ds")
+REPO = Path(__file__).resolve().parents[2]
 SANDBOX = Path("/tmp/mutation-sandbox")
 PY = REPO / ".venv/bin/python"
 

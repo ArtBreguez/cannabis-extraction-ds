@@ -4,9 +4,11 @@ Every figure the manuscript states in the two paragraphs added for
 total_terpenes and for the impossible potency values is recomputed here.
 """
 import pandas as pd, numpy as np
+from pathlib import Path
 from sklearn.linear_model import LinearRegression
 
-d = pd.read_csv('/home/arthur/cannabis-extraction-ds/data/labeled/master.csv',
+ROOT = Path(__file__).resolve().parents[2]
+d = pd.read_csv(ROOT / 'data/labeled/master.csv',
                 low_memory=False)
 d = d[d.label_conflict == 0]
 
