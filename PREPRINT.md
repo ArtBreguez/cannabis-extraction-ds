@@ -513,23 +513,45 @@ performance figures are obtained in a regime where we measure substantial
 inflation, and so cannot be read as estimates of performance on a new producer,
 genotype or laboratory.
 
-### 4.3 The confounder we could not test
+### 4.3 The confounder we could not test cleanly
 
 Strain is the obvious remaining candidate. Solventless production skews toward
 cultivars that wash well, so the class label may partly encode which cultivar
 was used, and cultivar drives terpene profile directly.
 
-We could not test it. The `strain_name` and `strain_type` columns exist in the
-source file but are empty for **0 of 37,374** labelled rows. The only remaining
-cultivar signal is inside `product_name`, and extracting a strain key from it
-yields 37.1% obvious non-cultivars: `oil`, `thc`, `lab sample`, `ethanol`,
-`acres`. A probe built on a key that is one-third noise cannot distinguish
-"cultivar leaks" from "my regex leaks".
+We could not test it cleanly. The `strain_name` and `strain_type` columns exist
+in the source file but are empty for **0 of 37,374** labelled rows. The only
+remaining cultivar signal is inside `product_name`, and extracting a strain key
+from it leaves a key too dirty to carry a confounder probe:
 
-We report this as a data-availability limit, not a finding. For completeness,
-the run on the noisy key gave a *negative* lift for predicting the key from
-chemistry, minus 3.0 points, which if anything hints that strain is a weaker
-fingerprint here than laboratory was. We do not rely on it.
+```
+labelled rows                                   37,344
+  no cultivar key extractable at all             4,717   (12.6%)
+  key extracted                                 32,627   (87.4%)
+    of those, an obvious non-cultivar word       7,386   (22.6% of keys)
+    (oil, thc, lab sample, acres, ethanol, raw)
+rows yielding no usable cultivar signal         12,103   (32.4% of labelled)
+```
+
+So roughly a third of the labelled corpus carries no cultivar signal, and
+nearly a quarter of the keys that do parse are packaging or process words
+rather than cultivar names. A probe built on a key that dirty cannot
+distinguish "cultivar leaks" from "my regex leaks".
+
+We ran it anyway, and report the output rather than withholding it. Grouping
+the method task by strain key gives 66.2% balanced accuracy
+(+/-1.6); restricting to the 214 keys that appear in both classes, 9,598 rows,
+gives 56.9% (+/-11.4) with a macro F1 of 42.8%, below the 50.0% chance level.
+Predicting the key itself from chemistry gave a *negative* lift, minus 3.0
+points, which if anything hints that strain is a weaker fingerprint here than
+laboratory was.
+
+The direction of all three figures agrees with 3.2: grouping by strain
+collapses the task toward chance just as grouping by producer does. We do not
+rest any conclusion on them, because a 22.6%-contaminated grouping key makes
+the fold composition partly arbitrary, and a macro F1 below chance with an
+11.4-point spread is instability rather than signal. The honest status of the
+strain question is open and unanswerable with this corpus alone.
 
 ### 4.4 Recommendations
 

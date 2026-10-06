@@ -98,9 +98,30 @@ def main() -> int:
     feats = features(df)
 
     df["strain_key"] = df["product_name"].fillna("").map(strain_key)
+    n_labelled = len(df)
+    n_empty = int((df["strain_key"] == "").sum())
     df = df[df["strain_key"] != ""]
 
+    # Obvious non-cultivar keys, reported so the contamination rate in the
+    # manuscript has a denominator. 4.3 quotes these three figures; keeping
+    # them in the log stops the share being recomputed against the wrong
+    # population (an earlier draft divided noise+empty by the key-bearing
+    # rows only, which is not a share of anything).
+    JUNK = {"oil", "thc", "lab sample", "acres", "ethanol",
+            "acres solvent based", "terpene free non solvent", "raw"}
+    n_junk = int(df["strain_key"].isin(JUNK).sum())
+
     out: list[str] = []
+    out.append(f"labelled rows:                 {n_labelled}")
+    out.append(f"  no cultivar key extractable: {n_empty} "
+               f"({100*n_empty/n_labelled:.1f}%)")
+    out.append(f"  key extracted:               {len(df)} "
+               f"({100*len(df)/n_labelled:.1f}%)")
+    out.append(f"    of those, obvious non-cultivar: {n_junk} "
+               f"({100*n_junk/len(df):.1f}% of keys)")
+    out.append(f"rows with no usable cultivar signal: {n_empty + n_junk} "
+               f"({100*(n_empty+n_junk)/n_labelled:.1f}% of labelled)")
+    out.append("")
     out.append(f"rows with a usable strain key: {len(df)}")
     out.append(f"distinct strain keys: {df['strain_key'].nunique()}")
     vc = df["strain_key"].value_counts()

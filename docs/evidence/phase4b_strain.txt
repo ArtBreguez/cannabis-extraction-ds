@@ -1,3 +1,9 @@
+labelled rows:                 37344
+  no cultivar key extractable: 4717 (12.6%)
+  key extracted:               32627 (87.4%)
+    of those, obvious non-cultivar: 7386 (22.6% of keys)
+rows with no usable cultivar signal: 12103 (32.4% of labelled)
+
 rows with a usable strain key: 32627
 distinct strain keys: 7319
 top strain keys:
@@ -21,4 +27,3 @@ same cultivar made both ways: strain cannot encode the label
 dual-class strains: 214   rows: 9598
 class balance: {'hydrocarbon': 4889, 'solventless': 4709}
 dual-strain+unseen     folds=5  balanced_acc= 56.9% (+/-11.4)  macro_F1= 42.8%
-P4B_EXIT=0

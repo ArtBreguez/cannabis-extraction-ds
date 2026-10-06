@@ -365,6 +365,46 @@ else:
 check("both recall conventions labelled",
       "mean of the five per-fold recalls" in FLAT and "Pooling the matrix" in FLAT)
 
+# ---------- 4.3 strain: denominators and the grouped runs ----------
+# An earlier draft reported "37.1% obvious non-cultivars", which divided
+# noise+empty rows by the key-bearing rows only — a ratio of two different
+# populations. Every figure is now read out of the phase4b log.
+log4b = (EV / "phase4b_strain.txt").read_text()
+sj = re.search(r"of those, obvious non-cultivar:\s*(\d+) \(([\d.]+)% of keys\)",
+               log4b)
+su = re.search(r"rows with no usable cultivar signal:\s*(\d+) "
+               r"\(([\d.]+)% of labelled\)", log4b)
+check("strain junk-key share anchored",
+      bool(sj) and f"{sj.group(2)}% of keys" in TEXT,
+      sj.group(2) if sj else None)
+check("strain no-signal share anchored",
+      bool(su) and f"{su.group(2)}% of labelled" in TEXT,
+      su.group(2) if su else None)
+check("strain junk count anchored",
+      bool(sj) and f"{int(sj.group(1)):,}" in TEXT,
+      sj.group(1) if sj else None)
+check("the bad 37.1% ratio is gone",
+      "37.1%" not in TEXT and "one-third noise" not in TEXT)
+# The two grouped strain runs exist in the log and must not be withheld.
+us = re.search(r"unseen-strain \(all\)\s+folds=\d+\s+"
+               r"balanced_acc=\s*([\d.]+)%", log4b)
+ds = re.search(r"dual-strain\+unseen\s+folds=\d+\s+"
+               r"balanced_acc=\s*([\d.]+)%", log4b)
+check("unseen-strain result reported",
+      bool(us) and f"{us.group(1)}% balanced accuracy" in FLAT,
+      us.group(1) if us else None)
+check("dual-strain result reported",
+      bool(ds) and f"{ds.group(1)}%" in TEXT,
+      ds.group(1) if ds else None)
+dsr = re.search(r"dual-class strains:\s*(\d+)\s+rows:\s*(\d+)", log4b)
+check("dual-strain subset size reported",
+      bool(dsr) and f"{dsr.group(1)} keys" in FLAT
+      and f"{int(dsr.group(2)):,} rows" in TEXT,
+      dsr.group(0) if dsr else None)
+check("4.3 no longer claims the test was impossible",
+      "The confounder we could not test cleanly" in TEXT
+      and "We could not test it. " not in TEXT)
+
 # ---------- prose hygiene ----------
 body = re.sub(r"```[\s\S]*?```", "", TEXT)
 check("no em-dash outside code", "\u2014" not in body,

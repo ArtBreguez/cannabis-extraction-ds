@@ -128,6 +128,17 @@ MUTATIONS = [
     # 3.2 recall reconciliation: the pooled figure must match the matrix
     ("pooled recall 29.6 -> 30.6", "3,332 / 11,262 = **29.6%**",
      "3,332 / 11,262 = **30.6%**"),
+    # 4.3 strain: denominator repair and the two previously-withheld runs
+    ("junk-key share 22.6 -> 23.6", "(22.6% of keys)", "(23.6% of keys)"),
+    ("no-signal share 32.4 -> 33.4", "(32.4% of labelled)",
+     "(33.4% of labelled)"),
+    ("the bad 37.1% ratio reinstated", "nearly a quarter of the keys",
+     "37.1% of the keys"),
+    ("unseen-strain result withheld", "gives 66.2% balanced accuracy",
+     "gives a figure we do not report"),
+    ("dual-strain result withheld", "gives 56.9% (+/-11.4)",
+     "gives a figure we do not report"),
+    ("dual-strain subset size 9,598 -> 9,599", "9,598 rows", "9,599 rows"),
     # prose hygiene: an em-dash must be caught
     ("em-dash introduced", "The task is a good\ntest case for three reasons.",
      "The task is a good test case \u2014 for three reasons."),
