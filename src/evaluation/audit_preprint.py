@@ -587,9 +587,9 @@ check("losses per estimator and weighting anchored",
 _gb_hi = round(max(max(_g.values()), float(c9.group(5))))
 check("boosting loss range in 4.1 and the conclusion spans the producer rows and the dual-class subset",
       float(c9.group(5)) > max(_g.values())
-      and f"on the market data {round(float(r7_gap.group(1)))} to {_gb_hi} points of balanced accuracy with gradient boosting, on the producer rows and on the dual-class subset" in FLAT
+      and f"on the market data {round(float(r7_gap.group(1)))} to {_gb_hi} points of balanced accuracy with gradient boosting and 8 to 11 with logistic regression, on the producer rows and on the dual-class subset alike" in FLAT
       and f"{round(float(r7_gap.group(1)))} to {_gb_hi} points of inflation on market data" in FLAT
-      and f"It changes the size of the result by {round(min(_g.values()))} to {_gb_hi} points." in FLAT
+      and f"It changes the size of the result by {round(min(_g.values()))} to {_gb_hi} points on the market data." in FLAT
       and "24 to 25" not in FLAT, (_gb_hi, c9.group(5)))
 _wp = re.search(r"20 shuffled partitions: bal_acc min ([\d.]+)%\s+median ([\d.]+)%\s+max ([\d.]+)%\s+AUC min ([\d.]+)\s+median [\d.]+\s+max ([\d.]+)\s+partitions with bal_acc at or below 50.0%: (\d+)", _pblk)
 check("class-weighted partitions anchored",

@@ -712,10 +712,10 @@ Cannabis chemical data has group structure, and the validation protocols in use
 ignore it, a concern raised in general terms by [9] and given a size here. Two
 independent datasets, one market and one designed, both lose performance when
 the group is held out: on the market data 24 to 26 points of balanced accuracy
-with gradient boosting, on the producer rows and on the dual-class subset, and 8
-to 11 with logistic regression, and 0.27 of AUC for the reported model; on the
-designed experiment 15 to 18 points with gradient boosting and 5 to 8 with
-logistic regression. The mechanisms differ. In the market data the same
+with gradient boosting and 8 to 11 with logistic regression, on the producer
+rows and on the dual-class subset alike, and 0.27 of AUC for the reported model;
+on the designed experiment 15 to 18 points with gradient boosting and 5 to 8
+with logistic regression. The mechanisms differ. In the market data the same
 producers sit on both sides of a random split; the designed experiment has no
 replicates, and its drop is a shift between varieties. The market gap is not
 produced by the 2023 change in labelling, since it is as large on the rows
@@ -834,7 +834,7 @@ producer, the genotype or the laboratory. We do not claim the published chemical
 conclusions are wrong, and we did not rerun those studies. We claim their
 numbers do not answer the question a reader will assume they answer. Group-aware
 validation is not a refinement here. It changes the size of the result by 8 to
-26 points.
+26 points on the market data.
 
 ## Data and code availability
 
