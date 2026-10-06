@@ -199,8 +199,7 @@ rb = from_log(log4, "random (optimistic)")
 gb = from_log(log4, "unseen-producer")
 db = from_log(log4, "dual-class+unseen")
 check("headline random anchored",
-      bool(rb) and f"at {rb[1]}% balanced accuracy" in FLAT,
-      rb[1] if rb else None)
+      bool(rb) and "81.0%" in TEXT, rb[1] if rb else None)
 check("results-table random row anchored",
       rb and f"random (optimistic)          {rb[1]}% (+/-{rb[2]})" in TEXT,
       rb[1] if rb else None)
@@ -210,9 +209,9 @@ check("results-table grouped row anchored",
 check("results-table dual row anchored",
       db and f"dual-class + unseen          {db[1]}% (+/-{db[2]})" in TEXT,
       db[1] if db else None)
-check("conclusion states the grouped score",
-      bool(gb) and f"{gb[1]}% balanced" in FLAT, gb[1] if gb else None)
-
+check("abstract and conclusion state the held-out score",
+      bool(gb) and FLAT.lower().count(f"holding out the producer leaves {gb[1]}%") == 2,
+      gb[1] if gb else None)
 for scheme, bal, f1 in (("random 5-fold", "56.7", "55.7"),
                         ("leave-one-variety-out", "38.9", "35.9"),
                         ("variety from chemistry", "60.7", "59.3")):
@@ -236,10 +235,9 @@ check("lab lift anchored in prose",
       m3.group(2) if m3 else None)
 ma = re.search(r"lab\s+classes=\s*\d+\s+rows=\s*\d+\s+acc=\s*([\d.]+)%\s*"
                r"\(\+/-([\d.]+)\)\s+baseline=\s*([\d.]+)%", log3)
-check("lab probe accuracy anchored in abstract, table and conclusion",
-      bool(ma) and f"testing laboratory at {ma.group(1)}% against {ma.group(3)}%" in FLAT
-      and f"{ma.group(1)}% (+/-{ma.group(2)})    {ma.group(3)}%" in TEXT
-      and f"laboratory at {ma.group(1)}% against {ma.group(3)}%, and the variety" in FLAT,
+check("lab probe accuracy anchored in abstract, table, discussion and conclusion",
+      bool(ma) and FLAT.count(f"laboratory at {ma.group(1)}% against {ma.group(3)}%") == 3
+      and f"{ma.group(1)}% (+/-{ma.group(2)})    {ma.group(3)}%" in TEXT,
       ma.groups() if ma else None)
 mp_ = re.search(r"producer\s+classes=\s*\d+\s+rows=\s*\d+\s+acc=\s*([\d.]+)%\s*"
                 r"\(\+/-([\d.]+)\)\s+baseline=\s*[\d.]+%\s+lift=\s*\+([\d.]+)pts", log3)
@@ -333,8 +331,8 @@ check("0.17% is correct", abs(100 * c_out / c_tot - 0.17) < 0.005,
       f"{100*c_out/c_tot:.3f}")
 check("abstract does not call them all concentrates",
       "37,374 concentrate certificates" not in TEXT)
-check("abstract counts the usable rows",
-      f"Using {len(rows):,} cannabis certificates" in FLAT)
+check("abstract counts the producer rows it reports on",
+      f"On {pf:,} certificate rows of cannabis concentrates that name a producer" in FLAT, pf)
 for t, n in (("extracts", 34034), ("concentrate, product inhalable", 30586),
              ("concentrate", 26030), ("marijuana extract for inhalation", 3901)):
     m = re.search(rf"^\s+(\d+)\s+{re.escape(t)}$", logc, re.M)
@@ -374,22 +372,23 @@ check("total_terpenes ablation cost anchored",
 log7 = (EV / "review7_statistical.txt").read_text()
 r7_sub = re.search(r"random, producer rows only\s+([\d.]+)%", log7)
 r7_gap = re.search(r"gap on a SINGLE sample\s+([\d.]+) points", log7)
-ss = re.search(r"rows\* scores ([\d.]+)%, so the protocol-only gap is\s*"
-               r"\*\*([\d.]+) points\*\*", FLAT)
+ss = re.search(r"the random split scores ([\d.]+)%, and that pair, ([\d.]+)% against ([\d.]+)%, "
+               r"a gap of \*\*([\d.]+) points\*\*", FLAT)
 check("same-sample random score anchored to its log",
-      bool(ss and r7_sub) and ss.group(1) == r7_sub.group(1),
+      bool(ss and r7_sub) and ss.group(1) == r7_sub.group(1) == ss.group(2) and ss.group(3) == gb[1],
+      r7_sub.group(1) if r7_sub else None)
+check("abstract headline random score anchored to its log",
+      bool(r7_sub) and f"scores {r7_sub.group(1)}% balanced accuracy (ROC AUC" in FLAT,
       r7_sub.group(1) if r7_sub else None)
 check("protocol-only gap anchored to its log",
-      bool(ss and r7_gap) and ss.group(2) == r7_gap.group(1),
+      bool(ss and r7_gap) and ss.group(4) == r7_gap.group(1),
       r7_gap.group(1) if r7_gap else None)
 # The protocol-only gap must equal the two scores the paper states, so a
 # mutated gap contradicts its own arithmetic.
 gscore = float(gb[1]) if gb else None
 check("protocol-only gap recomputes",
-      bool(ss) and gscore is not None
-      and abs((float(ss.group(1)) - gscore) - float(ss.group(2))) < 0.15,
-      f"{ss.group(1)}-{gscore}={float(ss.group(1))-gscore:.1f} "
-      f"vs stated {ss.group(2)}" if ss and gscore else None)
+      bool(ss) and abs((float(ss.group(1)) - float(ss.group(3))) - float(ss.group(4))) < 0.15,
+      ss.groups() if ss else None)
 check("89.0% producer coverage stated", "33,229" in TEXT and "89.0%" in TEXT)
 r7_ci = re.search(r"unseen-producer: mean [\d.]+%\s+95% CI \[([\d.]+), ([\d.]+)\]"
                   r"\s+p=([\d.]+)", log7)
@@ -406,8 +405,8 @@ r7_seeds = re.findall(r"seed\s+\d+: random [\d.]+%\s+grouped ([\d.]+)%\s+gap ([\
                       log7)
 check("reseeding anchored to its log",
       len(r7_seeds) == 3 and all(g == gb[1] for g, _ in r7_seeds)
-      and f"gaps of {r7_seeds[0][1]}, {r7_seeds[1][1]} and {r7_seeds[2][1]} points" in FLAT,
-      r7_seeds)
+      and f"{r7_seeds[0][1]}, {r7_seeds[1][1]}, {r7_seeds[2][1]}" in TEXT
+      and "stable under reseeding of the random split" in FLAT, r7_seeds)
 r7_pid = re.search(r"producer ID alone predicts label at ([\d.]+)%", log7)
 r7_sh = re.search(r"min ([\d.]+)\s+median ([\d.]+)\s+max ([\d.]+)", log7)
 check("producer-ID-only leakage anchored to its log",
@@ -465,44 +464,97 @@ uA, uK, uB, uL = _grp("unseen-producer")
 dA, dK, dB, dL = _grp("dual-class+unseen")
 check("unseen-producer: repeated partitions anchored",
       bool(uA and uK) and uK.group(1) == "0"
-      and f"give means from {uA.group(1)}% to {uA.group(3)}% (median {uA.group(2)}%, sd {uA.group(5)}), none at or below 50.0%" in FLAT,
-      uA.groups() if uA else None)
-check("unseen-producer: producer-cluster bootstrap anchored",
-      bool(uB) and f"a 95% interval of [{uB.group(1)}, {uB.group(2)}], with {uB.group(3)}% of draws at or below chance" in FLAT,
-      uB.groups() if uB else None)
+      and f"give the reported model means from {uA.group(1)}% to {uA.group(3)}% (median {uA.group(2)}%, sd {uA.group(5)})" in FLAT
+      and "none falls to 50.0%" in FLAT, uA.groups() if uA else None)
+log11 = (EV / "review11_checks.txt").read_text()
+log11b = (EV / "review11b_weighting.txt").read_text()
+bfm = re.findall(r"(unseen-producer|dual-class\+unseen)\s+(pooled|fold mean)\s+observed ([\d.]+)%\s+95% interval \[([\d.]+), ([\d.]+)\]", log11)
+_b = {(a_, b_): (o_, lo_, hi_) for a_, b_, o_, lo_, hi_ in bfm}
+check("unseen-producer: producer bootstrap anchored for both statistics",
+      bool(uB) and len(_b) == 4
+      and (uB.group(1), uB.group(2)) == _b[("unseen-producer", "pooled")][1:]
+      and f"is {_b[('unseen-producer', 'pooled')][0]}% when the predictions are pooled" in FLAT
+      and f"[{uB.group(1)}, {uB.group(2)}] for the pooled score and "
+          f"[{_b[('unseen-producer', 'fold mean')][1]}, {_b[('unseen-producer', 'fold mean')][2]}] for the fold mean" in FLAT
+      and "The models are not refitted" in FLAT, (uB.groups() if uB else None, _b))
 check("unseen-producer: laboratory-prior control anchored",
-      bool(uL) and f"scores {uL.group(1)}%, so those few points are not a laboratory prior" in FLAT,
-      uL.group(1) if uL else None)
+      bool(uL) and f"scores {uL.group(1)}%, below 50 because" in FLAT
+      and "are not a laboratory prior" in FLAT, uL.group(1) if uL else None)
 check("dual-class: repeated partitions anchored",
       bool(dA and dK) and dK.group(1) == "2"
       and f"twenty reassignments give means from {dA.group(1)}% to {dA.group(3)}% (median {dA.group(2)}%), two of them at or below 50.0%" in FLAT,
       dA.groups() if dA else None)
-check("dual-class: bootstrap and laboratory control anchored",
-      bool(dB and dL) and f"bootstrap interval is [{dB.group(1)}, {dB.group(2)}]" in FLAT
-      and f"Laboratory identity alone scores {dL.group(1)}% under the same folds" in FLAT,
-      (dB.groups() if dB else None, dL.group(1) if dL else None))
-check("abstract and conclusion carry the partition range",
-      bool(uA) and FLAT.count(f"{round(float(uA.group(1)))} to {round(float(uA.group(3)))}% across twenty") == 2,
+_dblk = log11b.split("=== dual-class rows")[1]
+_dau = re.search(r"boosting, unweighted\s+random: bal_acc [\d.]+% \(\+/-[\d.]+\)\s+AUC ([\d.]+)\s+held out: bal_acc [\d.]+% \(\+/-[\d.]+\)\s+AUC ([\d.]+).*?\n\s+held out, pooled AUC [\d.]+\s+producer bootstrap 95% \[([\d.]+), ([\d.]+)\]", _dblk)
+check("dual-class: bootstrap, AUC and laboratory control anchored",
+      bool(dB and dL and _dau)
+      and f"spans [{dB.group(1)}, {dB.group(2)}] for the pooled balanced accuracy and [{_dau.group(3)}, {_dau.group(4)}] for the pooled AUC" in FLAT
+      and f"its AUC falls from {_dau.group(1)} to {_dau.group(2)}" in FLAT
+      and f"identity alone scores {dL.group(1)}% under the same folds" in FLAT,
+      (dB.groups() if dB else None, _dau.groups() if _dau else None))
+check("conclusion carries the partition range",
+      bool(uA) and FLAT.count(f"{round(float(uA.group(1)))} to {round(float(uA.group(3)))}% across twenty fold assignments") == 1,
       uA.groups() if uA else None)
-check("grouped scores are not called a detected effect",
-      FLAT.count("not distinguishable from chance at the producer level") >= 1
+# pass eleven: the held-out signal is modest, not absent. Every model's AUC
+# and the class-weighted scores come from review11b_weighting.txt.
+_pblk = log11b.split("=== producer rows")[1].split("=== dual-class rows")[0]
+_rows = re.findall(r"^(boosting|logistic), (unweighted|class-weighted)\s+random: bal_acc ([\d.]+)% \(\+/-[\d.]+\)\s+AUC ([\d.]+)\s+"
+                   r"held out: bal_acc ([\d.]+)% \(\+/-([\d.]+)\)\s+AUC ([\d.]+).*?\n\s+held out, pooled AUC ([\d.]+)\s+"
+                   r"producer bootstrap 95% \[([\d.]+), ([\d.]+)\]", _pblk, re.M)
+check("table 10: four models anchored to the weighting log",
+      len(_rows) == 4 and all(
+          f"{m_}, {w_}".ljust(26) + f"  {rb_}%  {ra_}    {gb_}% (+/-{gs_})  {ga_}  {pa_} [{lo_}, {hi_}]" in TEXT
+          for m_, w_, rb_, ra_, gb_, gs_, ga_, pa_, lo_, hi_ in _rows), _rows)
+_R = {(m_, w_): (float(rb_), float(ra_), float(gb_), float(ga_), float(lo_), float(hi_)) for m_, w_, rb_, ra_, gb_, gs_, ga_, pa_, lo_, hi_ in _rows}
+_bu = _R.get(("boosting", "unweighted"), (0, 0, 0, 0, 0, 0))
+check("headline AUC figures anchored",
+      FLAT.count(f"(ROC AUC {_bu[1]:.2f})") == 1 and FLAT.count(f"(AUC {_bu[3]:.2f})") == 1
+      and f"an AUC of {_bu[3]:.2f} against {_bu[1]:.2f} under a random split" in FLAT
+      and f"an AUC of {_bu[1]:.2f}; holding out" in FLAT
+      and f"between {_bu[4]:.2f} and {_bu[5]:.2f}" in FLAT and f"{_bu[4]:.2f} to {_bu[5]:.2f}, excludes chance" in FLAT
+      and f"{_bu[1]-_bu[3]:.2f} of AUC for the reported model" in FLAT, _bu)
+check("less than a third of the above-chance AUC survives, and the text says so",
+      (_bu[3] - 0.5) / (_bu[1] - 0.5) < 1 / 3
+      and f"{_bu[3]-0.5:.3f} of {_bu[1]-0.5:.3f}" in FLAT
+      and FLAT.lower().count("less than a third") == 3 and "a modest signal survives" in FLAT,
+      f"{(_bu[3]-0.5)/(_bu[1]-0.5):.3f}")
+_aucs = [v[3] for v in _R.values()]
+check("AUC range and pooled-AUC intervals described correctly",
+      len(_aucs) == 4 and f"fold-mean AUC of {min(_aucs):.2f} to {max(_aucs):.2f}" in FLAT
+      and all(v[4] > 0.5 for v in _R.values()) and "excludes 0.5 for all four" in FLAT, _aucs)
+_g = {k: v[0] - v[2] for k, v in _R.items()}
+check("losses per estimator and weighting anchored",
+      len(_g) == 4 and bool(r7_gap) and abs(float(r7_gap.group(1)) - _g[('boosting','unweighted')]) < 0.15
+      and f"{r7_gap.group(1)} points for unweighted boosting, {_g[('boosting','class-weighted')]:.1f} with class weights, "
+      f"{_g[('logistic','unweighted')]:.1f} for an unweighted logistic regression and {_g[('logistic','class-weighted')]:.1f} for a class-weighted one" in FLAT
+      and f"whose held-out {_R[('logistic','class-weighted')][2]}% is the highest" in FLAT
+      and f"to {round(_R[('boosting','class-weighted')][2])} to {round(_R[('logistic','class-weighted')][2])}%" in FLAT
+      and f"{round(float(r7_gap.group(1)))}-point loss shrinks to {round(_g[('logistic','unweighted')])} for a logistic regression" in FLAT, _g)
+_wp = re.search(r"20 shuffled partitions: bal_acc min ([\d.]+)%\s+median ([\d.]+)%\s+max ([\d.]+)%\s+AUC min ([\d.]+)\s+median [\d.]+\s+max ([\d.]+)\s+partitions with bal_acc at or below 50.0%: (\d+)", _pblk)
+check("class-weighted partitions anchored",
+      bool(_wp) and _wp.group(6) == "0"
+      and f"the class-weighted one {_wp.group(1)}% to {_wp.group(3)}% (median {_wp.group(2)}%, AUC {_wp.group(4)} to {_wp.group(5)})" in FLAT,
+      _wp.groups() if _wp else None)
+check("the held-out signal is described as modest, not absent",
+      "not distinguishable from chance at the producer level" not in FLAT
       and "small but real" not in FLAT and "real in the permutation sense" not in FLAT
-      and "upper bound on the chemical signal" not in FLAT
-      and "is real but small" not in FLAT)
+      and "only weakly recoverable" in FLAT and "only weakly identifiable" in FLAT
+      and "The claim is about the size of the inflation, not that nothing transfers." in FLAT)
 check("the invalid row-level permutation test is gone",
       "permutation null is again" not in FLAT and not (EV / "perm_market.txt").exists())
 e9 = re.search(r"analytes: (\d+) \(([\d.]+)% of usable rows\)\s*\n\s*after dropping them: rows=\d+\s+random ([\d.]+)%.*?unseen-producer ([\d.]+)%.*?gap ([\d.]+) points", log9)
 check("duplicate count and sensitivity anchored",
       bool(e9) and f"{int(e9.group(1)):,} ({e9.group(2)}%) repeat" in FLAT
-      and f"gives {e9.group(3)}% for the random split and {e9.group(4)}% grouped, a gap of {e9.group(5)} points" in FLAT
-      and bool(rb and gb) and f"by {abs(float(rb[1])-float(e9.group(3))):.1f} points and the grouped score by {abs(float(gb[1])-float(e9.group(4))):.1f}" in FLAT,
+      and f"{int(e9.group(1)):,} duplicate rows dropped (all rows)     {e9.group(3)}%    {e9.group(4)}%     {e9.group(5)}" in TEXT,
       e9.groups() if e9 else None)
 h9 = re.findall(r"macro_F1 folds=\[[^\]]*\] mean=([\d.]+)% \(\+/-([\d.]+)\)", log9)
 f9 = re.search(r"majority ([\d.]+)%\s+stratified shuffle ([\d.]+)%", log9)
-check("macro-F1 spreads and baselines anchored",
-      len(h9) == 2 and bool(f9) and f"Macro F1 is {h9[0][0]}% (+/-{h9[0][1]}) and {h9[1][0]}% (+/-{h9[1][1]})" in FLAT
-      and f"against {f9.group(1)}% for the majority predictor and {f9.group(2)}% for a stratified shuffle" in FLAT,
-      (h9, f9.groups() if f9 else None))
+_f11 = re.findall(r"rows: n=\d+\s+majority ([\d.]+)%\s+stratified shuffle ([\d.]+)%", log11)
+check("macro-F1 spreads and baselines anchored, each scheme on its own rows",
+      len(h9) == 2 and len(_f11) == 2
+      and f"Macro F1 is {h9[0][0]}% (+/-{h9[0][1]}) and {h9[1][0]}% (+/-{h9[1][1]})" in FLAT
+      and f"against {_f11[0][0]}% and {_f11[1][0]}% for the majority predictor and {_f11[0][1]}% and {_f11[1][1]}% for a stratified shuffle on each scheme's own rows" in FLAT,
+      (h9, _f11))
 p9 = re.search(r"pooled balanced_acc=([\d.]+)%", log9)
 check("pooled balanced accuracy anchored",
       bool(p9) and f"pooled matrix gives a balanced accuracy of {p9.group(1)}%" in FLAT, p9.group(1) if p9 else None)
@@ -516,9 +568,27 @@ check("2.3 probe and main model given on both metrics",
       and "Those are in-sample figures for the lookup" in FLAT,
       (b9.groups() if b9 else None, m9.group(1) if m9 else None))
 k9 = re.search(r"PureVita Labs, LLC\s+\{\(0, 'solventless'\): \d+, \(1, 'hydrocarbon'\): (\d+), \(4, 'hydrocarbon'\): (\d+), \(6, 'solventless'\): (\d+)\}", log9)
-check("within-laboratory class-dependent panel anchored",
-      bool(k9) and k9.group(1) == k9.group(2) and f"all hydrocarbon ({int(k9.group(1)):,} each)" in FLAT
-      and f"all solventless ({k9.group(3)})" in FLAT, k9.groups() if k9 else None)
+_tw = re.search(r"adjacent \(1 then 4\) pairs: (\d+)", log11)
+_twl = re.search(r"pairs per laboratory: \{'PureVita Labs, LLC': (\d+)", log11)
+_mg = re.search(r"after merging each pair into one row: rows=(\d+).*?majority ([\d.]+)%", log11)
+_mp = re.search(r"pairs merged: (\d+) distinct, (\d+) pure covering (\d+) rows \(([\d.]+)%\), in-sample lookup accuracy ([\d.]+)% vs majority ([\d.]+)%", log11)
+_nop = re.search(r"producer-less rows: (\d+)\s+with a product name: (\d+)", log11)
+check("split records: counts anchored",
+      bool(_tw and _twl and _nop) and FLAT.count(f"{int(_tw.group(1)):,} samples") >= 3
+      and f"({int(_twl.group(1)):,} of them at `PureVita`)" in FLAT
+      and f"4,115 rows describe {int(_nop.group(1)) - int(_tw.group(1)):,} samples" in FLAT
+      and _nop.group(2) == "0", (_tw.group(1) if _tw else None))
+check("split records: merged patterns anchored",
+      bool(_mp) and f"take {_mp.group(1)} patterns, {_mp.group(2)} of them pure, covering {int(_mp.group(3)):,} rows ({_mp.group(4)}%)" in FLAT
+      and f"scores {_mp.group(5)}% against a {_mp.group(6)}% majority" in FLAT, _mp.groups() if _mp else None)
+_mr = re.search(r"random split, all rows, pairs merged: ([\d.]+)%", log11)
+_mu = re.search(r"unseen-lab, pairs merged: folds=\d+\s+([\d.]+)% \(\+/-([\d.]+)\)", log11)
+_ml = re.search(r"laboratory probe, pairs merged: classes=(\d+) rows=\d+\s+acc=([\d.]+)% .*?baseline=([\d.]+)%", log11)
+check("split records: all-rows figures with pairs merged anchored",
+      bool(_mr and _mu and _ml) and f"with those pairs merged it is {_mr.group(1)}%" in FLAT
+      and f"merged the scheme scores {_mu.group(1)}% (+/-{_mu.group(2)})" in FLAT
+      and _ml.group(2) == ma.group(1) and f"unchanged at {_ml.group(2)}%, on ten laboratories and a {_ml.group(3)}% baseline" in FLAT
+      and _ml.group(1) == "10", (_mr.group(1), _mu.groups(), _ml.groups()) if _mr and _mu and _ml else None)
 z9 = re.search(r"distinct \(method, variety, t, T, P\) cells=(\d+)", log9)
 check("controlled samples are distinct design cells",
       bool(z9) and z9.group(1) == "162" and "no replicates to leak across" in FLAT)
@@ -539,10 +609,10 @@ check("per-fold solventless counts anchored",
       fs.group(0) if fs else None)
 check("the false 'no gate is passed' sentence is gone",
       "No gate that requires" not in FLAT)
-check("the chance claim is scoped and qualified",
+check("no claim that the collapse reaches chance",
       "all the way to chance" not in FLAT
       and "statistically indistinguishable from guessing" not in FLAT
-      and "is not reliably recoverable" in FLAT and "is not reliably identifiable" in FLAT)
+      and "the collapse stops short of chance" in FLAT)
 # permutation test on the market schemes, docs/evidence/perm_market.txt
 check("no market p-value is quoted from a row-level shuffle",
       "above that null" not in FLAT)
@@ -801,7 +871,8 @@ check("random-group control anchored",
       and float(pc.group(1)) == 0.0 and "never falls to 38.9%" in FLAT,
       (ctl.group(1), pc.group(1)) if ctl and pc else None)
 check("permutation p-values anchored",
-      bool(pr5 and plo) and f"p ≤ {float(pr5.group(1)):.3f} for the random split, which no shuffle reaches" in FLAT
+      bool(pr5 and plo) and f"p = {float(pr5.group(1)):.4f} for the random split, the floor for 300 shuffles" in FLAT
+      and abs(float(pr5.group(1)) - 1 / 301) < 5e-5
       and f"p = {float(plo.group(1)):.2f} for leave-one-variety-out" in FLAT,
       (pr5.group(1), plo.group(1)) if pr5 and plo else None)
 check("process-settings leak anchored",
@@ -809,8 +880,7 @@ check("process-settings leak anchored",
       ttp.group(1) if ttp else None)
 check("discussion and conclusion carry the seed-averaged gap",
       bool(k5 and lovo and gap)
-      and f"{round(float(k5.group(1)) - float(lovo[1]))} to {round(float(gap.group(1)))} points on the designed experiment" in FLAT
-      and f"{round(float(k5.group(1)) - float(lovo[1]))} to {round(float(gap.group(1)))} on a designed experiment" in FLAT)
+      and FLAT.count(f"{round(float(k5.group(1)) - float(lovo[1]))} to {round(float(gap.group(1)))}") == 3)
 # ---------- markets and dates, from docs/evidence/lab_states.txt ----------
 logst = (EV / "lab_states.txt").read_text()
 nv = re.search(r"^\s+(\d+)\s+NV$", logst, re.M)
@@ -833,7 +903,8 @@ log10b = (EV / "review10b_robustness.txt").read_text()
 c1r = re.search(r"random, producer rows\s+([\d.]+)%", log10b)
 c1g = re.search(r"unseen-producer\s+([\d.]+)% \(\+/-[\d.]+\)\s+same-sample gap ([\d.]+) points", log10b)
 check("market data: logistic regression anchored",
-      bool(c1r and c1g) and f"scores {c1r.group(1)}% on the same-sample random split and {c1g.group(1)}% grouped: a gap of {c1g.group(2)} points" in FLAT,
+      bool(c1r and c1g) and (float(c1r.group(1)), float(c1g.group(1))) == (_R[("logistic", "unweighted")][0], _R[("logistic", "unweighted")][2])
+      and f"{c1g.group(2)} for an unweighted logistic regression" in FLAT,
       (c1r.group(1), c1g.groups()) if c1r and c1g else None)
 lg = re.search(r"logistic regression\s+method random ([\d.]+)% \(\+/-([\d.]+)\)\s+method LOVO ([\d.]+)% \(\+/-([\d.]+)\)\s+variety random ([\d.]+)%.*?gap ([\d.]+) points", log10b)
 check("controlled data: logistic rows anchored in the table",
@@ -856,30 +927,33 @@ check("controlled data: logistic seed sweep anchored",
 cap = re.findall(r"max_iter=(\d+)\s+random ([\d.]+)%.*?unseen-producer ([\d.]+)%.*?gap ([\d.]+) points", log10b)
 check("gap against capacity anchored",
       len(cap) == 4
-      and f"scores {cap[0][1]}%, {cap[1][1]}%, {cap[2][1]}% and {cap[3][1]}% and the grouped one {cap[0][2]}%, {cap[1][2]}%, {cap[2][2]}% and {cap[3][2]}%" in FLAT
-      and f"from {cap[0][3]} to {cap[3][3]} points" in FLAT, cap)
+      and all(f"{c_[0]} iterations".ljust(44) + f"{c_[1]}%    {c_[2]}%     {c_[3]}" in TEXT for c_ in (cap[0], cap[1], cap[3]))
+      and f"reported: 200 boosting iterations           {cap[2][1]}%    {cap[2][2]}%     {cap[2][3]}" in TEXT
+      and f"from {cap[0][3]} to {cap[3][3]}" in FLAT, cap)
 sub = re.findall(r"with producer=(\d+) producers=\d+.*?\n\s+random \(producer rows\) ([\d.]+)%.*?unseen-producer ([\d.]+)% \(\+/-([\d.]+)\)\s+gap ([\d.]+) points", log10b)
 check("label-definition subsets anchored",
       len(sub) == 2
-      and f"On the {int(sub[0][0]):,} producer rows not named distillate, the random split scores {sub[0][1]}% and the grouped one {sub[0][2]}% (+/-{sub[0][3]}), a gap of {sub[0][4]} points" in FLAT
-      and f"On the {int(sub[1][0]):,} rows whose names" in FLAT
-      and f"they score {sub[1][1]}% and {sub[1][2]}% (+/-{sub[1][3]}), a gap of {sub[1][4]} points" in FLAT, sub)
+      and f"rows not named distillate ({int(sub[0][0]):,})          {sub[0][1]}%    {sub[0][2]}%     {sub[0][4]}" in TEXT
+      and f"rows named for a process ({int(sub[1][0]):,})            {sub[1][1]}%    {sub[1][2]}%     {sub[1][4]}" in TEXT
+      and f"fold spreads of {sub[0][3]} and {sub[1][3]}" in FLAT, sub)
 tmp = re.search(r"balanced_acc ([\d.]+)%\s+test producers seen in training: ([\d.]+)% of test rows", log10b)
 check("temporal split anchored",
-      bool(tmp) and f"scores {tmp.group(1)}% with {tmp.group(2)}% of its test rows from producers seen in training" in FLAT,
-      tmp.groups() if tmp else None)
+      bool(tmp) and f"with {tmp.group(2)}% of its test rows from producers seen in training, scores {tmp.group(1)}%" in FLAT
+      and f"temporal split (latest 20% as test)         {tmp.group(1)}%" in TEXT, tmp.groups() if tmp else None)
 glr = re.search(r"random, all rows ([\d.]+)% \(\+/-([\d.]+)\)\s+unseen-producer ([\d.]+)%", log10b.split("=== G.")[1])
+_g0 = re.search(r"random, all rows ([\d.]+)% \(\+/-([\d.]+)\)", log10b.split("=== G.")[1])
 check("binary task at the probe learning rate anchored",
-      bool(glr and rb and gb) and f"is {rb[2]} at the default rate and {glr.group(2)} at 0.05, with the grouped score at {gb[1]}% and {glr.group(3)}%" in FLAT,
-      glr.groups() if glr else None)
+      bool(glr and rb and gb and _g0)
+      and f"its random split scores {rb[1]}% at the default rate and {_g0.group(1)}% at 0.05, with fold spreads of {rb[2]} and {glr.group(2)} "
+          f"and the held-out score at {gb[1]}% and {glr.group(3)}%" in FLAT, glr.groups() if glr else None)
 hs = re.search(r"rows with a strain key=\d+\s+random ([\d.]+)%.*?\n\s+dual-class strain rows=\d+\s+random ([\d.]+)%", log10b)
 check("strain subsets: same-sample random anchored",
       bool(hs) and f"{hs.group(1)}% for the keyed rows and {hs.group(2)}% for the dual-class keys" in FLAT,
       hs.groups() if hs else None)
 p01 = re.search(r"producer probe at 0\.1: folds=\[([\d., ]+)\]\s+mean=[\d.]+%\s+lift=\+([\d.]+)pts", log3)
 check("producer probe at the 0.1 rate is logged and matches the text",
-      bool(p01) and f"{min(float(v) for v in p01.group(1).split(','))} to {max(float(v) for v in p01.group(1).split(','))}" in FLAT
-      and f"a {p01.group(2)}-point lift" in FLAT, p01.groups() if p01 else None)
+      bool(p01) and f"{min(float(v) for v in p01.group(1).split(','))} to {max(float(v) for v in p01.group(1).split(','))}" in FLAT,
+      p01.groups() if p01 else None)
 fl = re.findall(r"^\s+folds=\[([\d., ]+)\]\s+balanced_acc", log3, re.M)
 check("fold spans at the 0.05 rate anchored",
       len(fl) == 2 and f"span {max(map(float, fl[0].split(','))) - min(map(float, fl[0].split(','))):.1f} points for the laboratory and "
@@ -891,9 +965,29 @@ def _fam(key):
     m = re.search(rf"^{re.escape(key)}.*?(\d+) \(\s*[\d.]+%\)\s+(\d+) \(\s*[\d.]+%\)$", logl, re.M)
     return (int(m.group(1)), int(m.group(2))) if m else (None, None)
 _h, _e, _m, _c = _fam("hydrocarbon words"), _fam("ethanol"), _fam("mechanical words"), _fam("co2 / supercritical")
-check("label contradiction counts anchored",
-      f"{_h[0]} non-solvent rows name a hydrocarbon process, and {_e[1]} solvent-based rows name ethanol, {_m[1]} a mechanical process and {_c[1]} CO2" in FLAT
-      and round(100 * (_h[0] + _e[1] + _m[1] + _c[1]) / len(rows)) == 1, (_h, _e, _m, _c))
+_n1 = re.search(r"non-solvent rows hitting a hydrocarbon word: (\d+), of which also say rosin: (\d+)", log11)
+_n2 = re.search(r"solvent-based rows hitting a mechanical word: (\d+) \(rosin (\d+),", log11)
+check("name word-families are not used to count mislabelled rows",
+      bool(_n1 and _n2) and _n1.group(1) == _n1.group(2) and _n2.group(2) == "0"
+      and f"All {_n1.group(1)} non-solvent rows that hit a hydrocarbon word also say rosin" in FLAT
+      and f"the {_n2.group(1)} solvent-based rows that hit a mechanical word" in FLAT
+      and "about 1% of the usable rows" not in FLAT and "it cannot count mislabelled rows" in FLAT,
+      (_n1.groups() if _n1 else None, _n2.groups() if _n2 else None))
+_eth = re.findall(r"^\s+(\d{4}):\s+(\d+) /\s+(\d+)$", log11, re.M)
+check("label drift: ethanol-named rows by year anchored",
+      len(_eth) == 4 and all(f"{y_}" in TEXT and re.search(rf"^{y_}\s+{a_}\s+{b_}$", TEXT, re.M) for y_, a_, b_ in _eth), _eth)
+_ter = dict(re.findall(r"^\s+(\d{4}):\s+([\d.]+)%\s+of \d+ rows$", log11, re.M))
+check("panel drift: terpene panel share by year anchored",
+      len(_ter) == 5 and f"falls from {_ter['2020']}% in 2020 to {_ter['2022']}% in 2022, {_ter['2023']}% in 2023 and none in 2024" in FLAT
+      and float(_ter["2024"]) == 0.0, _ter)
+_rp = re.search(r"producers=(\d+)\s+largest=\d+ \(([\d.]+)%\)\s+five largest=([\d.]+)%\s+median=(\d+)", log11)
+check("rows per producer anchored",
+      bool(_rp) and f"the largest holds {_rp.group(2)}% of them, the five largest {_rp.group(3)}%, and the median producer {_rp.group(4)} rows" in FLAT,
+      _rp.groups() if _rp else None)
+_pc = re.search(r"=== P\..*?random ([\d.]+)% \(\+/-[\d.]+\)\s+unseen-producer ([\d.]+)% \(\+/-[\d.]+\)\s+gap ([\d.]+) points", log11, re.S)
+check("positive control anchored",
+      bool(_pc) and f"positive control: named distillate or not   {_pc.group(1)}%    {_pc.group(2)}%     {_pc.group(3)}" in TEXT
+      and f"is recovered at {_pc.group(2)}% for unseen producers" in FLAT, _pc.groups() if _pc else None)
 _labc = Counter((r.get("lab") or "").strip() for r in rows if (r.get("producer") or "").strip())
 _top2 = sum(n for _, n in _labc.most_common(2))
 check("joint hold-out caveat: share of the two largest laboratories",
@@ -907,13 +1001,13 @@ check("laboratory hydrocarbon-share range anchored",
       f"{min(_sh):.1f}-{max(_sh):.1f}")
 check("sd convention stated", "population standard deviation of the fold scores" in FLAT)
 check("the logistic comparator and its inputs are described in methods",
-      "A standardised logistic regression is run beside it" in FLAT
-      and "log-transformed values with empty cells set to zero" in FLAT)
+      "A standardised logistic regression (L2 penalty, C = 1) is run beside it" in FLAT
+      and "log(1 + x) of each value with empty cells set to zero" in FLAT
+      and "class weights inversely proportional to class frequency" in FLAT)
 check("[11] is not credited with the earliest demonstration",
       "earliest quantitative demonstration" not in FLAT)
-check("the abstract gives the same-sample range of the inflation",
-      "we measure 24 to 27 points of inflation" in FLAT)
-
+check("the abstract names what its figures are computed on",
+      "that name a producer" in FLAT.split("## 1. Introduction")[0])
 # ---------- figure 1 is drawn from the logs ----------
 import json as _json
 sys.path.insert(0, str(ROOT))
@@ -928,12 +1022,13 @@ check("figure 1 plots exactly the logged values",
       _fig_json.exists() and _json.loads(_fig_json.read_text()) == _json.loads(_json.dumps(_fp)),
       "stale figure: rerun src/evaluation/make_figure.py")
 _svg = _fig_svg.read_text() if _fig_svg.exists() else ""
+_pool = {n_: re.search(r"pooled balanced_acc ([\d.]+)%", _blk(n_)).group(1) for n_ in ("unseen-producer", "dual-class+unseen")}
 check("figure 1 labels match the text",
-      all(f">{v}<" in _svg for v in (f"{cap[3][1]}", f"{cap[0][1]}", f"{cap[3][2]}", f"{cap[0][2]}", c1r.group(1), c1g.group(1)))
-      and f"{uA.group(1)} to {uA.group(3)}" in _svg and f"interval {uB.group(1)} to {uB.group(2)}" in _svg
-      and f"{dA.group(1)} to {dA.group(3)}" in _svg and f"interval {dB.group(1)} to {dB.group(2)}" in _svg)
-check("title names the declared category",
-      TEXT.startswith("# Group-aware validation collapses extraction-category classification"))
+      all(f">{v}<" in _svg for v in (f"{cap[3][1]}", f"{cap[0][1]}", f"{cap[3][2]}", f"{cap[0][2]}", f"{cap[2][1]}", c1r.group(1), c1g.group(1)))
+      and f"{uA.group(1)} to {uA.group(3)}" in _svg and f"pooled {_pool['unseen-producer']} ({uB.group(1)} to {uB.group(2)})" in _svg
+      and f"{dA.group(1)} to {dA.group(3)}" in _svg and f"pooled {_pool['dual-class+unseen']} ({dB.group(1)} to {dB.group(2)})" in _svg)
+check("title names the declared category and does not claim a collapse to chance",
+      TEXT.startswith("# Group-aware validation removes most of the apparent accuracy of extraction-category classification"))
 check("author contributions and funding are stated in their own sections",
       "## Author contributions" in TEXT and "## Funding" in TEXT
       and "This work received no funding." in FLAT)

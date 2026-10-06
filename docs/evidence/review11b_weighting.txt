@@ -1,0 +1,30 @@
+rows: 37344   features: 19   positive class for AUC: solventless
+
+=== producer rows: n=33229 producers=96 ===
+boosting, unweighted       random: bal_acc 78.5% (+/-0.4)  AUC 0.894   held out: bal_acc 54.0% (+/-5.6)  AUC 0.625 (+/-0.065)  recall hydro/solventless 75.7/32.3%
+                           held out, pooled AUC 0.610  producer bootstrap 95% [0.535, 0.698]  draws at or below 0.5: 0.1%
+                           held out, pooled bal_acc 51.6%  producer bootstrap 95% [47.3, 56.6]  draws at or below 50.0%: 23.2%
+boosting, class-weighted   random: bal_acc 80.6% (+/-0.4)  AUC 0.894   held out: bal_acc 55.8% (+/-5.5)  AUC 0.621 (+/-0.064)  recall hydro/solventless 61.5/50.2%
+                           held out, pooled AUC 0.630  producer bootstrap 95% [0.551, 0.715]  draws at or below 0.5: 0.0%
+                           held out, pooled bal_acc 56.8%  producer bootstrap 95% [50.3, 63.0]  draws at or below 50.0%: 2.0%
+logistic, unweighted       random: bal_acc 65.3% (+/-0.6)  AUC 0.753   held out: bal_acc 54.3% (+/-6.2)  AUC 0.634 (+/-0.062)  recall hydro/solventless 81.6/26.9%
+                           held out, pooled AUC 0.604  producer bootstrap 95% [0.519, 0.696]  draws at or below 0.5: 0.6%
+                           held out, pooled bal_acc 49.0%  producer bootstrap 95% [43.0, 57.4]  draws at or below 50.0%: 56.0%
+logistic, class-weighted   random: bal_acc 69.4% (+/-0.5)  AUC 0.752   held out: bal_acc 61.1% (+/-5.1)  AUC 0.636 (+/-0.061)  recall hydro/solventless 52.0/70.3%
+                           held out, pooled AUC 0.662  producer bootstrap 95% [0.571, 0.745]  draws at or below 0.5: 0.0%
+                           held out, pooled bal_acc 64.9%  producer bootstrap 95% [56.8, 71.9]  draws at or below 50.0%: 0.0%
+boosting, class-weighted, 20 shuffled partitions: bal_acc min 53.0%  median 55.5%  max 59.9%   AUC min 0.602  median 0.634  max 0.664   partitions with bal_acc at or below 50.0%: 0
+
+=== dual-class rows: n=27751 producers=53 ===
+boosting, unweighted       random: bal_acc 80.3% (+/-0.7)  AUC 0.899   held out: bal_acc 54.6% (+/-2.6)  AUC 0.632 (+/-0.058)  recall hydro/solventless 69.9/39.3%
+                           held out, pooled AUC 0.594  producer bootstrap 95% [0.497, 0.704]  draws at or below 0.5: 2.9%
+                           held out, pooled bal_acc 52.0%  producer bootstrap 95% [45.8, 59.8]  draws at or below 50.0%: 24.7%
+boosting, class-weighted   random: bal_acc 81.3% (+/-0.4)  AUC 0.898   held out: bal_acc 56.3% (+/-3.9)  AUC 0.631 (+/-0.061)  recall hydro/solventless 62.2/50.4%
+                           held out, pooled AUC 0.615  producer bootstrap 95% [0.509, 0.723]  draws at or below 0.5: 1.7%
+                           held out, pooled bal_acc 56.1%  producer bootstrap 95% [48.2, 63.8]  draws at or below 50.0%: 7.0%
+logistic, unweighted       random: bal_acc 65.7% (+/-0.7)  AUC 0.744   held out: bal_acc 55.6% (+/-2.5)  AUC 0.627 (+/-0.051)  recall hydro/solventless 77.6/33.7%
+                           held out, pooled AUC 0.583  producer bootstrap 95% [0.480, 0.710]  draws at or below 0.5: 5.3%
+                           held out, pooled bal_acc 51.7%  producer bootstrap 95% [44.3, 60.7]  draws at or below 50.0%: 29.2%
+logistic, class-weighted   random: bal_acc 67.8% (+/-0.4)  AUC 0.743   held out: bal_acc 58.8% (+/-7.2)  AUC 0.629 (+/-0.051)  recall hydro/solventless 54.6/62.9%
+                           held out, pooled AUC 0.646  producer bootstrap 95% [0.519, 0.759]  draws at or below 0.5: 1.2%
+                           held out, pooled bal_acc 61.2%  producer bootstrap 95% [48.7, 71.6]  draws at or below 50.0%: 4.7%

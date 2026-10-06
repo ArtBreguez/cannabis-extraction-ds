@@ -43,7 +43,8 @@ must = ["37,374", "37,344", "81.0%", "54.0%", "54.6%", "68.3%", "18.6",
         "80th percentile", "p = 0.11", "88.3%", "15 to 18",
         "[47.3, 56.6]", "ethanol or CO2", "46.3%", "Cannabis Compliance Board",
         "Figure 1.", "Score against model capacity", "Author contributions",
-        "extraction-category"]
+        "extraction-category", "Table 10.", "Table 11.", "0.610 [0.535, 0.698]",
+        "less than a third", "1,303 samples", "positive control"]
 missing = [m for m in must if m not in full]
 print(f"\n  key strings present: {len(must)-len(missing)}/{len(must)}")
 if missing:

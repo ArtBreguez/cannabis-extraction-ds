@@ -35,10 +35,13 @@ def build_sandbox():
     if SANDBOX.exists():
         shutil.rmtree(SANDBOX)
     (SANDBOX / "src/evaluation").mkdir(parents=True)
-    for d in ("data", "docs"):
+    # reports/ holds Figure 1, which the audit compares against the logs
+    for d in ("data", "docs", "reports"):
         (SANDBOX / d).symlink_to(REPO / d)
-    shutil.copy(REPO / "src/evaluation/audit_preprint.py",
-                SANDBOX / "src/evaluation/audit_preprint.py")
+    # the audit imports make_figure.parse(), so the figure script travels too
+    for f in ("audit_preprint.py", "make_figure.py", "__init__.py"):
+        shutil.copy(REPO / "src/evaluation" / f, SANDBOX / "src/evaluation" / f)
+    shutil.copy(REPO / "src/__init__.py", SANDBOX / "src/__init__.py")
 
 
 def run_audit(text):
@@ -58,15 +61,11 @@ def run_audit(text):
 # catches a wild number anyway, the dangerous error is the plausible one.
 MUTATIONS = [
     # headline results
-    ("random accuracy 81.0 -> 81.4", "81.0% balanced accuracy",
-     "81.4% balanced accuracy"),
     ("grouped accuracy 54.0 -> 55.0", "unseen-producer              54.0%",
      "unseen-producer              55.0%"),
     ("dual-class 54.6 -> 55.6", "dual-class + unseen          54.6%",
      "dual-class + unseen          55.6%"),
     ("lab lift 52.0 -> 53.0", "+52.0 pts", "+53.0 pts"),
-    ("lab probe accuracy 92.3 -> 93.3 in the abstract",
-     "testing laboratory at 92.3% against 40.3%", "testing laboratory at 93.3% against 40.3%"),
     ("missingness-only lab probe 57.3 -> 58.3", "reaches 57.3% on the same folds",
      "reaches 58.3% on the same folds"),
     ("producer-grouped lab probe 85.4 -> 86.4", "85.4% (+/-3.3) against",
@@ -98,8 +97,6 @@ MUTATIONS = [
     ("pre-roll share 0.17 -> 0.18", "0.17% of the labelled data",
      "0.18% of the labelled data"),
     # statistical qualifications added in pass seven
-    ("same-sample random 78.5 -> 79.5", "rows* scores 78.5%",
-     "rows* scores 79.5%"),
     ("protocol gap 24.4 -> 25.4", "**24.4 points**", "**25.4 points**"),
     ("CI lower 46.3 -> 47.3", "[46.3, 61.8]", "[47.3, 61.8]"),
     ("producer-ID-only 84.4 -> 85.4", "reaches 84.4% balanced",
@@ -143,35 +140,14 @@ MUTATIONS = [
     ("dual-class same-sample random 80.3 -> 81.3", "against 80.3% (+/-0.7)", "against 81.3% (+/-0.7)"),
 
     ("duplicate count 1,813 -> 1,814", "1,813 (4.9%) repeat", "1,814 (4.9%) repeat"),
-    ("dedup grouped 55.2 -> 56.2", "and 55.2% grouped", "and 56.2% grouped"),
-    ("macro-F1 majority baseline 39.8 -> 40.8", "against 39.8% for the majority predictor",
-     "against 40.8% for the majority predictor"),
     ("pooled balanced accuracy 51.6 -> 52.6", "balanced accuracy of 51.6%", "balanced accuracy of 52.6%"),
-    ("PureVita panel count 1,230 -> 1,231", "all hydrocarbon (1,230 each)", "all hydrocarbon (1,231 each)"),
-    ("partition range 51.3 -> 52.3", "give means from 51.3% to 56.6%",
-     "give means from 52.3% to 56.6%"),
-    ("producer bootstrap lower bound 47.3 -> 50.3", "a 95% interval of [47.3, 56.6]",
-     "a 95% interval of [50.3, 56.6]"),
-    ("dual-class bootstrap 45.8 -> 50.8", "bootstrap interval is [45.8, 59.8]",
-     "bootstrap interval is [50.8, 59.8]"),
     ("abstract partition range 51 -> 53", "51 to 57% across twenty fold assignments",
      "53 to 57% across twenty fold assignments"),
-    ("'real but small' reinstated", "but not distinguishable from chance at the producer level",
-     "and is real but small"),
-    ("logistic market gap 11.0 -> 12.0", "a gap of 11.0 points around", "a gap of 12.0 points around"),
-    ("capacity gap 26.1 -> 27.1", "from 21.1 to 26.1 points", "from 21.1 to 27.1 points"),
-    ("named-rows grouped 60.3 -> 61.3", "they score 77.0% and 60.3%", "they score 77.0% and 61.3%"),
-    ("temporal split 73.4 -> 74.4", "scores 73.4% with 99.3%", "scores 74.4% with 99.3%"),
     ("logistic LOVO 46.3 -> 47.3 in the table", "leave-one-variety-out          46.3% (+/-10.2)",
      "leave-one-variety-out          47.3% (+/-10.2)"),
     ("logistic permutation p 0.002 -> 0.02", "reaches 46.3% (p = 0.002)", "reaches 46.3% (p = 0.02)"),
     ("regulation reverted to CO2 only", "including concentrated cannabis extracted with ethanol or CO2\" against",
      "including concentrated cannabis extracted with CO2\" against"),
-    ("abstract inflation back to 27", "we measure 24 to 27 points of inflation",
-     "we measure 27 points of inflation"),
-    ("the false 'no gate passed' sentence reinstated",
-     "so neither scheme beats a stratified guess on that metric.",
-     "No gate that requires beating chance by more than the between-fold spread is passed."),
     ("censoring direction flipped back", "heavily left-censored",
      "heavily right-censored"),
     ("strain columns 'empty for 0' wording back",
@@ -179,17 +155,11 @@ MUTATIONS = [
     ("alarm max_iter 120 -> 200", "at `max_iter=120`", "at `max_iter=200`"),
     ("strain probe subset 109 -> 108", "the 109 keys with at least 30 rows",
      "the 108 keys with at least 30 rows"),
-    ("reseed gap 24.5 -> 24.4", "24.6, 24.5 and 24.6 points",
-     "24.6, 24.4 and 24.6 points"),
     ("reduction table total 37,374 -> 37,375",
      "total labelled rows                              37,374",
      "total labelled rows                              37,375"),
     ("regex variant count 1,445 -> 1,455", "`non-solvent concentrate` (1,445 rows)",
      "`non-solvent concentrate` (1,455 rows)"),
-    ("composition: distillate share 45.5 -> 44.5", "5,805 (45.5%)",
-     "5,805 (44.5%)"),
-    ("composition: mechanical count 559 -> 569", "559 ( 4.4%)",
-     "569 ( 4.4%)"),
     ("name-path scope 11.5 -> 12.5", "11.5% of labelled rows",
      "12.5% of labelled rows"),
     ("intro reverts to rosin-vs-BHO framing",
@@ -206,6 +176,61 @@ MUTATIONS = [
     ("t/T/P leak 88.3 -> 98.3", "split to 88.3%", "split to 98.3%"),
     ("conclusion drops the seed-averaged gap", "15 to 18 on a designed experiment",
      "18 on a designed experiment"),
+    # ---- pass eleven: anchors moved by the rewrite, and the new figures ----
+    ("P11 headline random 78.5 -> 79.5 in the abstract", "scores 78.5% balanced accuracy (ROC AUC",
+     "scores 79.5% balanced accuracy (ROC AUC"),
+    ("P11 table 9 random row 81.0 -> 81.4", "random (optimistic)          81.0%",
+     "random (optimistic)          81.4%"),
+    ("P11 lab probe 92.3 -> 93.3 in the abstract", "laboratory at 92.3% against 40.3%",
+     "laboratory at 93.3% against 40.3%"),
+    ("P11 same-sample random 78.5 -> 79.5", "the random split scores 78.5%, and that pair",
+     "the random split scores 79.5%, and that pair"),
+    ("P11 dedup grouped 55.2 -> 56.2", "80.8%    55.2%     25.6", "80.8%    56.2%     25.6"),
+    ("P11 macro-F1 majority baseline 39.8 -> 40.8", "against 39.8% and 38.4% for the majority predictor",
+     "against 40.8% and 38.4% for the majority predictor"),
+    ("P11 PureVita pairs 1,230 -> 1,231", "(1,230 of them at `PureVita`)", "(1,231 of them at `PureVita`)"),
+    ("P11 partition range 51.3 -> 52.3", "means from 51.3% to 56.6%", "means from 52.3% to 56.6%"),
+    ("P11 pooled bootstrap lower bound 47.3 -> 50.3", "[47.3, 56.6] for the pooled score",
+     "[50.3, 56.6] for the pooled score"),
+    ("P11 fold-mean bootstrap 50.2 -> 49.2", "[50.2, 58.9] for the fold mean", "[49.2, 58.9] for the fold mean"),
+    ("P11 dual-class bootstrap 45.8 -> 50.8", "spans [45.8, 59.8] for the pooled balanced accuracy",
+     "spans [50.8, 59.8] for the pooled balanced accuracy"),
+    ("P11 'indistinguishable from chance' reinstated",
+     "The claim is about the size of the inflation, not that nothing transfers.",
+     "The held-out score is not distinguishable from chance at the producer level."),
+    ("P11 logistic market gap 11.0 -> 12.0", "11.0 for an unweighted logistic regression",
+     "12.0 for an unweighted logistic regression"),
+    ("P11 capacity gap 26.1 -> 27.1", "from 21.1 to 26.1", "from 21.1 to 27.1"),
+    ("P11 named-rows grouped 60.3 -> 61.3", "77.0%    60.3%     16.8", "77.0%    61.3%     16.8"),
+    ("P11 temporal split 73.4 -> 74.4", "scores 73.4%, so time alone", "scores 74.4%, so time alone"),
+    ("P11 abstract loss 24 -> 27", "The 24-point loss shrinks to 11", "The 27-point loss shrinks to 11"),
+    ("P11 the false 'no gate passed' sentence reinstated",
+     "so on that thresholded metric neither beats a stratified guess.",
+     "No gate that requires beating chance by more than the between-fold spread is passed."),
+    ("P11 reseed gap 24.5 -> 24.4", "24.6, 24.5, 24.6", "24.6, 24.4, 24.6"),
+    ("P11 composition: distillate share 51.5 -> 50.5", "5,805 (51.5%)", "5,805 (50.5%)"),
+    ("P11 composition: mechanical count 559 -> 569", "559 ( 5.0%)", "569 ( 5.0%)"),
+    ("P11 held-out AUC 0.625 -> 0.725 in table 10", "54.0% (+/-5.6)  0.625", "54.0% (+/-5.6)  0.725"),
+    ("P11 pooled AUC interval lower 0.535 -> 0.435", "0.610 [0.535, 0.698]", "0.610 [0.435, 0.698]"),
+    ("P11 abstract AUC 0.62 -> 0.72", "(AUC 0.62)", "(AUC 0.72)"),
+    ("P11 conclusion AUC interval 0.54 -> 0.44", "0.54 to 0.70, excludes chance", "0.44 to 0.70, excludes chance"),
+    ("P11 surviving share 0.125 -> 0.225", "0.125 of 0.394", "0.225 of 0.394"),
+    ("P11 'less than a third' -> 'more than a third'", "less than a third of what the random split shows",
+     "more than a third of what the random split shows"),
+    ("P11 weighted logistic 61.1 -> 62.1", "whose held-out 61.1% is the highest", "whose held-out 62.1% is the highest"),
+    ("P11 merged pairs random 80.4 -> 81.4", "with those pairs merged it is 80.4%",
+     "with those pairs merged it is 81.4%"),
+    ("P11 split-record count 1,303 -> 1,304", "1,303 samples from the producer-less laboratories",
+     "1,304 samples from the producer-less laboratories"),
+    ("P11 ethanol table 133 -> 143", "2023          13           133", "2023          13           143"),
+    ("P11 terpene share 47.7 -> 57.7", "47.7% in 2023", "57.7% in 2023"),
+    ("P11 positive control 76.4 -> 77.4", "is recovered at 76.4%", "is recovered at 77.4%"),
+    ("P11 largest producer 13.2 -> 14.2", "the largest holds 13.2%", "the largest holds 14.2%"),
+    ("P11 permutation floor 0.0033 -> 0.003", "p = 0.0033 for the random split", "p = 0.003 for the random split"),
+    ("P11 class-weighted partitions 53.0 -> 54.0", "the class-weighted one 53.0% to 59.9%",
+     "the class-weighted one 54.0% to 59.9%"),
+    ("P11 dual-class AUC 0.632 -> 0.732", "its AUC falls from 0.899 to 0.632", "its AUC falls from 0.899 to 0.732"),
+    ("P11 title reverted to 'collapses'", "removes most of the apparent accuracy of", "collapses"),
     ("reference [1] journal reverted",
      "*European Archives of Psychiatry and\nClinical Neuroscience*",
      "*Journal of\nCannabis Research*"),
@@ -243,6 +268,10 @@ MUTATIONS = [
     ("em-dash introduced", "The task is a good test case for three reasons.",
      "The task is a good test case \u2014 for three reasons."),
 ]
+
+if len(sys.argv) > 1:
+    MUTATIONS = [mu for mu in MUTATIONS if any(arg in mu[0] for arg in sys.argv[1:])]
+    print(f"  filter {sys.argv[1:]}: {len(MUTATIONS)} mutations selected")
 
 print("  building sandbox")
 build_sandbox()

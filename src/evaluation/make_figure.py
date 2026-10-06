@@ -46,7 +46,8 @@ def parse():
         blk = a.split(f"=== {name}:")[1].split("\n===")[0]
         vals = [float(v) for v in re.search(r"values: \[([\d., ]+)\]", blk).group(1).split(",")]
         lo, hi = map(float, re.search(r"95% interval \[([\d.]+), ([\d.]+)\]", blk).groups())
-        parts[name] = {"values": vals, "boot": [lo, hi]}
+        pooled = float(re.search(r"pooled balanced_acc ([\d.]+)%", blk).group(1))
+        parts[name] = {"values": vals, "boot": [lo, hi], "pooled": pooled}
     parts["unseen-producer"]["random"] = float(
         re.search(r"random, producer rows only\s+([\d.]+)%", r7).group(1))
     parts["dual-class+unseen"]["random"] = float(
@@ -105,6 +106,7 @@ def main() -> int:
         s.append(f'<circle cx="{xs[0]:.1f}" cy="{Y(v):.1f}" r="4" fill="{col}" stroke="#fff" stroke-width="2"/>')
     # selective direct labels: the two ends and the logistic pair
     text(xs[-1] + 8, Y(rnd[-1]) + 3.5, f"{rnd[-1]:.1f}", 10)
+    text(xs[3], Y(rnd[2]) - 9, f"{rnd[2]:.1f}", 10, anchor="middle")
     text(xs[-1] + 8, Y(grp[-1]) - 6, f"{grp[-1]:.1f}", 10)
     text(xs[1] - 8, Y(rnd[0]) - 6, f"{rnd[0]:.1f}", 10, anchor="end")
     text(xs[1] - 8, Y(grp[0]) - 6, f"{grp[0]:.1f}", 10, anchor="end")
@@ -124,7 +126,8 @@ def main() -> int:
     s.append(f'<circle cx="{lab_x+5}" cy="40" r="3.2" fill="{ORANGE}" stroke="#fff" stroke-width="1.3"/>')
     text(lab_x + 13, 43.5, "one assignment", 10, MUTED)
     s.append(f'<line x1="{lab_x+112}" y1="40" x2="{lab_x+132}" y2="40" stroke="{BAND}" stroke-width="5" stroke-linecap="round"/>')
-    text(lab_x + 140, 43.5, "producer bootstrap, 95% interval", 10, MUTED)
+    s.append(f'<line x1="{lab_x+122}" y1="34" x2="{lab_x+122}" y2="46" stroke="{INK}" stroke-width="2"/>')
+    text(lab_x + 140, 43.5, "pooled score, producer bootstrap 95%", 10, MUTED)
     for v in (45, 50, 55, 60):
         s.append(f'<line x1="{X(v):.1f}" y1="{ay0}" x2="{X(v):.1f}" y2="{ay1}" stroke="{GRID}" stroke-width="1"/>')
         text(X(v), ay1 + 15, f"{v}", 10, MUTED, "middle")
@@ -140,7 +143,7 @@ def main() -> int:
         text(lab_x, cy - 6, lab, 10)
         text(lab_x, cy + 7, sub, 9.5, MUTED)
         text(lab_x, cy + 22, f"{min(p['values']):.1f} to {max(p['values']):.1f}", 9.5, MUTED)
-        text(lab_x, cy + 35, f"interval {lo:.1f} to {hi:.1f}", 9.5, MUTED)
+        text(lab_x, cy + 35, f"pooled {p['pooled']:.1f} ({lo:.1f} to {hi:.1f})", 9.5, MUTED)
         placed = []
         for v in sorted(p["values"]):
             x, lvl = X(v), 0
@@ -151,6 +154,8 @@ def main() -> int:
                      f'stroke="#fff" stroke-width="1.3"/>')
         s.append(f'<line x1="{X(lo):.1f}" y1="{cy+30}" x2="{X(hi):.1f}" y2="{cy+30}" '
                  f'stroke="{BAND}" stroke-width="5" stroke-linecap="round"/>')
+        s.append(f'<line x1="{X(p["pooled"]):.1f}" y1="{cy+24}" x2="{X(p["pooled"]):.1f}" y2="{cy+36}" '
+                 f'stroke="{INK}" stroke-width="2"/>')
     s.append("</svg>")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)

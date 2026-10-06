@@ -1,0 +1,57 @@
+rows: 37344   features: 19
+
+=== T. samples stored as two rows ===
+producer-less rows: 4115   with a product name: 0
+rows reporting exactly 1 analyte: 1303   exactly 4: 1303   adjacent (1 then 4) pairs: 1303
+analytes in the 1-analyte rows: ['delta_9_thc']   in the 4-analyte rows: ['cbd', 'cbda', 'thca', 'total_cbd']
+pairs with the same lab: 1303 of 1303
+pairs with the same date_tested: 1303 of 1303
+pairs with the same label: 1303 of 1303
+product_type of the first row: {'Solvent Based Concentrate': 1303}
+product_type of the second row: {'Solvent Based Concentrate/Extract': 1303}
+pairs per laboratory: {'PureVita Labs, LLC': 1230, 'Lifted Testing Laboratories': 22, 'Cannalytics RI, LLC': 51}
+after merging each pair into one row: rows=36041  classes={'hydrocarbon': 23270, 'solventless': 12771}  majority 64.6%
+missingness patterns, as stored: 13 distinct, 7 pure covering 4123 rows (11.04%), in-sample lookup accuracy 69.9% vs majority 65.8%
+missingness patterns, pairs merged: 12 distinct, 6 pure covering 2820 rows (7.82%), in-sample lookup accuracy 68.8% vs majority 64.6%
+random split, all rows, pairs merged: 80.4% (+/-0.7)
+unseen-lab, pairs merged: folds=8  67.4% (+/-19.3)
+laboratory probe, pairs merged: classes=10 rows=35875  acc=92.3% (+/-0.2)  baseline=41.9%  lift=+50.5pts
+
+=== Y. the label and the panel over time ===
+ethanol-named rows by year (solvent-based / non-solvent):
+  2020:   82 /    9
+  2021:   21 /    1
+  2022:   98 /    0
+  2023:   13 /  133
+share of rows with a terpene panel (d_limonene tested), by year:
+  2020:  96.2%  of 7484 rows
+  2021:  96.5%  of 7946 rows
+  2022:  84.9%  of 8118 rows
+  2023:  47.7%  of 9348 rows
+  2024:   0.0%  of 869 rows
+
+=== N. what the name word-families match ===
+named rows: 33229 of 37344  (non-solvent 11262, solvent-based 21967)
+non-solvent rows hitting a hydrocarbon word: 43, of which also say rosin: 43
+solvent-based rows hitting a mechanical word: 114 (rosin 0, hash 61, bubble 41, kief 12)
+
+=== F. macro-F1 baselines on each scheme's own rows ===
+  unseen-producer rows: n=33229  majority 39.8%  stratified shuffle 49.6%
+  dual-class rows: n=27751  majority 38.4%  stratified shuffle 49.4%
+
+=== L. logistic comparator, default and class-weighted (producer rows) ===
+  L2, C=1, unweighted              random 65.3% (+/-0.6)   unseen-producer 54.3% (+/-6.2)   gap 11.0 points
+  L2, C=1, class_weight=balanced   random 69.4% (+/-0.5)   unseen-producer 61.1% (+/-5.1)   gap 8.3 points
+
+=== P. positive control: is a row named distillate? (producer rows) ===
+  classes={np.str_('distillate'): 14063, np.str_('other'): 19166}
+  random 89.6% (+/-0.4)   unseen-producer 76.4% (+/-5.0)   gap 13.2 points
+
+=== R. rows per producer ===
+  producers=96  largest=4373 (13.2%)  five largest=42.3%  median=64  smallest=1
+
+=== B. producer bootstrap, predictions held fixed, both statistics ===
+  unseen-producer    pooled    observed 51.6%  95% interval [47.3, 56.6]  draws at or below 50.0%: 23.2%
+  unseen-producer    fold mean observed 54.0%  95% interval [50.2, 58.9]  draws at or below 50.0%: 2.0%
+  dual-class+unseen  pooled    observed 52.0%  95% interval [45.8, 59.8]  draws at or below 50.0%: 24.7%
+  dual-class+unseen  fold mean observed 54.6%  95% interval [48.4, 61.9]  draws at or below 50.0%: 7.1%

@@ -42,14 +42,20 @@ def main() -> int:
         out.append(f"{cls}:")
         out += [f"  {n:>6}  {t}" for t, n in vc.items()]
     out.append("")
-    out.append("=== PRODUCT-NAME WORD FAMILIES PER CLASS (a name may hit several) ===")
+    # Only rows that carry a product name can hit a word family: the 4,115
+    # producer-less rows have none. Percentages are over the NAMED rows of
+    # each class, so a nameless row is not counted as "names nothing".
+    named = name.str.strip() != ""
+    ns = int((named & (df["label"] == "solventless")).sum())
+    nh = int((named & (df["label"] == "hydrocarbon")).sum())
+    out.append(f"named rows: {int(named.sum())} of {len(df)}  "
+               f"(solventless {ns}, hydrocarbon {nh})")
+    out.append("=== PRODUCT-NAME WORD FAMILIES PER CLASS (a name may hit several; % of named rows) ===")
     out.append(f"{'family':66} {'solventless':>12} {'hydrocarbon':>12}")
     for label, pat in FAMILIES:
         hit = name.str.contains(pat, regex=True)
         s = int((hit & (df["label"] == "solventless")).sum())
         h = int((hit & (df["label"] == "hydrocarbon")).sum())
-        ns = int((df["label"] == "solventless").sum())
-        nh = int((df["label"] == "hydrocarbon").sum())
         out.append(f"{label:66} {s:>5} ({100*s/ns:4.1f}%) {h:>5} ({100*h/nh:4.1f}%)")
     out.append("")
     out.append("=== LABORATORIES CARRYING THE NON-SOLVENT + DISTILLATE NAMES ===")

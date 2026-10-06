@@ -1,4 +1,4 @@
-# Group-aware validation collapses extraction-category classification in cannabis chemical data
+# Group-aware validation removes most of the apparent accuracy of extraction-category classification in public cannabis certificates of analysis
 
 **Arthur Gonçalves Breguez**
 Independent researcher
@@ -15,32 +15,30 @@ Preprint. Code and evidence logs:
 Published models that classify cannabis products from cannabinoid and terpene
 profiles report near-perfect accuracy: above 95% for resin type, 100% for
 chemovar class. These figures come from random cross-validation or Kennard-Stone
-partitioning, protocols that do not hold out the plant, the producer or the
-laboratory, so replicate clones and repeat sources may span the train/test
-boundary.
+partitioning, which hold out no plant, producer or laboratory, so replicates may
+span the train/test boundary.
 
-We quantify that cost on a task whose group structure is explicit. Using 37,344
-cannabis certificates of analysis, almost all concentrates, each with a
+We quantify that cost on a task whose group structure is explicit. On 33,229
+certificate rows of cannabis concentrates that name a producer, each with a
 source-declared extraction category (non-solvent against solvent-based), a
-gradient-boosted classifier separates the two at 81.0% balanced accuracy under
-random five-fold cross-validation. Holding out the producer leaves 54.0%, and 51
-to 57% across twenty fold assignments, which a producer-level bootstrap cannot
-distinguish from the 50.0% chance level. Restricted to the 53 producers that
-make both classes, it gives 54.6%.
+gradient-boosted classifier scores 78.5% balanced accuracy (ROC AUC 0.89) under
+random five-fold cross-validation. Holding out the producer leaves 54.0% (AUC
+0.62). The 24-point loss shrinks to 11 for a logistic regression, and class
+weighting lifts the held-out score to 56 to 61%. A producer-level bootstrap puts
+the held-out AUC between 0.54 and 0.70: a modest signal survives, less than a
+third of what the random split shows above chance.
 
-A designed experiment shows the same direction with an estimator-dependent size:
-162 HPLC-assayed samples, six varieties and three extraction methods, fall from
-56.7% under random folds to 38.9% under leave-one-variety-out with gradient
+A designed experiment shows the same direction: 162 HPLC-assayed samples fall
+from 56.7% under random folds to 38.9% under leave-one-variety-out with gradient
 boosting, and from 54.3% to 46.3% with logistic regression, against 33.3%
 chance. In the market data the same profiles identify the producer at 67.1%
-against a 14.4% majority baseline and the testing laboratory at 92.3% against
-40.3%.
+against a 14.4% baseline and the laboratory at 92.3% against 40.3%.
 
-We conclude that the declared extraction category is not reliably recoverable
-from the analyte panels in public COAs for an unseen producer. We did not rerun
-the published studies and make no claim about their chemical conclusions, only
-that their figures come from validation that leaves group structure intact; for
-random cross-validation we measure 24 to 27 points of inflation.
+We conclude that the declared extraction category is only weakly recoverable
+from the analyte panels of this corpus for an unseen producer, and that a random
+split overstates it severalfold. We did not rerun the published studies and make
+no claim about their chemical conclusions, only that their figures come from
+validation that holds out no group.
 
 **Keywords:** cannabis, chemometrics, data leakage, group cross-validation,
 extraction method, certificates of analysis, negative result
@@ -99,8 +97,8 @@ sample names a producer and a laboratory. And a substantial subset of producers
 make both classes, which permits a test where a held-out producer's label cannot
 be read off the training rows.
 
-We report a negative result for the chemical question and a quantitative result
-for the methodological one.
+We report a largely negative result for the chemical question and a quantitative
+result for the methodological one.
 
 ## 2. Materials and methods
 
@@ -115,57 +113,95 @@ Labels come from the `product_type` field, which in some markets declares the
 extraction family directly as `non-solvent based concentrate` or `solvent based
 concentrate`. This is a source-declared label, recorded on the certificate, not
 an inference from a commercial product name. Rows whose `product_type` is only
-`concentrate` remain unlabelled and are never assigned to a class. Every row
-that carries a `lab_state` is from Nevada: seven laboratories and 31,422 of the
-usable rows (84.1%); the field is blank for the remaining 5,922 rows, across the
-four laboratories that record no producer and one that does, and no row names
-another state, although the names of the four producer-less laboratories (one is
-`Cannalytics RI`) suggest they are not Nevada laboratories, in which case the
-rule cited below does not govern their 4,115 rows. Tests are dated 2020-01-02 to
-2024-03-29 on the 33,765 rows that carry a date. Of the usable rows, 581 are
-exact duplicates and 1,813 (4.9%) repeat another row's product name, laboratory,
-producer and all 19 analyte values. We keep them, since nothing marks which copy
-is the record; 3.2 reports that dropping them moves the random split by 0.2
-points and the grouped score by 1.2.
+`concentrate` remain unlabelled and are never assigned to a class. The analyses
+run on the 37,344 labelled rows that survive the consistency check described
+below, which we call the usable rows.
 
-The two categories are regulatory, not chemical. The Nevada rule in force over
-the data period separates the same pair and defines it as "Extract of cannabis
-(nonsolvent) like hashish, bubble hash, infused dairy butter, mixtures of
-extracted products or oils or fats derived from natural sources, including
-concentrated cannabis extracted with ethanol or CO2" against "Extract of
-cannabis (solvent-based) made with any approved solvent, including concentrated
-cannabis extracted by means other than with ethanol or CO2" [12]; the 2018 rule
-it replaced named CO2 only. Under that definition the non-solvent category spans
-mechanical separation, ethanol and CO2, and the product names confirm that it is
-used that way here (counts on the 37,344 usable rows defined below; a name may
-hit several families):
+Every usable row that carries a `lab_state` is from Nevada: seven laboratories
+and 31,422 of the usable rows (84.1%). The field is blank for the remaining
+5,922 rows, which come from five laboratories, four that record no producer and
+one that does. No row names another state, but the names of the four
+producer-less laboratories (one is `Cannalytics RI`) suggest they are not in
+Nevada, in which case the rule cited below does not govern their 4,115 rows.
+Tests are dated 2020-01-02 to 2024-03-29 on the 33,765 rows that carry a date.
+
+Rows are not samples. Of the usable rows, 581 are exact duplicates and 1,813
+(4.9%) repeat another row's product name, laboratory, producer and all 19
+analyte values. Separately, 1,303 samples from the producer-less laboratories
+are stored as two adjacent rows each, with the same laboratory and date and
+complementary analytes (`delta_9_thc` in one; `cbd`, `cbda`, `thca` and
+`total_cbd` in the other), so those laboratories' 4,115 rows describe 2,812
+samples. We keep the rows as stored, since nothing marks which copy is the
+record, and 3.2 reports what dropping the duplicates and merging the pairs does.
+The split pairs lie outside the 33,229 rows that name a producer, on which the
+headline comparison runs. Those rows come from 96 producers of very unequal
+size: the largest holds 13.2% of them, the five largest 42.3%, and the median
+producer 64 rows.
+
+The two categories are regulatory, not chemical. Nevada's rule separates the
+same pair, and in its versions of July 2022 and October 2023 defines it as
+"Extract of cannabis (nonsolvent) like hashish, bubble hash, infused dairy
+butter, mixtures of extracted products or oils or fats derived from natural
+sources, including concentrated cannabis extracted with ethanol or CO2" against
+"Extract of cannabis (solvent-based) made with any approved solvent, including
+concentrated cannabis extracted by means other than with ethanol or CO2" [12].
+The text effective November 2020 already carries the second definition, and the
+2018 rule it replaced named CO2 only. Under the current definition the
+non-solvent category spans mechanical separation, ethanol and CO2, and the
+product names are consistent with that. Table 1 counts them over the rows that
+carry a name, which are the 33,229 rows with a producer; a name may hit several
+families.
+
+**Table 1.** Product-name word families in each declared category, over the
+33,229 named rows.
 
 ```
 word family in product_name              non-solvent     solvent-based
-distillate                               5,805 (45.5%)   8,258 (33.6%)
-co2 / supercritical                        225 ( 1.8%)      19 ( 0.1%)
-ethanol                                    163 ( 1.3%)     214 ( 0.9%)
-hydrocarbon words                           43 ( 0.3%)   3,805 (15.5%)
+distillate                               5,805 (51.5%)   8,258 (37.6%)
+co2 / supercritical                        225 ( 2.0%)      19 ( 0.1%)
+ethanol                                    163 ( 1.4%)     214 ( 1.0%)
+hydrocarbon words                           43 ( 0.4%)   3,805 (17.3%)
   (bho, butane, live resin, shatter, badder, wax)
-mechanical words                           559 ( 4.4%)     114 ( 0.5%)
+mechanical words                           559 ( 5.0%)     114 ( 0.5%)
   (rosin, hash, kief, bubble, ice water)
 ```
 
-Only 4.4% of the non-solvent rows name a mechanical process, while 45.5% are
-named `distillate`, a product that presupposes a crude extract and is not how
-mechanical concentrates are sold, 1.8% name CO2 and 1.3% name ethanol. The task
-this paper tests is therefore the regulator's category, mechanical, ethanol or
-CO2 extraction against the remaining solvents, and not rosin against BHO
-specifically; 3.2 reports the headline pair on two narrower subsets. The
-`hydrocarbon` shorthand is close to the rule's meaning, since the approved
-solvents other than ethanol and CO2 are hydrocarbons, but 0.9% of the
-solvent-based names say ethanol and 0.5% name a mechanical process, which the
-rule does not explain. Every distillate-named row in the non-solvent class comes
-from a laboratory that also records a producer; whether the four laboratories
-that record none draw the line the same way is not stated in the data.
+Only 5.0% of the named non-solvent rows contain a mechanical word, while 51.5%
+are named `distillate`, a product that presupposes a crude extract and is not
+how mechanical concentrates are sold, 2.0% name CO2 and 1.4% name ethanol. The
+word families are crude. All 43 non-solvent rows that hit a hydrocarbon word
+also say rosin, where badder and wax are consistencies, and the 114
+solvent-based rows that hit a mechanical word contain hash, bubble or kief
+inside cultivar names, none of them rosin. The table describes the two
+categories; it cannot count mislabelled rows.
+
+Neither the wording of the rule nor practice was constant over the period, and
+they did not change together. Product names that say ethanol are solvent-based
+through 2022 and non-solvent in 2023 (Table 2), so the meaning of the label
+drifts within the data.
+
+**Table 2.** Rows whose product name says ethanol, by year of test and declared
+category.
+
+```
+year    solvent-based   non-solvent
+2020          82             9
+2021          21             1
+2022          98             0
+2023          13           133
+```
+
+The task this paper tests is therefore the regulator's category as the
+laboratories applied it over four years, mechanical, ethanol or CO2 extraction
+against the remaining solvents, and not rosin against BHO specifically; 3.2
+reports the headline pair on two narrower subsets. The `hydrocarbon` shorthand
+is close to the current rule's meaning, since the approved solvents other than
+ethanol and CO2 are hydrocarbons.
 
 Most concentrate rows carry no such declaration and are therefore dropped at
 this step, which is where the bulk of the reduction happens:
+
+**Table 3.** From concentrate rows to labelled rows.
 
 ```
 concentrate or extract rows                     139,714
@@ -201,12 +237,16 @@ The resulting labelled dataset is 37,374 rows, of which 30 carry contradictory
 labels and are excluded from every analysis, leaving **37,344 rows** that all
 figures below are computed on unless stated otherwise:
 
+**Table 4.** Class counts on the usable rows.
+
 ```
 hydrocarbon   24,573   65.8%
 solventless   12,771   34.2%
 ```
 
 Grouping variables are populated as follows:
+
+**Table 5.** Grouping variables on the usable rows.
 
 ```
 producer      33,229 rows (89.0%)   96 distinct
@@ -252,6 +292,9 @@ coverage figures below and the pre-check in 2.3.
 This distinction produces two different and both meaningful coverage figures,
 which we separate explicitly because conflating them is easy:
 
+**Table 6.** Share of rows with the analyte tested and with a non-zero value, by
+class.
+
 ```
 analyte               tested (flag)          detected (value > 0)
                    solventless  hydro      solventless  hydro
@@ -261,10 +304,16 @@ alpha_pinene            75.7%   81.1%           34.2%   56.3%
 total_terpenes          88.2%   89.4%           56.8%   74.5%
 ```
 
-Terpene panels are requested at similar rates for both classes, a gap of
-1 to 6 points. The large gap, 18 to 25 points, is in *detection*: hydrocarbon
-extracts report a non-zero terpene value far more often. That is a property of
-the extracts or of their reporting, not of which test was ordered.
+Terpene panels are requested at similar rates for both classes, a gap of 1 to 6
+points. The large gap, 18 to 25 points, is in *detection*: hydrocarbon extracts
+report a non-zero terpene value far more often. That gap is in what is reported
+once a panel is run, not in which test was ordered, and with 51.5% of the named
+non-solvent rows being distillates, refining is a likelier cause than the
+extraction category itself. The panel is not constant over time either. Nevada
+listed terpene analysis among the required tests for both categories in the text
+effective November 2020 and no longer does in the July 2022 text [12], and the
+share of rows with a terpene panel falls from 96.2% in 2020 to 84.9% in 2022,
+47.7% in 2023 and none in 2024.
 
 Two properties of these columns are worth stating because they bound what the
 features can mean.
@@ -318,13 +367,13 @@ against 84.1% plain and 81.0% balanced for the main model under a random split,
 so the shortcut is 4.0 of 18.3 points on one metric and 6.8 of 31.0 on the
 other.
 
-The probe sees exactly the 19 analyte columns the model sees, which matters:
-an earlier version of it looked at 6 terpenes only and reported a +0.0-point
-lift, understating the available shortcut by four points. A probe narrower
-than the feature set is a lower bound on the wrong quantity.
+The probe sees exactly the 19 analyte columns the model sees; a probe narrower
+than the feature set would be a lower bound on the wrong quantity.
 
 That 4.1-point lift is not spread evenly. The 19 columns take only 13 distinct
 missingness patterns, and 7 of them are **100% one class**:
+
+**Table 7.** Missingness patterns that contain a single class, rows as stored.
 
 ```
 patterns that are 100% one class: 7 of 13
@@ -338,16 +387,17 @@ For 11% of the corpus the label is recoverable with certainty from which cells
 are blank, before any number is read. Almost all of these rows, 4,115 of 4,123,
 come from four laboratories (`PureVita`, `Cannalytics RI`, `Lifted Testing`,
 `Green Peaks`) that report a restricted analyte panel and record no producer, so
-the shortcut is a laboratory reporting convention and not chemistry. Inside
-those laboratories the panel is itself class-dependent: at `PureVita`, rows
-reporting one or four analytes are all hydrocarbon (1,230 each) and rows
-reporting six are all solventless (665), so the convention is which panel is
-ordered for which product, and it is entangled with the laboratory signal of
-3.1. The remaining 8 rows sit in three sparsely-populated patterns from other
-laboratories and do carry a producer; 14 of the pure rows report no analyte at
-all and stay in the data. Those 4,115 rows are therefore also the rows the
-unseen-producer scheme must drop, which is why the same-sample comparison in 3.2
-matters.
+the shortcut is a laboratory reporting convention and not chemistry. Much of it
+is an artefact of the split records of 2.1: the rows reporting one analyte and
+the rows reporting four are the two halves of the same 1,303 samples (1,230 of
+them at `PureVita`), all solvent-based, while the rows reporting six are all
+non-solvent. With each pair merged the columns take 12 patterns, 6 of them pure,
+covering 2,820 rows (7.82%), and the in-sample lookup scores 68.8% against a
+64.6% majority. The remaining 8 rows sit in three sparsely-populated patterns
+from other laboratories and do carry a producer; 14 of the pure rows report no
+analyte at all and stay in the data. Those 4,115 rows are therefore also the
+rows the unseen-producer scheme must drop, which is why the same-sample
+comparison in 3.2 matters.
 
 Laboratory and class are not degenerate, though they are far from independent.
 Only 373 rows, 1.0%, sit in laboratories that are more than 90% one class, and
@@ -368,11 +418,12 @@ A single model produces every headline figure: `HistGradientBoostingClassifier`
 19 analyte columns of 2.2. The point of the study is the evaluation protocol,
 not the estimator, so the estimator is held constant across all schemes. The
 alarm probes of 2.6 use the same estimator at `max_iter=120` and a learning rate
-of 0.05, for the reason given there. A standardised logistic regression is run
-beside it in 3.2 and 3.3 as a low-capacity comparator. Since a linear model
-cannot route missing values, on the market data it receives the log-transformed
-values with empty cells set to zero, plus one reported-or-not indicator per
-analyte.
+of 0.05, for the reason given there. A standardised logistic regression (L2
+penalty, C = 1) is run beside it in 3.2 and 3.3 as a low-capacity comparator.
+Since a linear model cannot route missing values, on the market data it receives
+log(1 + x) of each value with empty cells set to zero, plus one reported-or-not
+indicator per analyte. The headline model is unweighted, so 3.2 also runs both
+estimators with class weights inversely proportional to class frequency.
 
 Four split schemes are compared on the market data:
 
@@ -389,18 +440,17 @@ Four split schemes are compared on the market data:
 4. **dual-class + unseen**: restricted to the 53 producers that make *both*
    classes, grouped by producer.
 
-Scheme 4 is the strongest available evidence, though not for the reason a
-first reading suggests. Restricting to producers who make both classes removes
-the degenerate case where a producer's identity determines its label outright,
-but it does not make producer identity uninformative: the solventless share
-across these 53 producers ranges from below 0.01 to 0.99 with a median of 0.35,
-and 30 of the 53 sit outside the 0.2 to 0.8 band. A classifier given *only* an
-encoded producer ID, and no chemistry at all, still reaches 84.4% balanced
-accuracy inside this subset under a random split. What the restriction
-guarantees is that the held-out producer's label cannot be inferred from
-having seen that same producer in training, since every producer in the subset
-contributes both classes. It covers 27,751 rows, 74.3% of the usable data,
-with a 17,312 / 10,439 class split.
+Scheme 4 is the strictest available test. Restricting to producers who make both
+classes removes the degenerate case where a producer's identity determines its
+label outright, but it does not make producer identity uninformative: the
+solventless share across these 53 producers ranges from below 0.01 to 0.99 with
+a median of 0.35, and 30 of the 53 sit outside the 0.2 to 0.8 band. A classifier
+given *only* an encoded producer ID, and no chemistry at all, still reaches
+84.4% balanced accuracy inside this subset under a random split. What the
+restriction guarantees is that the held-out producer's label cannot be inferred
+from having seen that same producer in training, since every producer in the
+subset contributes both classes. It covers 27,751 rows, 74.3% of the usable
+data, with a 17,312 / 10,439 class split.
 
 On the controlled data, random five-fold is compared against
 leave-one-variety-out.
@@ -410,15 +460,18 @@ leave-one-variety-out.
 The classes are roughly 1:2, so the extraction task is scored by balanced
 accuracy; where plain accuracy appears, in the 2.3 probe and the alarm probes of
 2.6, it is given beside its majority-class baseline. Balanced accuracy has a
-chance level of 50.0% for two classes and 33.3% for three; we also report macro
-F1, per-class recall, confusion matrices, and the spread across folds. Every
-"+/-" in a table is the population standard deviation of the fold scores
-(divisor n), while the t-intervals of 3.2 use the sample standard deviation, so
-the two do not convert directly. Two baselines are computed explicitly:
-most-frequent (balanced accuracy 50.0%) and stratified random (50.7% on the one
-draw made, 50.0% in expectation). The alarm probes of 2.6 are multi-class and
-report plain accuracy against the explicit majority-class baseline of their
-target, with balanced accuracy beside it.
+chance level of 50.0% for two classes and 33.3% for three. Because it is
+computed at the default decision threshold, which an unweighted model on
+unbalanced classes does not place well, 3.2 also reports ROC AUC, which needs no
+threshold and has a chance level of 0.5. We also report macro F1, per-class
+recall, confusion matrices, and the spread across folds. Every "+/-" in a table
+is the population standard deviation of the fold scores (divisor n), while the
+t-intervals of 3.2 use the sample standard deviation, so the two do not convert
+directly. Two baselines are computed explicitly: most-frequent (balanced
+accuracy 50.0%) and stratified random (50.7% on the one draw made, 50.0% in
+expectation). The alarm probes of 2.6 are multi-class and report plain accuracy
+against the explicit majority-class baseline of their target, with balanced
+accuracy beside it.
 
 Per-class recall matters here because a single aggregate figure hides which side
 of the problem the model actually solves.
@@ -449,17 +502,19 @@ beside the chemical one.
 
 The probes are multi-class, 11 and 33 classes, and the softmax boosting diverges
 on them at scikit-learn's default learning rate of 0.1: the laboratory probe's
-five folds score 40.6 to 69.4 and the producer probe's 10.4 to 68.7. An earlier
-version of this manuscript reported those runs, as a 15.3-point and a 9.9-point
-lift. At a learning rate of 0.05 the fold scores span 0.6 points for the
-laboratory and 1.6 for the producer, and those are the figures reported in 3.1.
-The binary extraction task does not show the problem: its random-split fold
-spread is 0.4 at the default rate and 0.5 at 0.05, with the grouped score at
-54.0% and 54.1%, and it keeps the default.
+five folds score 40.6 to 69.4 and the producer probe's 10.4 to 68.7. At a
+learning rate of 0.05 the fold scores span 0.6 points for the laboratory and 1.6
+for the producer, and those are the figures reported in 3.1. The binary
+extraction task is less sensitive: its random split scores 81.0% at the default
+rate and 79.0% at 0.05, with fold spreads of 0.4 and 0.5 and the held-out score
+at 54.0% and 54.1%, and it keeps the default.
 
 ## 3. Results
 
 ### 3.1 The alarm fires first
+
+**Table 8.** Alarm probes: predicting metadata from the 19 analyte columns,
+random five-fold.
 
 ```
 target   classes    rows  accuracy        baseline  lift       bal_acc (chance)
@@ -477,10 +532,14 @@ with at least 100 rows that record one (33,161 rows), the laboratory probe
 scores 85.4% (+/-3.3) against a 45.3% baseline. In hindsight this is
 unsurprising, since instruments, calibration, reporting conventions and
 clientele all differ between laboratories, and this probe cannot separate them.
-Its consequence is not optional: any score obtained while train and test share
-laboratories is partly reading a laboratory-specific signal.
+The consequence is that any score obtained while train and test share
+laboratories is partly reading a laboratory-specific signal. With the split
+pairs of 2.1 merged the laboratory probe is unchanged at 92.3%, on ten
+laboratories and a 41.9% baseline.
 
-### 3.2 Market data: 81.0% becomes 54.0%
+### 3.2 Market data: 78.5% becomes 54.0%
+
+**Table 9.** The reported model under each split scheme.
 
 ```
 split scheme            balanced_acc    macro_F1   folds
@@ -492,85 +551,119 @@ unseen-lab                   68.3% (+/-18.6)  67.6%      8
 dual-class + unseen          54.6% (+/-2.6)   50.7%      5
 ```
 
-Under a protocol of the kind used in the published literature, the chemistry
-appears to separate the two declared categories at 81.0%. Holding out the
-producer leaves 54.0%, four points above coin-flipping.
+The `random` row runs on all 37,344 usable rows and the two producer schemes
+only on rows that name a producer, so the table's 81.0% and 54.0% are not like
+with like. On the same 33,229 rows the random split scores 78.5%, and that pair,
+78.5% against 54.0%, a gap of **24.4 points** on the unrounded means, is the
+headline of this paper. The 81.0% includes the 4,115 producer-less rows, which
+carry the reporting-panel shortcut of 2.3 and the 1,303 samples stored twice
+(2.1); with those pairs merged it is 80.4%.
 
-Two qualifications are needed before that 27-point gap can be read as a pure
-protocol effect, and both are measurable.
+How far above chance the held-out score sits depends on how it is measured. The
+reported model is unweighted and the classes are roughly 1:2, so held out it
+answers mostly with the majority class (Table 12), and balanced accuracy at the
+default threshold understates what its scores contain. Table 10 adds ROC AUC and
+class weighting.
 
-First, the two schemes do not run on the same rows: `random` uses all 37,344
-usable rows while `unseen-producer` requires a producer and so is confined to
-the 33,229 rows that have one, 89.0%. Comparing like with like, a random split
-*restricted to those same rows* scores 78.5%, so the protocol-only gap is
-**24.4 points** on the unrounded means and the remaining 2.6 come from the
-easier sample. The paper's headline figure of 27 is the comparison a reader of
-the published literature would make, since those studies report the
-random-split number on all their data; 24.4 is the stricter quantity and we
-report both.
+**Table 10.** Four models on the rows that name a producer; pooled AUC with its
+producer bootstrap 95% interval.
 
-Second, how far above chance the grouped result sits. The reported partition is
-one draw: its five folds score 48.6, 57.6, 46.7, 55.7 and 61.5, a 95% interval
-of [46.3, 61.8] over folds that share training data (one-sample t against
-chance, p = 0.22), and pooling its predictions gives 51.6%. Two analyses put the
-question at the level where the data are independent, the producer. Twenty
-random reassignments of producers to folds (Figure 1b) give means from 51.3% to
-56.6% (median 53.8%, sd 1.7), none at or below 50.0%. A bootstrap that resamples
-the 96 producers with replacement gives the pooled balanced accuracy a 95%
-interval of [47.3, 56.6], with 23.2% of draws at or below chance. The grouped
-score is therefore a few points above 50 on most partitions but not
-distinguishable from chance at the producer level, and 24 to 27 points below the
-random split. Laboratory identity alone, as a lookup under the same folds,
-scores 43.6%, so those few points are not a laboratory prior.
+```
+producer rows (33,229)     random split     producer held out
+model                      bal_acc   AUC    bal_acc         AUC    pooled AUC [95%]
+boosting, unweighted        78.5%  0.894    54.0% (+/-5.6)  0.625  0.610 [0.535, 0.698]
+boosting, class-weighted    80.6%  0.894    55.8% (+/-5.5)  0.621  0.630 [0.551, 0.715]
+logistic, unweighted        65.3%  0.753    54.3% (+/-6.2)  0.634  0.604 [0.519, 0.696]
+logistic, class-weighted    69.4%  0.752    61.1% (+/-5.1)  0.636  0.662 [0.571, 0.745]
+```
 
-The gap is stable under reseeding of the random split: three further seeds give
-protocol-only gaps of 24.6, 24.5 and 24.6 points. It grows with model capacity
-while the grouped score does not move (Figure 1a): at 50, 100, 200 and 400
-boosting iterations the same-sample random split scores 74.3%, 76.6%, 78.5% and
-80.1% and the grouped one 53.2%, 53.8%, 54.0% and 54.0%, so the gap runs from
-21.1 to 26.1 points and the 24.4 reported here is one point on that curve. A
-standardised logistic regression, which has far less capacity to memorise
-producers, scores 65.3% on the same-sample random split and 54.3% grouped: a gap
-of 11.0 points around the same grouped score. Dropping the 1,813 duplicate rows
-of 2.1 gives 80.8% for the random split and 55.2% grouped, a gap of 25.6 points.
-A temporal split, training on the earliest 80% of dated rows, scores 73.4% with
-99.3% of its test rows from producers seen in training, so time alone costs far
-less than holding out the producer.
+Three things follow. First, a signal does transfer across producers: every model
+ranks held-out rows with a fold-mean AUC of 0.62 to 0.64, and the producer
+bootstrap interval of the pooled AUC excludes 0.5 for all four. Second, it is
+modest. Held out, the reported model keeps less than a third of the above-chance
+AUC the random split shows, 0.125 of 0.394. Its balanced accuracy of 54.0% is
+51.6% when the predictions are pooled, with a producer bootstrap interval of
+[47.3, 56.6] for the pooled score and [50.2, 58.9] for the fold mean. Third, the
+size of the loss depends on the estimator and on class weighting: 24.4 points
+for unweighted boosting, 24.8 with class weights, 11.0 for an unweighted
+logistic regression and 8.3 for a class-weighted one, whose held-out 61.1% is
+the highest score any model reaches. The bootstrap resamples the 96 producers
+with replacement and recomputes the statistic from the held-out predictions of
+the reported partition. The models are not refitted, so it reflects which
+producers are tested, not which are trained on.
+
+The reported partition is one draw. Twenty random reassignments of producers to
+folds (Figure 1b) give the reported model means from 51.3% to 56.6% (median
+53.8%, sd 1.7) and the class-weighted one 53.0% to 59.9% (median 55.5%, AUC
+0.602 to 0.664); none falls to 50.0%. The five folds of the reported partition
+score 48.6, 57.6, 46.7, 55.7 and 61.5, a t-interval of [46.3, 61.8] over folds
+that share training data (p = 0.22), which is why the producer bootstrap is the
+better guide. Laboratory identity alone, as a lookup under the same folds,
+scores 43.6%, below 50 because a laboratory's majority class among the training
+producers is a poor guide to the held-out ones, so the points above chance are
+not a laboratory prior.
 
 ![Figure 1](reports/figures/fig1_validation_gap.svg)
 
-**Figure 1.** Balanced accuracy on the market data. (a) Random split on the
-producer rows and producer-held-out score, for a standardised logistic
-regression and for gradient boosting at four iteration counts. (b) Mean score of
-each of twenty random assignments of producers to folds, for all producers and
-for the dual-class subset, with the producer-cluster bootstrap 95% interval of
-the pooled score on the reported partition. Every plotted value is parsed from
-the evidence logs by `src/evaluation/make_figure.py`.
+**Figure 1.** Balanced accuracy on the rows that name a producer, unweighted
+models. (a) Random split and producer-held-out score, for a standardised
+logistic regression and for gradient boosting at four iteration counts. (b) Mean
+score of each of twenty random assignments of producers to folds, for all
+producers and for the dual-class subset; the bar is the producer bootstrap 95%
+interval of the pooled score on the reported partition and the tick is that
+pooled score. Every plotted value is parsed from the evidence logs by
+`src/evaluation/make_figure.py`.
 
-Two narrower definitions of the label behave the same way with a larger
-residual. On the 19,166 producer rows not named distillate, the random split
-scores 84.1% and the grouped one 60.6% (+/-8.7), a gap of 23.5 points. On the
-4,345 rows whose names say rosin, hash or kief in the non-solvent class or BHO,
-live resin, shatter, badder or wax in the solvent-based class, the closest this
-corpus comes to rosin against BHO, they score 77.0% and 60.3% (+/-6.2), a gap of
-16.8 points. Both grouped scores sit near 60% rather than 54%, each on a single
-partition with a wide fold spread, so the profile may carry somewhat more across
-producers once distillates are set aside; we did not test whether that
-difference is stable.
+**Table 11.** Robustness of the gap. Balanced accuracy; gap in points on
+unrounded means.
 
-The strictest test agrees. The dual-class subset scores 54.6% (+/-2.6) grouped
-by producer against 80.3% (+/-0.7) for a random split on the same 27,751 rows, a
-gap of 25.6 points on the unrounded means. On the reported partition its five
-folds are 54.1, 58.5, 53.2, 56.4 and 50.9, a fold interval of [51.0, 58.3] that
-excludes 50.0% (p = 0.024), but that is specific to the partition: twenty
-reassignments give means from 48.8% to 56.8% (median 54.0%), two of them at or
-below 50.0%, and the producer-cluster bootstrap interval is [45.8, 59.8].
-Laboratory identity alone scores 40.8% under the same folds. Macro F1 is 50.3%
-(+/-4.3) and 50.7% (+/-3.1) on the two schemes, against 39.8% for the majority
-predictor and 49.8% for a stratified shuffle on the same rows, so neither scheme
-beats a stratified guess on that metric.
+```
+check (producer rows, reported model)       random   held out    gap
+reported: 200 boosting iterations           78.5%    54.0%     24.4
+random-split seeds 1, 7, 12345                                 24.6, 24.5, 24.6
+50 iterations                               74.3%    53.2%     21.1
+100 iterations                              76.6%    53.8%     22.7
+400 iterations                              80.1%    54.0%     26.1
+1,813 duplicate rows dropped (all rows)     80.8%    55.2%     25.6
+rows not named distillate (19,166)          84.1%    60.6%     23.5
+rows named for a process (4,345)            77.0%    60.3%     16.8
+temporal split (latest 20% as test)         73.4%
+positive control: named distillate or not   89.6%    76.4%     13.2
+```
+
+Table 11 varies what could be suspected of producing the gap. It is stable under
+reseeding of the random split. It grows with model capacity while the held-out
+score does not move (Figure 1a), so 24.4 is one point on a curve from 21.1 to
+26.1. Duplicate rows do not produce it. A temporal split, training on the
+earliest 80% of dated rows with 99.3% of its test rows from producers seen in
+training, scores 73.4%, so time alone costs far less than holding out the
+producer, although the label and the panel both drift over the period (2.1,
+2.2). Two narrower definitions of the label keep more when held out, near 60% on
+a single partition each with fold spreads of 8.7 and 6.2: the rows not named
+distillate, and the rows whose names carry a mechanical word in the non-solvent
+class or a hydrocarbon word in the solvent-based class, the closest this corpus
+comes to rosin against BHO. The positive control shows that the hold-out does
+not destroy a score by itself: whether a row is named distillate, a target with
+a known chemical signature, is recovered at 76.4% for unseen producers.
+
+The strictest test agrees on the size of the loss. The dual-class subset scores
+54.6% (+/-2.6) held out against 80.3% (+/-0.7) for a random split on the same
+27,751 rows, a gap of 25.6 points on the unrounded means, and its AUC falls from
+0.899 to 0.632. On this subset the surviving signal is not separable from chance
+at the producer level: twenty reassignments give means from 48.8% to 56.8%
+(median 54.0%), two of them at or below 50.0%, and the producer bootstrap spans
+[45.8, 59.8] for the pooled balanced accuracy and [0.497, 0.704] for the pooled
+AUC. On the reported partition its five folds are 54.1, 58.5, 53.2, 56.4 and
+50.9, a fold interval of [51.0, 58.3] that excludes 50.0% (p = 0.024), which is
+specific to that partition. Laboratory identity alone scores 40.8% under the
+same folds. Macro F1 is 50.3% (+/-4.3) and 50.7% (+/-3.1) on the two schemes,
+against 39.8% and 38.4% for the majority predictor and 49.6% and 49.4% for a
+stratified shuffle on each scheme's own rows, so on that thresholded metric
+neither beats a stratified guess.
 
 The confusion matrices show where the apparent skill was concentrated:
+
+**Table 12.** Pooled confusion matrix of the reported model, producer held out.
 
 ```
 unseen-producer     true hydrocarbon: 16,149 correct /  5,818 wrong
@@ -591,7 +684,7 @@ easy side. A single balanced-accuracy number would have concealed this;
 per-class recall does not.
 
 The `unseen-lab` scheme deserves separate comment. Its mean, 68.3%, is the
-highest of the three honest schemes, but its fold-to-fold standard deviation is
+highest of the three group-held-out schemes, but its fold-to-fold standard deviation is
 **18.6 points**. Performance swings wildly with which laboratory is held out.
 That is the signature of a model keyed to laboratory convention rather than to a
 stable chemical difference, and it is consistent with the alarm in 3.1. A study
@@ -603,9 +696,12 @@ eight held-out laboratories the hydrocarbon share ranges from 13.5%
 (`Cannalytics RI`, 758 rows) to 78.4% (`PureVita`, 3,137 rows), against an
 overall 65.8%. Holding out a laboratory therefore shifts the test-set prior as
 well as the instrument, and the two effects cannot be separated with this data.
-We report the scheme for completeness and do not rest any conclusion on it.
+With the split pairs of 2.1 merged the scheme scores 67.4% (+/-19.3).
+We report it for completeness and do not rest any conclusion on it.
 
 ### 3.3 Controlled experiment: the same direction, an estimator-dependent size
+
+**Table 13.** Controlled experiment, gradient boosting.
 
 ```
 split scheme              balanced_acc    macro_F1   folds
@@ -619,6 +715,8 @@ With gradient boosting, a random split suggests method is somewhat separable at
 chance with a fold spread of 12.6 that straddles it. That is the market-data
 pattern with the confounder changed from producer to variety. It does not
 survive a change of estimator intact:
+
+**Table 14.** Controlled experiment, logistic regression.
 
 ```
 logistic regression       balanced_acc
@@ -656,9 +754,9 @@ and the gap 5.5. Second, the drop comes from the variety structure and not from
 the fold count: holding out six groups of 27 samples assigned at random, which
 keeps the fold geometry and breaks the variety link, averages 54.0% over 200
 draws and never falls to 38.9%. Third, a permutation test over 300 global label
-shuffles, which also break the balanced design, gives p ≤ 0.003 for the random
-split, which no shuffle reaches, and p = 0.11 for leave-one-variety-out, so the
-boosted grouped score is not distinguishable from chance.
+shuffles, which also break the balanced design, gives p = 0.0033 for the random
+split, the floor for 300 shuffles, and p = 0.11 for leave-one-variety-out, so
+the boosted grouped score is not distinguishable from chance.
 
 This matters for interpretation. The Cannlytics result alone could be dismissed
 as a consequence of messy market data. The controlled experiment shows the same
@@ -671,14 +769,15 @@ property of the estimator as well as of the data.
 
 Two claims, of different kinds.
 
-The **chemical claim** is narrow: the analyte panels present in public cannabis
-COAs, 19 columns of which three are derived totals, heavily left-censored, do
-not carry enough information to identify the declared extraction category,
-non-solvent against solvent-based (2.1), for a producer the model has never
-seen. Producer variation dominates whatever method signal exists: on the
-dual-class rows under a random split, a classifier given only an encoded
-producer ID reaches 84.4% and the chemistry 80.3%, while the chemistry grouped
-by producer reaches 54.6%. Cultivar plausibly does the same, but the two
+The **chemical claim** is narrow: the analyte panels of this corpus, 19 columns
+of which three are derived totals, heavily left-censored, carry only a weak
+signal of the declared extraction category, non-solvent against solvent-based
+(2.1), for a producer the model has never seen: an AUC of 0.62 against 0.89
+under a random split, and 54 to 61% balanced accuracy depending on the estimator
+and on class weighting. Producer variation dominates whatever method signal
+exists: on the dual-class rows under a random split, a classifier given only an
+encoded producer ID reaches 84.4% and the chemistry 80.3%, while the chemistry
+grouped by producer reaches 54.6%. Cultivar plausibly does the same, but the two
 datasets disagree on the evidence and we do not claim it for the market corpus:
 in the controlled experiment the four cannabinoids read variety at 60.7% against
 16.7% chance while reading method at 38.9% against 33.3% (46.9% and 46.3% with
@@ -688,19 +787,20 @@ reconstructed strain key only weakly, 9.9 points above its baseline (4.3).
 The **methodological claim** is general and, we think, the more useful one.
 Cannabis chemical data has group structure, and the validation protocols in use
 ignore it. Two independent datasets, one market and one designed, both lose
-performance when the group is held out: 24 to 27 points on the market data with
-gradient boosting and 11 with logistic regression, to a grouped score near 54%
-either way; 15 to 18 points on the designed experiment with gradient boosting
-and 5 to 8 with logistic regression. What the random split rewards is largely
-group identity, which the same profiles carry strongly: producer at 67.1%
-against a 14.4% baseline, laboratory at 92.3% against 40.3%, variety at 3.6
-times chance.
+performance when the group is held out: on the market data 24 points of balanced
+accuracy with gradient boosting and 8 to 11 with logistic regression, and 0.27
+of AUC for the reported model; on the designed experiment 15 to 18 points with
+gradient boosting and 5 to 8 with logistic regression. What the random split
+rewards is largely group identity, which the same profiles carry strongly:
+producer at 67.1% against a 14.4% baseline, laboratory at 92.3% against 40.3%,
+variety at 3.6 times chance.
 
 This gives a concrete magnitude to the concern raised abstractly in [8]: in this
-domain the inflation is 27 points on market data, 24.4 of which survive a
-same-sample comparison, and 15 to 18 on a controlled experiment, for a flexible
-estimator; it is 11 and 5 to 8 points for a linear one. It is not a rounding
-error for either.
+corpus the inflation is 24 points of balanced accuracy for a flexible estimator,
+27 if rows without a producer are counted on the random side only, and 15 to 18
+on a controlled experiment; for a linear model it is 8 to 11 and 5 to 8. It is
+not a rounding error for either, and it is not the whole score either: the
+collapse stops short of chance.
 
 ### 4.2 What this does not establish
 
@@ -713,17 +813,19 @@ contradict them.
 generalise across producers. A richer assay, a full terpene panel or an LC-MS
 fingerprint, is a different experiment.
 
-**Not** that the labels are wrong. They are source-declared and agree with the
-name-derived path on 99.3% of the 11.5% of rows where both exist; that check
-covers eight rosin and hydrocarbon words only. The 2.1 table counts the names
-that visibly contradict the rule in [12]: 43 non-solvent rows name a hydrocarbon
-process, and 214 solvent-based rows name ethanol, 114 a mechanical process and
-19 CO2, about 1% of the usable rows. They stay in the data, and most names carry
-none of these words, so this is a count and not a bound. What the labels mean is
-the regulator's category (2.1), which is wider than the rosin-and-hash reading
-of "solventless": 3.2 gives the result on the rows that come closest to rosin
-against BHO, and a reader who wants that comparison specifically should rely on
-those and not on the headline.
+**Not** that the labels are wrong, and not that they are clean. They are
+source-declared and agree with the name-derived path on 99.3% of the 11.5% of
+rows where both exist; that check covers eight rosin and hydrocarbon words only.
+Product names cannot count mislabelled rows (2.1), and the treatment of ethanol
+extracts changed within the period (Table 2). What the labels mean is the
+regulator's category as applied (2.1), which is wider than the rosin-and-hash
+reading of "solventless": 3.2 gives the result on the rows that come closest to
+rosin against BHO, and a reader who wants that comparison specifically should
+rely on those and not on the headline.
+
+**Not** chance. The held-out scores are low, but a producer-level bootstrap puts
+the reported model's AUC above 0.5, and a class-weighted linear model reaches
+61.1%. The claim is about the size of the inflation, not that nothing transfers.
 
 **Not** sensitive to the 64 pre-roll rows. Removing them moves random-split
 balanced accuracy from 81.0% to 80.6% and leaves unseen-producer unchanged at
@@ -743,14 +845,16 @@ a new producer, genotype or laboratory.
 
 ### 4.3 The confounder we could not test cleanly
 
-Strain is the obvious remaining candidate. Solventless production skews toward
-cultivars that wash well, so the class label may partly encode which cultivar
-was used, and cultivar drives terpene profile directly.
+Strain is the obvious remaining candidate. Extraction routes are not applied to
+the same cultivars at the same rates, so the declared category may partly encode
+which cultivar was used, and cultivar drives terpene profile directly.
 
 We could not test it cleanly. The `strain_name` and `strain_type` columns exist
 in the source file but are populated for **0 of 37,344** usable rows. The only
 remaining cultivar signal is inside `product_name`, and extracting a strain key
 from it leaves a key too dirty to carry a confounder probe:
+
+**Table 15.** What a strain key extracted from product names contains.
 
 ```
 usable rows                                     37,344
@@ -806,8 +910,10 @@ For anyone fitting a classifier to cannabis chemical data:
    measured zero with a missing cell changes the coverage gap in our data from
    1 to 6 points to 18 to 25.
 7. **Report the gap for more than one estimator.** Here it runs from 21 to 26
-   points across boosting iterations and is 11 for a linear model, while the
-   grouped score stays near 54%.
+   points across boosting iterations and is 8 to 11 for a linear model.
+8. **Report a threshold-free metric and a class-weighted model.** Our
+   unweighted model's held-out 54.0% hides an AUC of 0.62; class weighting
+   alone moves a linear model from 54.3% to 61.1%.
 
 ### 4.5 Where a decisive answer would come from
 
@@ -820,28 +926,30 @@ gigabytes and a separate build, not an extension of this work.
 
 ## 5. Conclusion
 
-The declared extraction category, non-solvent against solvent-based, is not
-reliably identifiable from the cannabinoid and terpene panels in public cannabis
-certificates of analysis for an unseen producer: 54.0% balanced accuracy on the
-reported partition and 51 to 57% across twenty, not distinguishable from the
-50.0% chance level at the producer level, where a random split reports 81.0%. A
+The declared extraction category, non-solvent against solvent-based, is only
+weakly identifiable from the cannabinoid and terpene panels of this corpus of
+public certificates of analysis for an unseen producer. On the rows that name a
+producer, a random split reports 78.5% balanced accuracy and an AUC of 0.89;
+holding out the producer leaves 54.0% (51 to 57% across twenty fold assignments)
+and an AUC of 0.62, whose producer-level bootstrap interval, 0.54 to 0.70,
+excludes chance. Less than a third of the above-chance skill survives. A
 designed HPLC experiment shows the same direction when variety is held out,
 56.7% to 38.9% with gradient boosting and 54.3% to 46.3% with logistic
 regression, against 33.3% chance. The same profiles identify the producer at
 67.1% against a 14.4% baseline, the laboratory at 92.3% against 40.3%, and the
 variety at 3.6 times chance.
 
-The field's published accuracies, 95% and 100%, are obtained under validation
-that leaves the group structure intact, the family of protocols for which we
-measure 27 points of inflation on market data, 24.4 of them on a same-sample
-comparison, and 15 to 18 on a designed experiment, with gradient boosting; a
-linear model shows 11 and 5 to 8. We ran random cross-validation, not
-Kennard-Stone selection, so the magnitude we report is specific to the former;
-what the two share is that neither holds out the producer, the genotype or the
-laboratory. We do not claim the published chemical conclusions are wrong, and we
-did not rerun those studies. We claim their numbers do not answer the question a
-reader will assume they answer. Group-aware validation is not a refinement here.
-It changes the conclusion.
+The published accuracies cited here, 95% and 100%, are obtained under validation
+that holds out no group, the family of protocols for which we measure 24 points
+of inflation on market data and 15 to 18 on a designed experiment with gradient
+boosting, and 8 to 11 and 5 to 8 with a linear model. We ran random
+cross-validation, not Kennard-Stone selection, so the magnitude we report is
+specific to the former; what the two share is that neither holds out the
+producer, the genotype or the laboratory. We do not claim the published chemical
+conclusions are wrong, and we did not rerun those studies. We claim their
+numbers do not answer the question a reader will assume they answer. Group-aware
+validation is not a refinement here. It changes the size of the result
+severalfold.
 
 ## Data and code availability
 
@@ -882,10 +990,10 @@ This work received no funding.
 ## Competing interests
 
 The author produces cannabis-related content on social media under the handle
-@HiddenTerps and has a commercial interest in the solventless extract category.
-This work reports a negative result about distinguishing that category from
-hydrocarbon extracts, which runs against that interest rather than supporting
-it.
+@HiddenTerps and has a commercial interest in mechanically separated
+(solventless) extracts, which fall inside the non-solvent category studied here.
+This work reports that the category is only weakly recoverable from routine
+laboratory panels, which runs against that interest rather than supporting it.
 
 ## Use of AI tools
 
@@ -965,8 +1073,10 @@ doi:10.1007/s00477-024-02715-1.
 Scaling in Chemometric Model Validation. *Journal of Chemometrics*, 39(4),
 e70026, 2025. doi:10.1002/cem.70026.
 
-[9] Cannlytics. `cannabis_results`: public cannabis lab test results.
-Hugging Face Datasets. CC-BY-4.0.
+[9] Cannlytics. `cannabis_results`: public cannabis lab test results. Hugging
+Face Datasets, `https://huggingface.co/datasets/cannlytics/cannabis_results`,
+revision 8724df97f3c40b3f844157606dd91e97509a8cb9 (last modified 2026-02-02),
+file `all-results-latest.csv`, retrieved 2026-09-21. CC-BY-4.0.
 
 [10] Solís García, H. F., Suntaxi Crisanto, S. L. F., Vargas Delgado, L. F.,
 De la Rosa Martínez, A. F., Londoño Larrea, P., González Benítez, D., Montúfar
@@ -981,8 +1091,15 @@ of Sciences*, 99(10), 6562-6566, 2002. doi:10.1073/pnas.102102699.
 
 [12] Nevada Cannabis Compliance Board. Nevada Cannabis Compliance Regulations,
 Regulation 11, section 11.050, Required quality assurance tests; submission of
-wet cannabis for testing. As effective November 2020 and as revised July 2022.
-`https://ccb.nv.gov/`. Its 2018 predecessor, NAC 453D.780, named CO2 only.
+wet cannabis for testing. Quoted from the version of 21 July 2022,
+`https://ccb.nv.gov/wp-content/uploads/2022/07/Reg-11_v072122.pdf`; the same
+wording stands in the version of 24 October 2023,
+`https://ccb.nv.gov/wp-content/uploads/2023/11/Reg-11_v102423.pdf`. The
+regulations effective November 2020,
+`https://ccb.nv.gov/wp-content/uploads/2021/02/Effective-NCCR-as-of-Nov-2020.pdf`,
+carry the same solvent-based definition and list terpene analysis for both
+categories. All accessed 2026-10-06. The 2018 predecessor, NAC 453D.780,
+named CO2 only.
 
 [13] Kennard, R. W., Stone, L. A. Computer Aided Design of Experiments.
 *Technometrics*, 11(1), 137-148, 1969. doi:10.1080/00401706.1969.10490666.
