@@ -37,14 +37,14 @@ must = ["37,374", "37,344", "81.0%", "54.0%", "54.6%", "68.3%", "18.6",
         "Arthur Gonçalves Breguez", "0009-0005-8551-731X",
         "arthurbreguez@gmail.com", "Competing interests",
         "Kennard-Stone", "HiddenTerps", "1.50%", "13.5%", "78.4%",
-        "[51.0, 58.3]", "0.024", "left-censored", "max_iter=120",
+        "[48.4, 61.9]", "49.0% [43.0, 57.4]", "left-censored", "max_iter=120",
         "European Archives of Psychiatry", "15,018", "11.04%",
         "Király", "Guignard", "Birenboim", "Solís García",
-        "80th percentile", "p = 0.11", "88.3%", "15 to 18",
+        "80th percentile", "p = 0.11", "88.3%",
         "[47.3, 56.6]", "ethanol or CO2", "46.3%", "Cannabis Compliance Board",
         "Figure 1.", "Score against model capacity", "Author contributions",
         "extraction-category", "Table 10.", "Table 11.", "0.610 [0.535, 0.698]",
-        "less than a third", "1,303 samples", "positive control"]
+        "about 30%", "1,303 samples", "positive control"]
 missing = [m for m in must if m not in full]
 print(f"\n  key strings present: {len(must)-len(missing)}/{len(must)}")
 if missing:

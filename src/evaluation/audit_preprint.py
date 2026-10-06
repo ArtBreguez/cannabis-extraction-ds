@@ -134,7 +134,8 @@ check("date_tested is not counted as an analyte",
 def cov(a, mode):
     out = {}
     for cls in ("solventless", "hydrocarbon"):
-        sub = [r for r in rows if (r.get("label") or "").strip() == cls]
+        sub = [r for r in rows if (r.get("label") or "").strip() == cls
+               and (r.get("producer") or "").strip()]
         if mode == "tested":
             k = sum(1 for r in sub
                     if (r.get(a + "_tested") or "").strip().lower() in TRUE)
@@ -148,11 +149,12 @@ def cov(a, mode):
     return out
 
 
+_cov_gap = []
 for a, t_s, t_h, d_s, d_h in (
-        ("d_limonene", 75.7, 81.1, 40.7, 65.6),
-        ("beta_caryophyllene", 75.7, 81.1, 47.0, 68.3),
-        ("alpha_pinene", 75.7, 81.1, 34.2, 56.3),
-        ("total_terpenes", 88.2, 89.4, 56.8, 74.5)):
+        ("d_limonene", 85.8, 90.7, 46.1, 73.4),
+        ("beta_caryophyllene", 85.8, 90.8, 53.3, 76.4),
+        ("alpha_pinene", 85.8, 90.8, 38.8, 63.0),
+        ("total_terpenes", 100.0, 100.0, 64.4, 83.4)):
     t = cov(a, "tested")
     d = cov(a, "detected")
     ok = (abs(t["solventless"] - t_s) < 0.1 and abs(t["hydrocarbon"] - t_h) < 0.1
@@ -166,7 +168,8 @@ for a, t_s, t_h, d_s, d_h in (
     # built from the RECOMPUTED values rather than from the prose.
     row = (f"{t['solventless']:.1f}%   {t['hydrocarbon']:.1f}%"
            f"           {d['solventless']:.1f}%   {d['hydrocarbon']:.1f}%")
-    check(f"coverage row in text: {a}", row in TEXT, row)
+    check(f"coverage row in text: {a}", " ".join(f"{a} {row}".split()) in FLAT, row)
+    _cov_gap.append((t["hydrocarbon"] - t["solventless"], d["hydrocarbon"] - d["solventless"]))
 
 # ---------- model results, against the logs ----------
 log4 = (EV / "phase4_generalisation.txt").read_text()
@@ -237,8 +240,8 @@ check("lab lift anchored in prose",
       m3.group(2) if m3 else None)
 ma = re.search(r"lab\s+classes=\s*\d+\s+rows=\s*\d+\s+acc=\s*([\d.]+)%\s*"
                r"\(\+/-([\d.]+)\)\s+baseline=\s*([\d.]+)%", log3)
-check("lab probe accuracy anchored in abstract, table, discussion and conclusion",
-      bool(ma) and FLAT.count(f"laboratory at {ma.group(1)}% against {ma.group(3)}%") == 3
+check("lab probe accuracy anchored in abstract, table and discussion",
+      bool(ma) and FLAT.count(f"laboratory at {ma.group(1)}% against {ma.group(3)}%") == 2
       and f"{ma.group(1)}% (+/-{ma.group(2)})    {ma.group(3)}%" in TEXT,
       ma.groups() if ma else None)
 mp_ = re.search(r"producer\s+classes=\s*\d+\s+rows=\s*\d+\s+acc=\s*([\d.]+)%\s*"
@@ -359,10 +362,10 @@ pr_r = re.search(r"random \(all rows\)\s+([\d.]+)%", blk)
 pr_g = re.search(r"unseen-producer\s+([\d.]+)%", blk)
 pr_gap = re.search(r"gap\s+([\d.]+) points", blk)
 _k12 = re.search(r"pre-roll rows: (\d+)\s+of which name a producer: (\d+)", log12)
-check("pre-roll sensitivity anchored",
-      bool(pr_r and _k12) and _k12.group(2) == "0" and "None of them names a producer" in FLAT
-      and f"without them the all-rows random split is {pr_r.group(1)}% against {rb[1]}%" in FLAT,
-      (pr_r.group(1) if pr_r else None, _k12.groups() if _k12 else None))
+check("pre-roll rows are outside the headline comparison",
+      bool(_k12) and _k12.group(2) == "0"
+      and "none names a producer, so they are outside the headline comparison" in FLAT,
+      _k12.groups() if _k12 else None)
 check("pre-roll sensitivity: held-out score unaffected",
       bool(pr_g) and pr_g.group(1) == gb[1], pr_g.group(1) if pr_g else None)
 check("the disowned 27-point gap is not used as a headline",
@@ -396,9 +399,8 @@ check("protocol-only gap recomputes",
 check("89.0% producer coverage stated", "33,229" in TEXT and "89.0%" in TEXT)
 r7_ci = re.search(r"unseen-producer: mean [\d.]+%\s+95% CI \[([\d.]+), ([\d.]+)\]"
                   r"\s+p=([\d.]+)", log7)
-check("CI on the grouped score anchored to its log",
-      bool(r7_ci) and f"[{r7_ci.group(1)}, {r7_ci.group(2)}] over folds that share training data (p = {float(r7_ci.group(3)):.2f})" in FLAT,
-      r7_ci.group(0) if r7_ci else None)
+check("no t-interval is put on cross-validation folds",
+      "t-interval" not in FLAT and "p = 0.22" not in FLAT and "p = 0.024" not in FLAT)
 r7_folds = re.search(r"folds: \[([\d., ]+)\]", log7)
 check("fold-level scores anchored to its log",
       bool(r7_folds) and all(v.strip() in TEXT
@@ -438,9 +440,12 @@ d_ci = re.search(r"dual-class\+unseen\s+([\d.]+)% \(\+/-([\d.]+)\)\s*\n"
 check("dual-class folds anchored to the sensitivity log",
       bool(d_ci) and all(v.strip() in TEXT for v in d_ci.group(3).split(","))
       and d_ci.group(1) == db[1], d_ci.group(3) if d_ci else None)
-check("dual-class interval anchored",
-      bool(d_ci) and f"[{d_ci.group(4)}, {d_ci.group(5)}] that excludes 50.0% (p = {d_ci.group(6)})" in FLAT,
-      d_ci.group(0)[-60:] if d_ci else None)
+_fmd = re.search(r"dual-class\+unseen\s+fold mean\s+observed ([\d.]+)%\s+95% interval \[([\d.]+), ([\d.]+)\]",
+                 (EV / "review11_checks.txt").read_text())
+check("dual-class fold-mean bootstrap anchored",
+      bool(_fmd) and _fmd.group(1) == db[1]
+      and f"the producer bootstrap of their mean spans [{_fmd.group(2)}, {_fmd.group(3)}]" in FLAT,
+      _fmd.groups() if _fmd else None)
 # pass nine: the dual-class residual is reported as a range over fold
 # assignments, not as a detected effect, and every figure comes from
 # docs/evidence/review9_checks.txt
@@ -474,14 +479,11 @@ log11 = (EV / "review11_checks.txt").read_text()
 log11b = (EV / "review11b_weighting.txt").read_text()
 bfm = re.findall(r"(unseen-producer|dual-class\+unseen)\s+(pooled|fold mean)\s+observed ([\d.]+)%\s+95% interval \[([\d.]+), ([\d.]+)\]", log11)
 _b = {(a_, b_): (o_, lo_, hi_) for a_, b_, o_, lo_, hi_ in bfm}
-check("unseen-producer: producer bootstrap anchored for both statistics",
-      bool(uB) and len(_b) == 4
-      and (uB.group(1), uB.group(2)) == _b[("unseen-producer", "pooled")][1:]
-      and f"is {_b[('unseen-producer', 'pooled')][0]}% when the predictions are pooled" in FLAT
-      and f"[{uB.group(1)}, {uB.group(2)}] for the pooled score, which includes chance, and "
-          f"[{_b[('unseen-producer', 'fold mean')][1]}, {_b[('unseen-producer', 'fold mean')][2]}] for the fold mean, which barely excludes it" in FLAT
-      and float(uB.group(1)) < 50 < float(_b[('unseen-producer', 'fold mean')][1])
-      and "The models are not refitted" in FLAT and "with replacement 2,000 times" in FLAT, (uB.groups() if uB else None, _b))
+check("unseen-producer: fold-mean bootstrap anchored",
+      len(_b) == 4
+      and f"fold-mean balanced accuracy of {_b[('unseen-producer', 'fold mean')][0]}% has a producer bootstrap interval of "
+          f"[{_b[('unseen-producer', 'fold mean')][1]}, {_b[('unseen-producer', 'fold mean')][2]}]" in FLAT
+      and "without refitting" in FLAT and "2,000 bootstrap draws" in FLAT, _b)
 check("unseen-producer: laboratory-prior control anchored",
       bool(uL) and f"scores {uL.group(1)}%, below 50 because" in FLAT
       and "are not a laboratory prior" in FLAT, uL.group(1) if uL else None)
@@ -491,12 +493,13 @@ check("dual-class: repeated partitions anchored",
       dA.groups() if dA else None)
 _dblk = log11b.split("=== dual-class rows")[1]
 _dau = re.search(r"boosting, unweighted\s+random: bal_acc [\d.]+% \(\+/-[\d.]+\)\s+AUC ([\d.]+)\s+held out: bal_acc [\d.]+% \(\+/-[\d.]+\)\s+AUC ([\d.]+).*?\n\s+held out, pooled AUC [\d.]+\s+producer bootstrap 95% \[([\d.]+), ([\d.]+)\]", _dblk)
-check("dual-class: bootstrap, AUC and laboratory control anchored",
-      bool(dB and dL and _dau)
-      and f"spans [{dB.group(1)}, {dB.group(2)}] for the pooled balanced accuracy and [{_dau.group(3)}, {_dau.group(4)}] for the pooled AUC" in FLAT
+_dblk = log11b.split("=== dual-class rows")[1]
+_dau = re.search(r"boosting, unweighted\s+random: bal_acc [\d.]+% \(\+/-[\d.]+\)\s+AUC ([\d.]+)\s+held out: bal_acc [\d.]+% \(\+/-[\d.]+\)\s+AUC ([\d.]+)", _dblk)
+check("dual-class: AUC and laboratory control anchored",
+      bool(dL and _dau)
       and f"its AUC falls from {_dau.group(1)} to {_dau.group(2)}" in FLAT
       and f"identity alone scores {dL.group(1)}% under the same folds" in FLAT,
-      (dB.groups() if dB else None, _dau.groups() if _dau else None))
+      (_dau.groups() if _dau else None))
 check("conclusion carries the partition range",
       bool(uA) and FLAT.count(f"{round(float(uA.group(1)))} to {round(float(uA.group(3)))}% across twenty fold assignments") == 1,
       uA.groups() if uA else None)
@@ -508,8 +511,31 @@ _rows = re.findall(r"^(boosting|logistic), (unweighted|class-weighted)\s+random:
                    r"producer bootstrap 95% \[([\d.]+), ([\d.]+)\]", _pblk, re.M)
 check("table 10: four models anchored to the weighting log",
       len(_rows) == 4 and all(
-          f"{m_}, {w_}".ljust(26) + f"  {rb_}%  {ra_}    {gb_}% (+/-{gs_})  {ga_}  {pa_} [{lo_}, {hi_}]" in TEXT
+          f"{m_}, {w_}".ljust(26) + f"  {rb_}%  {ra_}    {gb_}% (+/-{gs_})  {ga_}" in TEXT
           for m_, w_, rb_, ra_, gb_, gs_, ga_, pa_, lo_, hi_ in _rows), _rows)
+def _pooled(block):
+    return re.findall(r"^(boosting|logistic), (unweighted|class-weighted).*?\n\s+held out, pooled AUC ([\d.]+)\s+producer bootstrap 95% \[([\d.]+), ([\d.]+)\].*?\n"
+                      r"\s+held out, pooled bal_acc ([\d.]+)%\s+producer bootstrap 95% \[([\d.]+), ([\d.]+)\]", block, re.M)
+_p11 = {"producer": _pooled(_pblk), "dual": _pooled(log11b.split("=== dual-class rows")[1])}
+check("table 11: pooled scores and intervals anchored for both row sets",
+      all(len(v) == 4 for v in _p11.values()) and all(
+          " ".join(f"{m_}, {w_} {ba_}% [{bl_}, {bh_}] {au_} [{al_}, {ah_}]".split()) in FLAT
+          for v in _p11.values() for m_, w_, au_, al_, ah_, ba_, bl_, bh_ in v), _p11)
+_P = {(k, m_, w_): (float(au_), float(al_), float(ah_), float(ba_), float(bl_), float(bh_))
+      for k, v in _p11.items() for m_, w_, au_, al_, ah_, ba_, bl_, bh_ in v}
+check("which intervals include chance is stated completely and correctly",
+      all(_P[("producer", m_, w_)][1] > 0.5 for m_ in ("boosting", "logistic") for w_ in ("unweighted", "class-weighted"))
+      and all(_P[("producer", m_, "unweighted")][4] < 50 for m_ in ("boosting", "logistic"))
+      and all(_P[("producer", m_, "class-weighted")][4] > 50 for m_ in ("boosting", "logistic"))
+      and all(_P[("dual", m_, w_)][4] < 50 for m_ in ("boosting", "logistic") for w_ in ("unweighted", "class-weighted"))
+      and all(_P[("dual", m_, "class-weighted")][1] > 0.5 for m_ in ("boosting", "logistic"))
+      and all(_P[("dual", m_, "unweighted")][1] < 0.5 for m_ in ("boosting", "logistic"))
+      and "pooled balanced accuracy of both unweighted models has an interval that includes 50%" in FLAT
+      and f"point estimate, {_P[('producer', 'logistic', 'unweighted')][3]}%, is below it" in FLAT
+      and "On this subset no model's pooled balanced accuracy has an interval that excludes 50%" in FLAT
+      and "only the class-weighted models' pooled AUC intervals exclude 0.5, marginally" in FLAT
+      and "the pooled balanced-accuracy interval excludes 50% only for the class-weighted ones" in FLAT
+      and "no balanced-accuracy interval excludes chance, and only the class-weighted models' AUC intervals do" in FLAT)
 _R = {(m_, w_): (float(rb_), float(ra_), float(gb_), float(ga_), float(lo_), float(hi_)) for m_, w_, rb_, ra_, gb_, gs_, ga_, pa_, lo_, hi_ in _rows}
 _bu = _R.get(("boosting", "unweighted"), (0, 0, 0, 0, 0, 0))
 _pauc = re.search(r"boosting, unweighted.*?\n\s+held out, pooled AUC ([\d.]+)", _pblk)
@@ -523,25 +549,29 @@ check("headline AUC figures anchored, each paired with its own interval",
       and f"{_bu[1]-_bu[3]:.2f} of AUC for the reported model" in FLAT
       and f"({_b[('unseen-producer', 'pooled')][0]}%, interval {uB.group(1)} to {uB.group(2)})" in FLAT, (_bu, _pauc.group(1) if _pauc else None))
 _lu = _R.get(("logistic", "unweighted"), (0, 0, 0, 0, 0, 0))
-check("surviving share of above-chance AUC stated per estimator",
-      (_bu[3] - 0.5) / (_bu[1] - 0.5) < 1 / 3
-      and (_R[("boosting", "class-weighted")][3] - 0.5) / (_R[("boosting", "class-weighted")][1] - 0.5) < 1 / 3
-      and 0.45 < (_lu[3] - 0.5) / (_lu[1] - 0.5) < 0.6
-      and f"{_bu[3]-0.5:.3f} of {_bu[1]-0.5:.3f} for the reported one" in FLAT
-      and f"about half, {_lu[3]-0.5:.3f} of {_lu[1]-0.5:.3f}" in FLAT
-      and FLAT.lower().count("less than a third") == 3 and FLAT.count("about half") == 3,
-      f"{(_bu[3]-0.5)/(_bu[1]-0.5):.3f} / {(_lu[3]-0.5)/(_lu[1]-0.5):.3f}")
+_lu = _R.get(("logistic", "unweighted"), (0, 0, 0, 0, 0, 0))
+_bp, _lp = _P[("producer", "boosting", "unweighted")][0], _P[("producer", "logistic", "unweighted")][0]
+_fr = [(_bu[3] - 0.5) / (_bu[1] - 0.5), (_bp - 0.5) / (_bu[1] - 0.5), (_lu[3] - 0.5) / (_lu[1] - 0.5), (_lp - 0.5) / (_lu[1] - 0.5)]
+check("surviving share of above-chance AUC stated per estimator and statistic",
+      all(0.25 <= f_ <= 0.35 for f_ in _fr[:2]) and all(0.40 <= f_ <= 0.55 for f_ in _fr[2:])
+      and f"{_bu[3]-0.5:.3f} of {_bu[1]-0.5:.3f} on fold means and {_bp-0.5:.3f} of {_bu[1]-0.5:.3f} pooled for the reported one" in FLAT
+      and f"{_lu[3]-0.5:.3f} and {_lp-0.5:.3f} of {_lu[1]-0.5:.3f}" in FLAT
+      and FLAT.count("about 30% of") == 2 and FLAT.count("40 to 55%") == 2
+      and "less than a third" not in FLAT.lower(), [round(f_, 3) for f_ in _fr])
 _aucs = [v[3] for v in _R.values()]
 check("AUC range and pooled-AUC intervals described correctly",
-      len(_aucs) == 4 and f"fold-mean AUC of {min(_aucs):.2f} to {max(_aucs):.2f}" in FLAT
-      and all(v[4] > 0.5 for v in _R.values()) and "excludes 0.5 for all four" in FLAT, _aucs)
+      len(_aucs) == 4 and f"held-out AUC is {min(_aucs):.2f} to {max(_aucs):.2f} as a fold mean" in FLAT
+      and "excludes 0.5 for all four, marginally for the unweighted logistic model" in FLAT
+      and min(v[4] for v in _R.values()) == _R[("logistic", "unweighted")][4] < 0.52, _aucs)
 _g = {k: v[0] - v[2] for k, v in _R.items()}
 check("losses per estimator and weighting anchored",
       len(_g) == 4 and bool(r7_gap) and abs(float(r7_gap.group(1)) - _g[('boosting','unweighted')]) < 0.15
       and f"{r7_gap.group(1)} points for unweighted boosting, {_g[('boosting','class-weighted')]:.1f} with class weights, "
       f"{_g[('logistic','unweighted')]:.1f} for an unweighted logistic regression and {_g[('logistic','class-weighted')]:.1f} for a class-weighted one" in FLAT
       and f"whose held-out {_R[('logistic','class-weighted')][2]}% is the highest" in FLAT
-      and FLAT.count(f"by {round(_g[('logistic','class-weighted')])} to {round(float(r7_gap.group(1)))} points") == 2, _g)
+      and FLAT.count(f"by {round(min(_g.values()))} to {round(max(_g.values()))} points") == 2
+      and f"{round(float(r7_gap.group(1)))} to {round(max(_g.values()))} points of balanced accuracy with gradient boosting" in FLAT
+      and f"{round(float(r7_gap.group(1)))} to {round(max(_g.values()))} points of inflation on market data" in FLAT, _g)
 _wp = re.search(r"20 shuffled partitions: bal_acc min ([\d.]+)%\s+median ([\d.]+)%\s+max ([\d.]+)%\s+AUC min ([\d.]+)\s+median [\d.]+\s+max ([\d.]+)\s+partitions with bal_acc at or below 50.0%: (\d+)", _pblk)
 check("class-weighted partitions anchored",
       bool(_wp) and _wp.group(6) == "0"
@@ -716,8 +746,7 @@ if cm and po:
 else:
     check("pooled recall recomputes from the quoted matrix", False, "no match")
 check("both recall conventions labelled",
-      "mean of the five per-fold recalls" in FLAT and "Pooling the matrix" in FLAT)
-
+      "as the mean of the five per-fold recalls" in FLAT and "**29.6%** pooled" in FLAT)
 # ---------- 4.3 strain: denominators and the grouped runs ----------
 # An earlier draft reported "37.1% obvious non-cultivars", which divided
 # noise+empty rows by the key-bearing rows only — a ratio of two different
@@ -789,7 +818,7 @@ _pure_noprod = sum(
 check("pure-stratum total matches the data",
       f"{_pure_rows:,} of" in TEXT or str(_pure_rows) in TEXT, str(_pure_rows))
 check("the producer-less majority is counted, not generalised",
-      f"{_pure_noprod:,} of {_pure_rows:,}" in TEXT, f"{_pure_noprod}/{_pure_rows}")
+      f"{_pure_noprod:,} of {_pure_rows:,}" in FLAT, f"{_pure_noprod}/{_pure_rows}")
 check("the 8-row exception is disclosed",
       f"remaining {_pure_rows - _pure_noprod} rows" in TEXT,
       str(_pure_rows - _pure_noprod))
@@ -920,8 +949,10 @@ bl = re.search(r"^\s+(\d+)\s+\(blank\)$", logst, re.M)
 dr = re.search(r"date_tested filled: (\d+) of (\d+)\s*\ndate_tested range: (\S+) to (\S+)", logst)
 nv_labs = len(re.findall(r"\{'NV': \d+\}", logst))
 check("Nevada row count and share anchored",
-      bool(nv) and f"{int(nv.group(1)):,} of the usable rows ({100*int(nv.group(1))/len(rows):.1f}%)" in FLAT
-      and f"{nv_labs} laboratories" in FLAT.replace("seven", "7"), nv.group(1) if nv else None)
+      bool(nv) and f"{int(nv.group(1)):,} of the usable rows ({100*int(nv.group(1))/len(rows):.1f}%, and "
+                   f"{100*int(nv.group(1))/pf:.1f}% of the rows that name a producer)" in FLAT
+      and f"{nv_labs} laboratories" in FLAT.replace("seven", "7")
+      and "nearly all from Nevada" in FLAT, nv.group(1) if nv else None)
 check("blank lab_state rows anchored",
       bool(bl) and f"remaining {int(bl.group(1)):,} rows" in FLAT, bl.group(1) if bl else None)
 check("no other state appears in the data",
@@ -943,11 +974,14 @@ check("controlled data: logistic rows anchored in the table",
       bool(lg) and f"random 5-fold                  {lg.group(1)}% (+/-{lg.group(2)})" in TEXT
       and f"leave-one-variety-out          {lg.group(3)}% (+/-{lg.group(4)})" in TEXT, lg.groups() if lg else None)
 check("controlled data: logistic gap and variety anchored",
-      bool(lg and gap) and f"drops {lg.group(6)} points instead of {gap.group(1)}" in FLAT
-      and f"logistic regression ({lg.group(5)}%)" in FLAT
-      and f"from {lg.group(1)}% to {lg.group(3)}% with logistic regression" in FLAT
-      and FLAT.count(f"{lg.group(1)}% to {lg.group(3)}% with logistic regression") == 2,
-      lg.groups() if lg else None)
+      bool(lg and gap) and f"drops {lg.group(6)} points instead of {gap.group(1)}, which is inside its fold spread of {lg.group(4)}" in FLAT
+      and f"logistic regression ({lg.group(5)}%)" in FLAT, lg.groups() if lg else None)
+_ls = re.search(r"over 200 seeds: mean ([\d.]+)% sd", log10b)
+check("abstract quotes the seed-averaged controlled figures",
+      bool(k5 and lovo and _ls and lg)
+      and f"fall from {k5.group(1)}% to {lovo[1]}% under leave-one-variety-out with gradient boosting and "
+          f"from {_ls.group(1)}% to {lg.group(3)}% with logistic regression" in FLAT
+      and "averaged over 200 seeds" in FLAT, (k5.group(1), _ls.group(1)) if k5 and _ls else None)
 lp = re.search(r"logistic LOVO permutation: obs ([\d.]+)%.*?at or above obs: (\d+) of (\d+)\s+p=([\d.]+)", log10b)
 check("controlled data: logistic permutation anchored",
       bool(lp) and f"{lp.group(2)} of {int(lp.group(3)):,} label shuffles reaches {lp.group(1)}% (p = {lp.group(4)})" in FLAT,
@@ -970,22 +1004,37 @@ check("label-definition subsets anchored",
       and f"fold spreads of {sub[0][3]} and {sub[1][3]}" in FLAT, sub)
 tmp = re.search(r"balanced_acc ([\d.]+)%\s+test producers seen in training: ([\d.]+)% of test rows", log10b)
 _t12 = re.findall(r"(all years|2020-2022 only): dated producer rows=\d+.*?bal_acc ([\d.]+)%\s+AUC ([\d.]+)\s+test rows from producers seen in training: ([\d.]+)%", log12)
-check("temporal split anchored on the producer rows",
-      len(_t12) == 2
-      and f"with {_t12[0][3]}% of the test rows from producers seen in training, scores {_t12[0][1]}% with an AUC of {_t12[0][2]}" in FLAT
-      and f"{_t12[0][2]} against {_bu[3]}" in FLAT
+log13 = (EV / "review13_checks.txt").read_text()
+_r13 = re.search(r"rows=(\d+)\s+bal_acc ([\d.]+)% \(\+/-[\d.]+\)\s+AUC ([\d.]+)", log13.split("=== 2.")[1])
+check("temporal split anchored on the producer rows, with its like-for-like baseline",
+      len(_t12) == 2 and bool(_r13)
+      and f"with {_t12[0][3]}% of the test rows from producers seen in training, scores {_t12[0][1]}% with an AUC of {_t12[0][2]}, "
+          f"against {_r13.group(2)}% and {_r13.group(3)} for a random five-fold split of the same {int(_r13.group(1)):,} rows" in FLAT
+      and 0.4 < (float(_r13.group(3)) - float(_t12[0][2])) / (_bu[1] - _bu[3]) < 0.65 and "the AUC about half as far" in FLAT
       and f"the same split scores {_t12[1][1]}% with an AUC of {_t12[1][2]}" in FLAT
-      and "time alone costs far less" not in FLAT and "73.4%" not in TEXT, _t12)
+      and "time alone costs far less" not in FLAT.lower() and "scores 73.4%" not in FLAT
+      and "The two hold-outs are not interchangeable" in FLAT, (_t12, _r13.groups() if _r13 else None))
+_s13 = re.search(r"no key: (\d+)\s+of which have no product name at all: (\d+)\s+named rows with no key: (\d+)", log13)
+check("strain key: nameless rows separated from unparsed names",
+      bool(_s13) and f"The {int(_s13.group(1)):,} rows with no key are the {int(_s13.group(2)):,} producer-less rows, which have no product name, and {_s13.group(3)} named ones" in FLAT,
+      _s13.groups() if _s13 else None)
+check("coverage gaps recomputed on the producer rows",
+      len(_cov_gap) == 4
+      and f"a gap of {round(min(g_[0] for g_ in _cov_gap))} to {round(max(g_[0] for g_ in _cov_gap))} points" in FLAT
+      and FLAT.count(f"{round(min(g_[1] for g_ in _cov_gap))} to {round(max(g_[1] for g_ in _cov_gap))}") >= 3
+      and "1 to 6 points" not in FLAT and "18 to 25" not in FLAT, _cov_gap)
+check("the nineteen analytes are listed and match the data",
+      all(f"`{a_}`" in TEXT for a_ in usable) and len(usable) == 19)
 glr = re.search(r"random, all rows ([\d.]+)% \(\+/-([\d.]+)\)\s+unseen-producer ([\d.]+)%", log10b.split("=== G.")[1])
 _g0 = re.search(r"random, all rows ([\d.]+)% \(\+/-([\d.]+)\)", log10b.split("=== G.")[1])
-check("binary task at the probe learning rate anchored",
+check("binary task at the probe learning rate anchored, with its row sets named",
       bool(glr and rb and gb and _g0)
-      and f"its random split scores {rb[1]}% at the default rate and {_g0.group(1)}% at 0.05, with fold spreads of {rb[2]} and {glr.group(2)} "
-          f"and the held-out score at {gb[1]}% and {glr.group(3)}%" in FLAT, glr.groups() if glr else None)
+      and f"on all usable rows its random split scores {rb[1]}% at the default rate and {_g0.group(1)}% at 0.05, with fold spreads of {rb[2]} and {glr.group(2)}, "
+          f"and on the producer rows the held-out score is {gb[1]}% and {glr.group(3)}%" in FLAT, glr.groups() if glr else None)
 hs = re.search(r"rows with a strain key=\d+\s+random ([\d.]+)%.*?\n\s+dual-class strain rows=\d+\s+random ([\d.]+)%", log10b)
 check("strain subsets: same-sample random anchored",
-      bool(hs) and f"{hs.group(1)}% for the keyed rows and {hs.group(2)}% for the dual-class keys" in FLAT,
-      hs.groups() if hs else None)
+      bool(hs) and f"against {hs.group(1)}% for a random split on the keyed rows" in FLAT
+      and f"gives 56.9% (+/-11.4), against {hs.group(2)}%" in FLAT, hs.groups() if hs else None)
 p01 = re.search(r"producer probe at 0\.1: folds=\[([\d., ]+)\]\s+mean=[\d.]+%\s+lift=\+([\d.]+)pts", log3)
 check("producer probe at the 0.1 rate is logged and matches the text",
       bool(p01) and f"{min(float(v) for v in p01.group(1).split(','))} to {max(float(v) for v in p01.group(1).split(','))}" in FLAT,
@@ -1063,7 +1112,8 @@ _fig_json = ROOT / "reports/figures/fig1_validation_gap.json"
 _fig_svg = ROOT / "reports/figures/fig1_validation_gap.svg"
 check("figure 1 exists and is embedded",
       _fig_svg.exists() and "![Figure 1](reports/figures/fig1_validation_gap.svg)" in TEXT
-      and "**Figure 1.**" in TEXT and FLAT.count("(Figure 1a)") == 1 and FLAT.count("(Figure 1b)") == 1)
+      and "**Figure 1.**" in TEXT and FLAT.count("(Figure 1a)") == 2 and FLAT.count("(Figure 1b)") == 1
+      and FLAT.index("(Figure 1a)") < FLAT.index("(Figure 1b)"))
 _fp = _fig_parse()
 check("figure 1 plots exactly the logged values",
       _fig_json.exists() and _json.loads(_fig_json.read_text()) == _json.loads(_json.dumps(_fp)),
@@ -1083,10 +1133,22 @@ check("author contributions and funding are stated in their own sections",
       and "This work received no funding." in FLAT)
 
 _dw = re.findall(r"^(boosting|logistic), class-weighted.*?\n\s+held out, pooled AUC [\d.]+\s+producer bootstrap 95% \[([\d.]+), ([\d.]+)\]", _dblk, re.M)
-check("dual-class: class-weighted AUC intervals anchored",
-      len(_dw) == 2 and f"[{_dw[0][1]}, {_dw[0][2]}] and [{_dw[1][1]}, {_dw[1][2]}], exclude 0.5 narrowly" in FLAT
-      and all(float(lo_) > 0.5 for _, lo_, _ in _dw)
-      and "signal of the unweighted models is not separable from chance" in FLAT, _dw)
+_caps = [int(n_) for n_ in re.findall(r"^\*\*Table (\d+)\.\*\*", TEXT, re.M)]
+_ps = TEXT.split("\n\n")
+check("tables are numbered consecutively and each is a code block",
+      _caps == list(range(1, len(_caps) + 1)) and len(_caps) == 16
+      and all(_ps[k_ + 1].startswith("```") for k_, par_ in enumerate(_ps[:-1]) if par_.startswith("**Table ")), _caps)
+check("table cross-references point at the right tables",
+      "changed within the period (Table 5)" in FLAT and "Table 4 counts them" in FLAT
+      and "Table 12 varies what could be suspected" in FLAT and "(Table 2)" not in FLAT
+      and "fold spreads in Tables 10 and 12" in FLAT)
+check("keywords agree with the data description",
+      "certificates of analysis" not in TEXT.split("**Keywords:**")[1].split("---")[0]
+      and "extraction category, laboratory testing data" in FLAT)
+check("the controlled drop is not called leakage or confounding",
+      "with the held-out group changed from producer to variety" in FLAT
+      and "confounder changed" not in FLAT and "its drop is a shift between varieties" in FLAT)
+check("name-path check described with its pattern count", "eleven name patterns" in FLAT)
 check("table 9 carries the same-sample random row",
       bool(r7_sub) and f"random, producer rows        {r7_sub.group(1)}% (+/-0.4)      --      5" in TEXT)
 check("data source described as laboratory results, not certificates",

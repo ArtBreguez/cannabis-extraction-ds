@@ -1,0 +1,19 @@
+usable rows: 37344   rows that name a producer: 33229
+
+=== 1. tested / detected shares on the producer rows ===
+analyte                            tested     detected (value > 0)
+                       solventless  hydro       solventless  hydro
+d_limonene                  85.8%   90.7%            46.1%   73.4%
+beta_caryophyllene          85.8%   90.8%            53.3%   76.4%
+alpha_pinene                85.8%   90.8%            38.8%   63.0%
+total_terpenes             100.0%  100.0%            64.4%   83.4%
+
+=== 2. random five-fold on the dated producer rows ===
+rows=29650  bal_acc 79.5% (+/-0.5)  AUC 0.902
+
+=== 3. producer rows by lab_state (from lab_states.txt laboratories) ===
+producer rows from the seven laboratories stamped NV: 31422 of 33229 (94.6%)
+other laboratories among producer rows: {'CERTIFIED AG LAB LLC': 1807}
+
+=== 4. rows with no extractable strain key ===
+no key: 4717   of which have no product name at all: 4115   named rows with no key: 602 of 33229 named rows
