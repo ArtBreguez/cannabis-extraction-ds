@@ -218,8 +218,9 @@ fats derived from natural sources, including concentrated cannabis extracted
 with ethanol or CO2" against "Extract of cannabis (solvent-based) made with any
 approved solvent, including concentrated cannabis extracted by means other than
 with ethanol or CO2" [11]. The text effective November 2020 carries the same
-pair of definitions, and the 2018 rule it replaced named CO2 only, so the first
-ten months of the data fall under the older wording. Under the current
+pair of definitions, and the 2018 rule it replaced named CO2 only, so at least
+the first six months of the data, which precede the adoption of the current
+regulations in July 2020, fall under the older wording. Under the current
 definition the non-solvent category spans mechanical separation, ethanol and
 CO2, and the product names are consistent with that. Table 4 counts them over
 the rows that carry a name, which are the 33,229 rows with a producer; a name
@@ -652,24 +653,24 @@ one, whose held-out 61.1% is the highest fold-mean score of the four models.
 
 The reported partition is one draw, and refitting on others moves the score.
 Twenty random reassignments of producers to folds (Figure 1b) give the reported
-model means from 51.3% to 56.6% (median 53.8%, sd 1.7; AUC 0.603 to 0.658) and
-the class-weighted one 53.0% to 59.9% (median 55.5%, AUC 0.602 to 0.664); none
-falls to 50.0%. The five folds of the reported partition score 48.6, 57.6, 46.7,
-55.7 and 61.5. Laboratory identity alone, as a lookup under the same folds,
-scores 43.6%, below 50 because a laboratory's majority class among the training
-producers is a poor guide to the held-out ones, so the points above chance are
-not a laboratory prior.
+model means from 51.3% to 56.6% (median 53.8%, sample sd 1.7; AUC 0.603 to
+0.658) and the class-weighted one 53.0% to 59.9% (median 55.5%, AUC 0.602 to
+0.664); none falls to 50.0%. The five folds of the reported partition score
+48.6, 57.6, 46.7, 55.7 and 61.5. Laboratory identity alone, as a lookup under
+the same folds, scores 43.6%, below 50 because a laboratory's majority class
+among the training producers is a poor guide to the held-out ones, so the points
+above chance are not a laboratory prior.
 
 ![Figure 1](reports/figures/fig1_validation_gap.svg)
 
 **Figure 1.** Balanced accuracy on the rows that name a producer, unweighted
 models. (a) Random split and producer-held-out score, for a standardised
 logistic regression and for gradient boosting at four iteration counts; fold
-means; the fold spreads of the reported and logistic models are in Table 10. (b)
-Mean score of each of twenty random assignments of producers to folds, for all
-producers and for the dual-class subset; the bar is the producer bootstrap 95%
-interval of the fold-mean score on the reported partition and the tick is that
-score. Every plotted value is parsed from the evidence logs by
+means; the held-out fold spreads of the reported and logistic models are in
+Table 10. (b) Mean score of each of twenty random assignments of producers to
+folds, for all producers and for the dual-class subset; the bar is the producer
+bootstrap 95% interval of the fold-mean score on the reported partition and the
+tick is that score. Every plotted value is parsed from the evidence logs by
 `src/evaluation/make_figure.py`.
 
 **Table 12.** Robustness of the gap. Balanced accuracy of the reported model;

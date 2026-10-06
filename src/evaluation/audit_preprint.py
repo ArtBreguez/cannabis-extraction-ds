@@ -473,7 +473,7 @@ dA, dK, dB, dL = _grp("dual-class+unseen")
 _i12 = re.search(r"=== I\..*?AUC min ([\d.]+)\s+median ([\d.]+)\s+max ([\d.]+)", log12, re.S)
 check("unseen-producer: repeated partitions anchored",
       bool(uA and uK and _i12) and uK.group(1) == "0"
-      and f"give the reported model means from {uA.group(1)}% to {uA.group(3)}% (median {uA.group(2)}%, sd {uA.group(5)}; AUC {_i12.group(1)} to {_i12.group(3)})" in FLAT
+      and f"give the reported model means from {uA.group(1)}% to {uA.group(3)}% (median {uA.group(2)}%, sample sd {uA.group(5)}; AUC {_i12.group(1)} to {_i12.group(3)})" in FLAT
       and "none falls to 50.0%" in FLAT, (uA.groups() if uA else None, _i12.groups() if _i12 else None))
 log11 = (EV / "review11_checks.txt").read_text()
 log11b = (EV / "review11b_weighting.txt").read_text()
@@ -1146,7 +1146,7 @@ check("tables are numbered consecutively and each is a code block",
 check("table cross-references point at the right tables",
       "changed within the period (Table 5)" in FLAT and "Table 4 counts them" in FLAT
       and "Table 12 varies what could be suspected" in FLAT and "(Table 2)" not in FLAT
-      and "the fold spreads of the reported and logistic models are in Table 10" in FLAT)
+      and "the held-out fold spreads of the reported and logistic models are in Table 10" in FLAT)
 check("keywords agree with the data description",
       "certificates of analysis" not in TEXT.split("**Keywords:**")[1].split("---")[0]
       and "extraction category, laboratory testing data" in FLAT)

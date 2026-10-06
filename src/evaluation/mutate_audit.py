@@ -288,7 +288,7 @@ MUTATIONS = [
      "is the highest score any model reaches"),
     ("P14 protocol of [3] asserted again", "the performance figures of [1] and [2] are obtained",
      "the reported performance figures are obtained"),
-    ("P14 figure caption points at Table 12 again", "the fold spreads of the reported and logistic models are in Table 10",
+    ("P14 figure caption points at Table 12 again", "the held-out fold spreads of the reported and logistic models are in Table 10",
      "with fold spreads in Tables 10 and 12"),
     ("reference [1] journal reverted",
      "*European Archives of Psychiatry and\nClinical Neuroscience*",
