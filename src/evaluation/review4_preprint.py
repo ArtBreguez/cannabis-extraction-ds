@@ -66,7 +66,10 @@ check("repository is public", sh("gh repo view --json isPrivate -q .isPrivate")
 check("LICENSE is tracked", "LICENSE" in sh("git ls-files"))
 check("data/ is NOT tracked", not sh("git ls-files -- data/"))
 check("no absolute local path in tracked code",
-      not sh("git grep -lI '/home/arthur' -- 'src/*.py'"))
+      # exclude this file: it contains the search string itself, which made the
+      # check report a failure caused only by its own source.
+      not sh("git grep -lI '/home/arthur' -- 'src/*.py' 'src/**/*.py' "
+             "| grep -v review4_preprint.py"))
 check("working tree committed", not sh("git status --porcelain"))
 
 print("\n  === 5. abstract standalone: does it overstate? ===")
