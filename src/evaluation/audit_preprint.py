@@ -17,7 +17,13 @@ TEXT = (ROOT / "PREPRINT.md").read_text()
 EV = ROOT / "docs/evidence"
 
 csv.field_size_limit(10_000_000)
-rows = list(csv.DictReader((ROOT / "data/labeled/master.csv").open()))
+all_rows = list(csv.DictReader((ROOT / "data/labeled/master.csv").open()))
+# The analyses drop the 30 contradictory rows first (phase4_generalisation.py
+# line 92), so any population figure must be computed on the same filtered
+# view. Computing dual-class producers on the unfiltered file returns 55 and
+# 28,927, which is what the manuscript claimed for six review rounds while the
+# committed log said 53 and 27,751.
+rows = [r for r in all_rows if (r.get("label_conflict") or "").strip() == "0"]
 TRUE = {"true", "1", "yes"}
 
 passed = failed = 0
@@ -35,20 +41,25 @@ def check(name, cond, got=""):
 
 
 # ---------- dataset facts, recomputed ----------
+# Two populations matter and must not be mixed: the labelled file (37,374) and
+# the view the analyses use after dropping conflicts (37,344).
+check("row count 37,374", "37,374" in TEXT and len(all_rows) == 37374,
+      len(all_rows))
+check("usable count 37,344", "37,344" in TEXT and len(rows) == 37344,
+      len(rows))
 n = len(rows)
-check("row count 37,374", "37,374" in TEXT and n == 37374, n)
 
 lab = Counter((r.get("label") or "").strip() for r in rows)
-check("hydrocarbon 24,576", lab["hydrocarbon"] == 24576 and "24,576" in TEXT,
+check("hydrocarbon 24,573", lab["hydrocarbon"] == 24573 and "24,573" in TEXT,
       lab["hydrocarbon"])
-check("solventless 12,798", lab["solventless"] == 12798 and "12,798" in TEXT,
+check("solventless 12,771", lab["solventless"] == 12771 and "12,771" in TEXT,
       lab["solventless"])
 maj = 100 * max(lab.values()) / n
 check("majority 65.8%", abs(maj - 65.8) < 0.1 and "65.8" in TEXT, f"{maj:.1f}")
 
 prod = [(r.get("producer") or "").strip() for r in rows]
 pf = sum(1 for p in prod if p)
-check("producer filled 33,259", pf == 33259 and "33,259" in TEXT, pf)
+check("producer filled 33,229", pf == 33229 and "33,229" in TEXT, pf)
 check("producers 96", len(set(p for p in prod if p)) == 96 and "96 distinct" in TEXT,
       len(set(p for p in prod if p)))
 
@@ -66,16 +77,16 @@ for r in rows:
         byp.setdefault(p, set()).add(l)
 dual = {p for p, s in byp.items() if len(s) > 1}
 drows = sum(1 for p in prod if p in dual)
-check("55 dual-class producers", len(dual) == 55 and "55 producers" in TEXT,
+check("53 dual-class producers", len(dual) == 53 and "53 producers" in TEXT,
       len(dual))
-check("28,927 dual rows", drows == 28927 and "28,927" in TEXT, drows)
-check("77.4% of labelled", abs(100*drows/n - 77.4) < 0.1 and "77.4%" in TEXT,
+check("27,751 dual rows", drows == 27751 and "27,751" in TEXT, drows)
+check("74.3% of usable", abs(100*drows/n - 74.3) < 0.1 and "74.3%" in TEXT,
       f"{100*drows/n:.1f}")
 dl = Counter((r.get("label") or "").strip() for r in rows
              if (r.get("producer") or "").strip() in dual)
-check("dual split 18,470/10,457",
-      dl["hydrocarbon"] == 18470 and dl["solventless"] == 10457
-      and "18,470" in TEXT and "10,457" in TEXT,
+check("dual split 17,312/10,439",
+      dl["hydrocarbon"] == 17312 and dl["solventless"] == 10439
+      and "17,312" in TEXT and "10,439" in TEXT,
       f"{dl['hydrocarbon']}/{dl['solventless']}")
 
 # analytes
@@ -108,10 +119,10 @@ def cov(a, mode):
 
 
 for a, t_s, t_h, d_s, d_h in (
-        ("d_limonene", 75.7, 81.1, 40.8, 65.6),
-        ("beta_caryophyllene", 75.7, 81.1, 47.1, 68.3),
-        ("alpha_pinene", 75.7, 81.1, 34.3, 56.3),
-        ("total_terpenes", 88.2, 89.4, 56.9, 74.5)):
+        ("d_limonene", 75.7, 81.1, 40.7, 65.6),
+        ("beta_caryophyllene", 75.7, 81.1, 47.0, 68.3),
+        ("alpha_pinene", 75.7, 81.1, 34.2, 56.3),
+        ("total_terpenes", 88.2, 89.4, 56.8, 74.5)):
     t = cov(a, "tested")
     d = cov(a, "detected")
     ok = (abs(t["solventless"] - t_s) < 0.1 and abs(t["hydrocarbon"] - t_h) < 0.1
@@ -194,6 +205,19 @@ check("undeclared breakdown fits inside the total",
       34034 + 30586 + 26030 + 3901 <= 102404 and "34,034" in TEXT)
 check("regex variant documented",
       "1,445" in TEXT and "non[- ]?solvent" in TEXT)
+
+# statistical qualifications added in pass seven
+check("same-sample gap reported", "78.5%" in TEXT and "24.4" in TEXT)
+check("89.0% producer coverage stated", "33,229" in TEXT and "89.0%" in TEXT)
+check("CI on the grouped score", "46.3" in TEXT and "61.8" in TEXT
+      and "0.22" in TEXT)
+check("fold-level scores given", all(v in TEXT for v in
+      ("48.6", "57.6", "46.7", "55.7", "61.5")))
+check("reseeding reported", "24.6" in TEXT and "24.5" in TEXT)
+check("producer-ID-only leakage disclosed",
+      "84.4%" in TEXT and "0.35" in TEXT)
+check("'by construction' claim removed",
+      "nothing about the label by construction" not in TEXT)
 
 # ---------- prose hygiene ----------
 body = re.sub(r"```[\s\S]*?```", "", TEXT)

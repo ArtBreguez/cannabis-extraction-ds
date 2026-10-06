@@ -31,8 +31,9 @@ full = "\n".join(p.get_text() for p in doc)
 print(f"  extracted characters: {len(full):,}")
 
 # --- does every headline number survive into the PDF? ---
-must = ["37,374", "81.0%", "54.0%", "54.6%", "68.3%", "18.6", "56.7%",
-        "38.9%", "60.7%", "15.3", "32.3%", "28,927", "77.4%", "99.3%",
+must = ["37,374", "37,344", "81.0%", "54.0%", "54.6%", "68.3%", "18.6",
+        "56.7%", "38.9%", "60.7%", "15.3", "32.3%", "27,751", "74.3%",
+        "99.3%", "78.5%", "24.4", "84.4%",
         "Arthur Gonçalves Breguez", "0009-0005-8551-731X",
         "arthurbreguez@gmail.com", "Competing interests",
         "Kennard-Stone", "HiddenTerps", "1.50%", "13.5%", "78.4%"]

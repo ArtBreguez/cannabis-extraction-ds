@@ -23,9 +23,9 @@ explicit and measurable. Using 37,374 cannabis certificates of analysis, almost
 all of them concentrates, with a producer-declared extraction-method label, a
 gradient-boosted classifier separates solventless from hydrocarbon extracts at
 81.0% balanced accuracy under random five-fold cross-validation. Holding out the
-producer drops it to 54.0%, against a 50.0% chance level. The strictest
-available test, restricted to the 55 producers that make both product classes so
-that producer identity carries no label information, gives 54.6%.
+producer drops it to 54.0%, a 95% confidence interval that contains the 50.0%
+chance level. Restricted to the 53 producers making both classes, so a held-out
+producer's label cannot be read off training rows, it gives 54.6%.
 
 The collapse replicates on an independent, designed experiment: 162 HPLC-assayed
 samples across six varieties and three laboratory extraction methods fall from
@@ -138,18 +138,19 @@ they agree on 4,254 of 4,284 rows, 99.3%. The 30 contradictory rows are
 excluded.
 
 The resulting labelled dataset is 37,374 rows, of which 30 carry contradictory
-labels and are excluded from every analysis, leaving 37,344 rows in use:
+labels and are excluded from every analysis, leaving **37,344 rows** that all
+figures below are computed on unless stated otherwise:
 
 ```
-hydrocarbon   24,576   65.8%
-solventless   12,798   34.2%
+hydrocarbon   24,573   65.8%
+solventless   12,771   34.2%
 ```
 
 Grouping variables are populated as follows:
 
 ```
-producer      33,259 rows (89.0%)   96 distinct
-lab           37,374 rows (100.0%)  12 distinct
+producer      33,229 rows (89.0%)   96 distinct
+lab           37,344 rows (100.0%)  12 distinct
 strain_name        0 rows (0.0%)     0 distinct
 ```
 
@@ -184,10 +185,10 @@ which we separate explicitly because conflating them is easy:
 ```
 analyte               tested (flag)          detected (value > 0)
                    solventless  hydro      solventless  hydro
-d_limonene              75.7%   81.1%           40.8%   65.6%
-beta_caryophyllene      75.7%   81.1%           47.1%   68.3%
-alpha_pinene            75.7%   81.1%           34.3%   56.3%
-total_terpenes          88.2%   89.4%           56.9%   74.5%
+d_limonene              75.7%   81.1%           40.7%   65.6%
+beta_caryophyllene      75.7%   81.1%           47.0%   68.3%
+alpha_pinene            75.7%   81.1%           34.2%   56.3%
+total_terpenes          88.2%   89.4%           56.8%   74.5%
 ```
 
 Terpene panels are requested at similar rates for both classes, a gap of
@@ -234,13 +235,21 @@ Four split schemes are compared on the market data:
    8 of the 12 laboratories clear that floor and all 8 contain both classes,
    giving 8 folds. The 4 excluded laboratories hold 561 rows, 1.50% of the
    data, and they are still present in every training set;
-4. **dual-class + unseen**: restricted to the 55 producers that make *both*
+4. **dual-class + unseen**: restricted to the 53 producers that make *both*
    classes, grouped by producer.
 
-Scheme 4 is the strongest available evidence. Inside that subset, knowing the
-maker tells you nothing about the label by construction, so any lift must come
-from the chemistry. It covers 28,927 rows, 77.4% of the labelled data, with an
-18,470 / 10,457 class split.
+Scheme 4 is the strongest available evidence, though not for the reason a
+first reading suggests. Restricting to producers who make both classes removes
+the degenerate case where a producer's identity determines its label outright,
+but it does not make producer identity uninformative: the solventless share
+across these 53 producers ranges from 0.00 to 0.99 with a median of 0.35, and
+30 of the 53 sit outside the 0.2 to 0.8 band. A classifier given *only* an
+encoded producer ID, and no chemistry at all, still reaches 84.4% balanced
+accuracy inside this subset under a random split. What the restriction
+guarantees is that the held-out producer's label cannot be inferred from
+having seen that same producer in training, since every producer in the subset
+contributes both classes. It covers 27,751 rows, 74.3% of the usable data,
+with a 17,312 / 10,439 class split.
 
 On the controlled data, random five-fold is compared against
 leave-one-variety-out.
@@ -306,9 +315,31 @@ dual-class + unseen          54.6% (+/-2.6)   50.7%      5
 
 Under the protocol used in the published literature, the chemistry appears to
 separate solventless from hydrocarbon extracts at 81.0%. Holding out the
-producer leaves 54.0%, four points above coin-flipping. The 27-point gap is a
-direct measurement of how much of that 81.0% was producer identity rather than
-extraction chemistry.
+producer leaves 54.0%, four points above coin-flipping.
+
+Two qualifications are needed before that 27-point gap can be read as a pure
+protocol effect, and both are measurable.
+
+First, the two schemes do not run on the same rows: `random` uses all 37,344
+usable rows while `unseen-producer` requires a producer and so is confined to
+the 33,229 rows that have one, 89.0%. Comparing like with like, a random split
+*restricted to those same rows* scores 78.5%, so the protocol-only gap is
+**24.4 points** and the remaining 2.5 come from the easier sample. The paper's
+headline figure of 27 is the comparison a reader of the published literature
+would make, since those studies report the random-split number on all their
+data; 24.4 is the stricter quantity and we report both.
+
+Second, the grouped result is not distinguishable from chance by a
+conventional test. Across the five producer-held-out folds the scores are
+48.6, 57.6, 46.7, 55.7 and 61.5, giving a 95% confidence interval of
+[46.3, 61.8] that contains 50.0% (one-sample t against chance, p = 0.22). The
+honest reading is therefore not "54.0% is a small real effect" but "the
+producer-held-out performance is statistically indistinguishable from
+guessing". That strengthens rather than weakens the conclusion: the collapse
+goes all the way to chance.
+
+The gap is stable under reseeding. Three further seeds give protocol-only gaps
+of 24.6, 24.5 and 24.6 points, with the grouped score at 54.0% in every case.
 
 The strictest test agrees: 54.6% on the dual-class subset, with a tight
 fold spread of 2.6 points. Macro F1 is 50.3% and 50.7% on the two
@@ -389,8 +420,9 @@ show double-digit collapses when the group is held out. In both, the chemistry
 predicts the confounder better than the target.
 
 This gives a concrete magnitude to the concern raised abstractly in [8]: in this
-domain the inflation is 27 points on market data and 18 on a controlled
-experiment, not a rounding error.
+domain the inflation is 27 points on market data, 24.4 of which survive a
+same-sample comparison, and 18 on a controlled experiment, not a rounding
+error.
 
 ### 4.2 What this does not establish
 
@@ -466,22 +498,23 @@ gigabytes and a separate build, not an extension of this work.
 
 Extraction method is not identifiable from the cannabinoid and terpene panels in
 public cannabis certificates of analysis for an unseen producer: 54.0% balanced
-accuracy against a 50.0% chance level, and 54.6% on the strictest subset, where
-a random split reports 81.0%. The same collapse appears in a designed HPLC
-experiment when variety is held out, 56.7% to 38.9% against 33.3% chance. In
-both datasets the chemistry reads the confounder better than the target,
-identifying the laboratory 15.3 points above baseline and the variety at nearly
-four times chance.
+accuracy whose 95% confidence interval contains the 50.0% chance level, and
+54.6% on the strictest subset, where a random split reports 81.0%. The same
+collapse appears in a designed HPLC experiment when variety is held out, 56.7%
+to 38.9% against 33.3% chance. In both datasets the chemistry reads the
+confounder better than the target, identifying the laboratory 15.3 points above
+baseline and the variety at nearly four times chance.
 
 The field's published accuracies, 95% and 100%, are obtained under validation
 that leaves the group structure intact, the family of protocols for which we
-measure 27 points of inflation on market data and 18 on a designed experiment.
-We ran random cross-validation, not Kennard-Stone selection, so the magnitude
-we report is specific to the former; what the two share is that neither holds
-out the producer, the genotype or the laboratory. We do not claim the published
-chemical conclusions are wrong, and we did not rerun those studies. We claim
-their numbers do not answer the question a reader will assume they answer.
-Group-aware validation is not a refinement here. It changes the conclusion.
+measure 27 points of inflation on market data, 24.4 of them on a same-sample
+comparison, and 18 on a designed experiment. We ran random cross-validation,
+not Kennard-Stone selection, so the magnitude we report is specific to the
+former; what the two share is that neither holds out the producer, the genotype
+or the laboratory. We do not claim the published chemical conclusions are
+wrong, and we did not rerun those studies. We claim their numbers do not answer
+the question a reader will assume they answer. Group-aware validation is not a
+refinement here. It changes the conclusion.
 
 ## Data and code availability
 
