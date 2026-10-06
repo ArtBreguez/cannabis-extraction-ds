@@ -1,0 +1,26 @@
+claim: 'ten terpenes that survive the empty-column drop'
+  non-empty terpene value columns: 10 True
+
+claim: on the rows with all ten terpenes reported, Pearson r = 0.992 against their sum and R2 = 0.984
+  rows with total_terpenes and all ten terpenes reported: 26413 of 33229
+  Pearson r: 0.99173
+  R2 (r^2) : 0.98353
+
+claim: CERTIFIED AG exact on 99.7%, MA & ASSOCIATES on none
+  CERTIFIED AG LAB LLC     exact-sum share = 99.7%
+  MA & ASSOCIATES LLC      exact-sum share = 0.0%
+
+claim: populated total_terpenes == producer present, 33,229 / 33,229
+  total_terpenes populated: 33229  producer present: 33229
+  masks identical         : True
+
+claim: every lab at 0% or 100%, 8 at 100% and 4 at 0%
+  labs at 100%: ['374 LABS LLC', 'CERTIFIED AG LAB LLC', 'DB LABS LLC', 'DPL NV LLC', 'ERP LLC', 'G3 LABS LLC', 'MA & ASSOCIATES LLC', 'NV CANN LABS LLC']
+  labs at   0%: ['Cannalytics RI, LLC', 'Green Peaks Analytical', 'Lifted Testing Laboratories', 'PureVita Labs, LLC']
+  any lab strictly between: False
+
+claim: 101 rows total_thc > 100, max 686,400, 94 from one lab
+  rows > 100 : 101
+  max        : 686400.46
+  top lab    : {'G3 LABS LLC': 94}
+  share      : 0.27% of corpus

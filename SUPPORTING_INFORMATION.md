@@ -113,16 +113,17 @@ Two properties of these columns are worth stating because they bound what the
 features can mean.
 
 First, `total_terpenes` is not an independent measurement. It is a near-exact
-sum of the ten terpenes that survive the empty-column drop (R² = 0.984 against
-their sum, Pearson r = 0.992), so it is collinear with features already in the
-matrix and any per-feature importance attributed to it is split credit rather
-than chemistry. Its residual against that sum is laboratory-specific: `CERTIFIED
-AG LAB` reports an exact sum (within 10⁻⁶) on 99.7% of rows, `MA & ASSOCIATES`
-on none, which makes the residual a laboratory fingerprint in its own right.
-`total_thc` and `total_cbd` are derived columns of the same kind, each a fixed
-combination of its acid and neutral forms. Dropping the column costs 0.3 points
-of balanced accuracy under the all-rows random split, so nothing in this paper
-depends on keeping it; we keep it because the published literature does.
+sum of the ten terpenes that survive the empty-column drop: on the 26,413 rows
+that name a producer and report all ten, Pearson r = 0.992 against their sum and
+R² = 0.984. So it is collinear with features already in the matrix and any
+per-feature importance attributed to it is split credit rather than chemistry.
+Its residual against that sum is laboratory-specific: `CERTIFIED AG LAB` reports
+an exact sum (within 10⁻⁶) on 99.7% of rows, `MA & ASSOCIATES` on none, which
+makes the residual a laboratory fingerprint in its own right. `total_thc` and
+`total_cbd` are derived columns of the same kind, each a fixed combination of
+its acid and neutral forms. Dropping the column costs 0.3 points of balanced
+accuracy under the all-rows random split, so nothing in this paper depends on
+keeping it; we keep it because the published literature does.
 
 Second, whether `total_terpenes` is populated at all is a laboratory
 convention, not a per-sample decision. Every laboratory is at 0% or 100%, with

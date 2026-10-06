@@ -3,11 +3,25 @@
 Every figure the manuscript states in the two paragraphs added for
 total_terpenes and for the impossible potency values is recomputed here.
 """
+import sys
 import pandas as pd, numpy as np
 from pathlib import Path
 from sklearn.linear_model import LinearRegression
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+class _Tee:
+    """Print to stdout and to the committed evidence log at once."""
+    def __init__(self, path):
+        self.f = open(path, "w"); self.o = sys.stdout
+    def write(self, s):
+        self.f.write(s); self.o.write(s)
+    def flush(self):
+        self.f.flush(); self.o.flush()
+
+
+sys.stdout = _Tee(ROOT / "docs/evidence/verify_22_disclosures.txt")
 d = pd.read_csv(ROOT / 'data/labeled/master.csv',
                 low_memory=False)
 d = d[d.label_conflict == 0]
@@ -20,11 +34,17 @@ print("  non-empty terpene value columns:", len(PARTS), PARTS == sorted(PARTS, k
 
 s = d[PARTS].sum(axis=1, min_count=1)
 m = d.total_terpenes.notna() & s.notna()
-print("\nclaim: R2 = 0.984, Pearson r = 0.992")
+# One row set for both statistics: the rows that carry total_terpenes and
+# report all ten terpenes. R2 is the squared correlation with the plain sum,
+# so the two figures describe the same comparison.
 mm = m & d[PARTS].notna().all(axis=1)
-lr = LinearRegression().fit(d.loc[mm, PARTS], d.loc[mm, 'total_terpenes'])
-print("  R2       : %.4f" % lr.score(d.loc[mm, PARTS], d.loc[mm, 'total_terpenes']))
-print("  Pearson r: %.4f" % np.corrcoef(d.total_terpenes[m], s[m])[0, 1])
+r_full = np.corrcoef(d.total_terpenes[mm], s[mm])[0, 1]
+print("\nclaim: on the rows with all ten terpenes reported, Pearson r = 0.992 "
+      "against their sum and R2 = 0.984")
+print("  rows with total_terpenes and all ten terpenes reported: %d of %d"
+      % (mm.sum(), d.total_terpenes.notna().sum()))
+print("  Pearson r: %.5f" % r_full)
+print("  R2 (r^2) : %.5f" % r_full ** 2)
 
 print("\nclaim: CERTIFIED AG exact on 99.7%, MA & ASSOCIATES on none")
 ad = (d.total_terpenes - s)[m].abs()

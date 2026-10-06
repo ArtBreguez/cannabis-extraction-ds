@@ -581,9 +581,16 @@ check("losses per estimator and weighting anchored",
       f"{_g[('logistic','unweighted')]:.1f} for an unweighted logistic regression and {_g[('logistic','class-weighted')]:.1f} for a class-weighted one" in FLAT
       and f"whose held-out {_R[('logistic','class-weighted')][2]}% is the highest fold-mean score of the four models" in FLAT
       and _R[('logistic','class-weighted')][2] == max(v[2] for v in _R.values())
-      and FLAT.count(f"by {round(min(_g.values()))} to {round(max(_g.values()))} points") == 2
-      and f"{round(float(r7_gap.group(1)))} to {round(max(_g.values()))} points of balanced accuracy with gradient boosting" in FLAT
-      and f"{round(float(r7_gap.group(1)))} to {round(max(_g.values()))} points of inflation on market data" in FLAT, _g)
+      and f"overstates it by {round(min(_g.values()))} to {round(max(_g.values()))} points of balanced accuracy depending on the model" in FLAT, _g)
+# The boosting range in 4.1 and the conclusion covers the dual-class subset too
+# (its gap, from review9_checks.txt, is the largest boosting loss reported).
+_gb_hi = round(max(max(_g.values()), float(c9.group(5))))
+check("boosting loss range in 4.1 and the conclusion spans the producer rows and the dual-class subset",
+      float(c9.group(5)) > max(_g.values())
+      and f"on the market data {round(float(r7_gap.group(1)))} to {_gb_hi} points of balanced accuracy with gradient boosting, on the producer rows and on the dual-class subset" in FLAT
+      and f"{round(float(r7_gap.group(1)))} to {_gb_hi} points of inflation on market data" in FLAT
+      and f"It changes the size of the result by {round(min(_g.values()))} to {_gb_hi} points." in FLAT
+      and "24 to 25" not in FLAT, (_gb_hi, c9.group(5)))
 _wp = re.search(r"20 shuffled partitions: bal_acc min ([\d.]+)%\s+median ([\d.]+)%\s+max ([\d.]+)%\s+AUC min ([\d.]+)\s+median [\d.]+\s+max ([\d.]+)\s+partitions with bal_acc at or below 50.0%: (\d+)", _pblk)
 check("class-weighted partitions anchored",
       bool(_wp) and _wp.group(6) == "0"
@@ -737,6 +744,12 @@ check("pre-check log runs on the usable rows",
 # ---------- 2.2 feature-construction disclosures ----------
 check("total_terpenes collinearity disclosed",
       "0.984" in TEXT and "0.992" in TEXT)
+_l22 = (EV / "verify_22_disclosures.txt").read_text()
+_r22 = re.search(r"reported: (\d+) of (\d+)\s+Pearson r: ([\d.]+)\s+R2 \(r\^2\) : ([\d.]+)", _l22)
+check("collinearity of total_terpenes anchored to its log, on one stated row set",
+      bool(_r22) and _r22.group(2) == "33229"
+      and f"on the {int(_r22.group(1)):,} rows that name a producer and report all ten, Pearson r = {float(_r22.group(3)):.3f} against their sum and R² = {float(_r22.group(4)):.3f}." in FLAT,
+      _r22.groups() if _r22 else None)
 check("total_terpenes ablation cost disclosed", "0.3 points" in FLAT)
 check("total_terpenes population is a lab convention",
       "33,229 / 33,229" in TEXT)
