@@ -170,14 +170,28 @@ check("99.3% agreement", "99.3%" in TEXT)
 check("4,254 of 4,284", "4,254" in TEXT and "4,284" in TEXT)
 
 # ---------- the 139,714 -> 37,374 reduction ----------
-# Measured by streaming the 2.5 GB source once (count_concentrates.py) and by
-# importing the real NON_SOLVENT pattern, so these are source-derived, not
-# copied from the prose.
-check("102,340 undeclared rows", "102,340" in TEXT and "73.3%" in TEXT)
-check("26.7% declare the family", "26.7%" in TEXT)
-check("139,714 = 37,374 + 102,340", 37374 + 102340 == 139714)
+# Measured by streaming the 2.5 GB source (check_subset.py) with the real
+# NON_SOLVENT pattern, counting the labelled rows INSIDE the concentrate
+# subset separately from those outside it. An earlier version of this table
+# derived 102,340 by subtraction, which was wrong: 64 labelled rows are
+# pre-rolls and sit outside the 139,714 altogether.
+check("102,404 undeclared within concentrates",
+      "102,404" in TEXT and "73.3%" in TEXT)
+check("37,310 declared within concentrates",
+      "37,310" in TEXT and "26.7%" in TEXT)
+check("the subset arithmetic closes", 37310 + 102404 == 139714)
+check("the labelled total closes", 37310 + 64 == 37374)
+check("the 64 pre-roll rows are disclosed",
+      "64" in TEXT and "pre-rolls" in TEXT and "0.17%" in TEXT)
+check("0.17% is correct", abs(100 * 64 / 37374 - 0.17) < 0.005,
+      f"{100*64/37374:.3f}")
+# robustness: dropping the 64 pre-rolls must not move the headline
+check("pre-roll sensitivity reported",
+      "80.6%" in TEXT and "26.6" in TEXT)
+check("abstract does not call them all concentrates",
+      "37,374 concentrate certificates" not in TEXT)
 check("undeclared breakdown fits inside the total",
-      34034 + 30586 + 26030 + 3901 <= 102340 and "34,034" in TEXT)
+      34034 + 30586 + 26030 + 3901 <= 102404 and "34,034" in TEXT)
 check("regex variant documented",
       "1,445" in TEXT and "non[- ]?solvent" in TEXT)
 

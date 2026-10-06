@@ -19,13 +19,13 @@ Kennard-Stone partitioning over data with group structure, where replicate
 clones, repeat producers and repeat laboratories span the train/test boundary.
 
 We quantify the cost of that choice on a task where the group structure is
-explicit and measurable. Using 37,374 concentrate certificates of analysis with
-a producer-declared extraction-method label, a gradient-boosted classifier
-separates solventless from hydrocarbon extracts at 81.0% balanced accuracy
-under random five-fold cross-validation. Holding out the producer drops it to
-54.0%, against a 50.0% chance level. The strictest available test, restricted
-to the 55 producers that make both product classes so that producer identity
-carries no label information, gives 54.6%.
+explicit and measurable. Using 37,374 cannabis certificates of analysis, almost
+all of them concentrates, with a producer-declared extraction-method label, a
+gradient-boosted classifier separates solventless from hydrocarbon extracts at
+81.0% balanced accuracy under random five-fold cross-validation. Holding out the
+producer drops it to 54.0%, against a 50.0% chance level. The strictest
+available test, restricted to the 55 producers that make both product classes so
+that producer identity carries no label information, gives 54.6%.
 
 The collapse replicates on an independent, designed experiment: 162 HPLC-assayed
 samples across six varieties and three laboratory extraction methods fall from
@@ -112,8 +112,11 @@ this step, which is where the bulk of the reduction happens:
 
 ```
 concentrate or extract rows                     139,714
-  product_type declares the extraction family    37,374   (26.7%)
-  product_type does not                         102,340   (73.3%)
+  product_type declares the extraction family    37,310   (26.7%)
+  product_type does not                         102,404   (73.3%)
+
+labelled rows outside that subset                    64
+total labelled rows                              37,374
 ```
 
 The discarded majority is dominated by values that name a format rather than a
@@ -122,7 +125,11 @@ bare `concentrate` (26,030) and `marijuana extract for inhalation` (3,901).
 These are not missing labels to be recovered, since the extraction family was
 never recorded, so imputing one would invent the dependent variable. Matching
 is by regular expression (`non[- ]?solvent`) rather than exact string, which
-also admits regional variants such as `non-solvent concentrate` (1,445 rows).
+also admits regional variants such as `non-solvent concentrate` (1,445 rows)
+and, in 64 cases, `infused pre-rolls (non-solvent)`. Those 64 rows are the
+reason the labelled total slightly exceeds the declared count within the
+concentrate subset; they are solventless by declaration but are pre-rolls
+rather than concentrates, and they are 0.17% of the labelled data.
 
 A secondary labelling path applies regular expressions to `product_name`
 (`hash rosin`, `live rosin`, `rosin` for solventless; `live resin`, `bho`,
@@ -397,6 +404,11 @@ fingerprint, is a different experiment.
 
 **Not** that the labels are wrong. They are source-declared and agree with the
 name-derived path on 99.3% of rows where both exist.
+
+**Not** sensitive to the 64 pre-roll rows. Removing them moves random-split
+balanced accuracy from 81.0% to 80.6% and leaves unseen-producer unchanged at
+54.0%, so the 27-point gap becomes 26.6. The conclusion does not depend on
+their inclusion.
 
 **Not** a claim about the correctness of the conclusions in [1], [2] or [3].
 Their chemical findings may well hold. What we show is that the reported
