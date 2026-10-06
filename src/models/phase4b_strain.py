@@ -72,6 +72,15 @@ def model():
         max_iter=200, random_state=SEED, early_stopping=False)
 
 
+def probe_model():
+    # Multiclass alarm probe. At the 0.1 default the softmax boosting
+    # diverges on 109 separable classes (see phase3_alarms.py); 0.05 is
+    # stable. The binary method task above keeps the default.
+    return HistGradientBoostingClassifier(
+        max_iter=200, learning_rate=0.05, random_state=SEED,
+        early_stopping=False)
+
+
 def evaluate(X, y, groups, name, out):
     n = min(5, len(np.unique(groups)))
     if n < 2:
@@ -140,11 +149,16 @@ def main() -> int:
         ys = sub["strain_key"].astype(str).to_numpy()
         base = pd.Series(ys).value_counts().max() / len(ys)
         cv = StratifiedKFold(5, shuffle=True, random_state=SEED)
-        sc = cross_val_score(model(), Xs, ys, cv=cv, scoring="accuracy",
+        sc = cross_val_score(probe_model(), Xs, ys, cv=cv, scoring="accuracy",
                              n_jobs=-1)
         out.append(f"strains={sub['strain_key'].nunique()} rows={len(sub)}  "
                    f"acc={100*sc.mean():.1f}%  baseline={100*base:.1f}%  "
                    f"lift={100*(sc.mean()-base):+.1f}pts")
+        out.append(f"  folds={[round(100*float(v), 1) for v in sc]}  (learning_rate=0.05)")
+        sc0 = cross_val_score(model(), Xs, ys, cv=cv, scoring="accuracy",
+                              n_jobs=-1)
+        out.append(f"  at the 0.1 default: acc={100*sc0.mean():.1f}%  "
+                   f"folds={[round(100*float(v), 1) for v in sc0]}  (diverges)")
     out.append("")
 
     # The method task, grouped by strain key.

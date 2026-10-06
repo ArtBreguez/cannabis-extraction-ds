@@ -32,7 +32,7 @@ print(f"  extracted characters: {len(full):,}")
 
 # --- does every headline number survive into the PDF? ---
 must = ["37,374", "37,344", "81.0%", "54.0%", "54.6%", "68.3%", "18.6",
-        "56.7%", "38.9%", "60.7%", "15.3", "32.3%", "27,751", "74.3%",
+        "56.7%", "38.9%", "60.7%", "92.3%", "+52.0 pts", "32.3%", "27,751", "74.3%",
         "99.3%", "78.5%", "24.4", "84.4%",
         "Arthur Gonçalves Breguez", "0009-0005-8551-731X",
         "arthurbreguez@gmail.com", "Competing interests",

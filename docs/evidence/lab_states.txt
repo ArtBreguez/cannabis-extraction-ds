@@ -1,0 +1,22 @@
+usable rows: 37344
+
+=== lab_state per laboratory ===
+   15018  G3 LABS LLC                      {'NV': 15018}
+   12531  NV CANN LABS LLC                 {'NV': 12531}
+    3137  PureVita Labs, LLC               {'(blank)': 3137}
+    2155  DB LABS LLC                      {'NV': 2155}
+    1807  CERTIFIED AG LAB LLC             {'(blank)': 1807}
+     817  DPL NV LLC                       {'NV': 817}
+     758  Cannalytics RI, LLC              {'(blank)': 758}
+     560  374 LABS LLC                     {'NV': 560}
+     273  ERP LLC                          {'NV': 273}
+     120  Lifted Testing Laboratories      {'(blank)': 120}
+     100  Green Peaks Analytical           {'(blank)': 100}
+      68  MA & ASSOCIATES LLC              {'NV': 68}
+
+=== rows per lab_state ===
+   31422  NV
+    5922  (blank)
+
+date_tested filled: 33765 of 37344
+date_tested range: 2020-01-02 to 2024-03-29

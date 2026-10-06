@@ -30,7 +30,8 @@ from pathlib import Path
 
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.model_selection import (GroupKFold, StratifiedKFold,
+                                     cross_val_score, cross_validate)
 
 warnings.filterwarnings("ignore")
 
@@ -39,6 +40,7 @@ MASTER = ROOT / "data/labeled/master.csv"
 OUT = ROOT / "docs/evidence/phase3_alarms.txt"
 
 SEED = 20260921
+PROBE_LR = 0.05
 
 
 def load():
@@ -79,10 +81,19 @@ def probe(df: pd.DataFrame, feats: list[str], target: str,
     y = sub[target].astype(str).to_numpy()
 
     baseline = counts[keep].max() / len(sub)
+    # learning_rate=0.05, not the 0.1 default: with 11 or 33 perfectly
+    # separable classes the softmax boosting diverges at 0.1 (fold accuracies
+    # 40.6 to 69.4 for the lab, 10.4 to 68.7 for the producer), which an
+    # earlier version of this log reported as a +15.3-point lift. The binary
+    # task in phase 4 is unaffected (fold spread 0.4) and keeps the default.
     clf = HistGradientBoostingClassifier(
-        max_iter=120, random_state=SEED, early_stopping=False)
+        max_iter=120, learning_rate=PROBE_LR, random_state=SEED,
+        early_stopping=False)
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
-    scores = cross_val_score(clf, X, y, cv=cv, scoring="accuracy", n_jobs=-1)
+    res = cross_validate(clf, X, y, cv=cv, n_jobs=-1,
+                         scoring=("accuracy", "balanced_accuracy"))
+    scores = res["test_accuracy"]
+    bal = res["test_balanced_accuracy"]
 
     acc = scores.mean()
     lift = 100 * (acc - baseline)
@@ -92,6 +103,9 @@ def probe(df: pd.DataFrame, feats: list[str], target: str,
                f"rows={len(sub):>6}  acc={100*acc:>5.1f}% "
                f"(+/-{100*scores.std():.1f})  baseline={100*baseline:>5.1f}%  "
                f"lift={lift:>+6.1f}pts  [{verdict}]")
+    out.append(f"{'':10} folds={[round(100*float(v), 1) for v in scores]}  "
+               f"balanced_acc={100*bal.mean():.1f}% (+/-{100*bal.std():.1f}) "
+               f"chance={100/sub[target].nunique():.1f}%")
 
 
 def main() -> int:
@@ -112,6 +126,55 @@ def main() -> int:
                               ("producer", 150)]:
         if target in df.columns:
             probe(df, feats, target, min_count, out)
+
+    # --- why 0.05: document the divergence at the default rate ------------
+    out.append("")
+    out.append("=== WHY learning_rate=0.05: the lab probe at the 0.1 default ===")
+    sub = df[df["lab"].notna() & (df["lab"].astype(str).str.strip() != "")]
+    counts = sub["lab"].value_counts()
+    sub = sub[sub["lab"].isin(counts[counts >= 100].index)]
+    X = sub[feats].astype(float).to_numpy()
+    y = sub["lab"].astype(str).to_numpy()
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
+    for lr in (0.1, PROBE_LR):
+        sc = cross_val_score(HistGradientBoostingClassifier(
+            max_iter=120, learning_rate=lr, random_state=SEED,
+            early_stopping=False), X, y, cv=cv, scoring="accuracy", n_jobs=-1)
+        out.append(f"  learning_rate={lr:<5} folds={[round(100*float(v), 1) for v in sc]}"
+                   f"  mean={100*sc.mean():.1f}%")
+
+    # --- missingness-only lab probe --------------------------------------
+    out.append("")
+    out.append("=== LAB FROM THE MISSINGNESS PATTERN ALONE (no measured value) ===")
+    pat = pd.Series([tuple(int(v) for v in r)
+                     for r in sub[feats].notna().to_numpy()], index=sub.index)
+    hits = 0
+    for tr, te in cv.split(X, y):
+        vote = (pd.DataFrame({"p": pat.iloc[tr].to_numpy(), "y": y[tr]})
+                .groupby("p")["y"].agg(lambda c: c.value_counts().index[0]))
+        pred = pat.iloc[te].map(vote).fillna(pd.Series(y[tr]).mode()[0])
+        hits += int((pred.to_numpy() == y[te]).sum())
+    out.append(f"  acc={100*hits/len(y):.1f}%  baseline={100*counts[counts>=100].max()/len(y):.1f}%"
+               f"  (lookup table over {pat.nunique()} patterns, same 5 folds)")
+
+    # --- lab probe with producers held out --------------------------------
+    out.append("")
+    out.append("=== LAB PROBE, PRODUCER-GROUPED (no producer in both train and test) ===")
+    prod = df["producer"].fillna("").astype(str).str.strip()
+    sp = df[(prod != "") & df["lab"].notna()]
+    counts = sp["lab"].value_counts()
+    sp = sp[sp["lab"].isin(counts[counts >= 100].index)]
+    Xp = sp[feats].astype(float).to_numpy()
+    yp = sp["lab"].astype(str).to_numpy()
+    gp = prod[sp.index].to_numpy()
+    sc = cross_val_score(HistGradientBoostingClassifier(
+        max_iter=120, learning_rate=PROBE_LR, random_state=SEED,
+        early_stopping=False), Xp, yp, groups=gp, cv=GroupKFold(5),
+        scoring="accuracy", n_jobs=-1)
+    out.append(f"  classes={sp['lab'].nunique()} rows={len(sp)}  "
+               f"acc={100*sc.mean():.1f}% (+/-{100*sc.std():.1f})  "
+               f"baseline={100*counts[counts>=100].max()/len(sp):.1f}%  "
+               f"folds={[round(100*float(v), 1) for v in sc]}")
 
     out.append("")
     out.append("=== REFERENCE: the actual task, naive split ===")

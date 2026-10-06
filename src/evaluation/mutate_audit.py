@@ -64,7 +64,14 @@ MUTATIONS = [
      "unseen-producer              55.0%"),
     ("dual-class 54.6 -> 55.6", "dual-class + unseen          54.6%",
      "dual-class + unseen          55.6%"),
-    ("lab lift 15.3 -> 16.3", "+15.3 pts", "+16.3 pts"),
+    ("lab lift 52.0 -> 53.0", "+52.0 pts", "+53.0 pts"),
+    ("lab probe accuracy 92.3 -> 93.3 in the abstract",
+     "laboratory on 92.3% of market rows", "laboratory on 93.3% of market rows"),
+    ("missingness-only lab probe 57.3 -> 58.3", "reaches 57.3% on the same folds",
+     "reaches 58.3% on the same folds"),
+    ("producer-grouped lab probe 85.4 -> 86.4", "85.4% (+/-3.3) against",
+     "86.4% (+/-3.3) against"),
+    ("strain lift 9.9 -> 10.9 in 4.3", "a lift of 9.9 points", "a lift of 10.9 points"),
     ("solventless recall 32.3 -> 33.3", "recall is **32.3%**",
      "recall is **33.3%**"),
     # population figures, the class of bug pass seven found
@@ -130,12 +137,26 @@ MUTATIONS = [
      "costs 0.2 points of balanced accuracy"),
     ("dual-class CI lower 51.0 -> 50.0", "[51.0, 58.3] that excludes 50.0%",
      "[50.0, 58.3] that excludes 50.0%"),
-    ("dual-class p 0.024 -> 0.24", "(p = 0.024)", "(p = 0.24)"),
+    ("dual-class p 0.024 -> 0.24", "excludes 50.0% (p = 0.024)", "excludes 50.0% (p = 0.24)"),
     ("dual-class fold 50.9 -> 51.9", "56.4 and 50.9", "56.4 and 51.9"),
-    ("dual-class residual 4.6 -> 5.6", "residual of 4.6 points",
-     "residual of 5.6 points"),
+    ("dual-class residual range 2-5 -> 4-5", "residual above chance is therefore 2 to 5 points",
+     "residual above chance is therefore 4 to 5 points"),
+    ("dual-class same-sample random 80.3 -> 81.3", "against 80.3% (+/-0.7)", "against 81.3% (+/-0.7)"),
+    ("shuffled reseed 52.2 -> 53.2", "gives 55.9%, 52.2% and 53.5%", "gives 55.9%, 53.2% and 53.5%"),
+    ("duplicate count 1,813 -> 1,814", "1,813 (4.9%) repeat", "1,814 (4.9%) repeat"),
+    ("dedup grouped 55.2 -> 56.2", "and 55.2% grouped", "and 56.2% grouped"),
+    ("macro-F1 majority baseline 39.8 -> 40.8", "against 39.8% for the majority predictor",
+     "against 40.8% for the majority predictor"),
+    ("pooled balanced accuracy 51.6 -> 52.6", "balanced accuracy of 51.6%", "balanced accuracy of 52.6%"),
+    ("PureVita panel count 1,230 -> 1,231", "all hydrocarbon (1,230 each)", "all hydrocarbon (1,231 each)"),
+    ("dual-class permutation p 0.016 -> 0.16", "sits above it (p = 0.016)",
+     "sits above it (p = 0.16)"),
+    ("unseen-producer permutation p 0.024 -> 0.24", "null (p = 0.024)", "null (p = 0.24)"),
+    ("'all the way to chance' reinstated",
+     "On this scheme the collapse goes to within a few points of chance.",
+     "On this scheme the collapse goes all the way to chance."),
     ("the false 'no gate passed' sentence reinstated",
-     "neither clears chance by more than its balanced-accuracy fold spread.",
+     "so neither scheme beats a stratified guess on that metric.",
      "No gate that requires beating chance by more than the between-fold spread is passed."),
     ("censoring direction flipped back", "heavily left-censored",
      "heavily right-censored"),
@@ -200,8 +221,8 @@ MUTATIONS = [
     ("4.1 strain dominance unscoped again",
      "Producer variation dominates\nwhatever method signal exists",
      "Strain and producer variation dominate\nwhatever method signal exists"),
-    ("4.1 drops the negative market lift", "minus 3.0 points (4.3)",
-     "a weaker signal (4.3)"),
+    ("4.1 drops the strain-vs-lab comparison", "9.9 points\nabove its baseline against",
+     "a weaker signal\nabove its baseline against"),
     ("4.1 producer-ID figure 84.4 -> 85.4", "84.4% while the chemistry",
      "85.4% while the chemistry"),
     # prose hygiene: an em-dash must be caught
@@ -225,11 +246,15 @@ if base[0] != base[1]:
 print(f"\n  running {len(MUTATIONS)} mutations\n")
 survived = []
 for label, old, new in MUTATIONS:
-    if old not in ORIGINAL:
+    # Anchors are matched across line breaks: the manuscript is reflowed at
+    # 80 columns, so a phrase may wrap differently from one pass to the next.
+    pat = r"\s+".join(re.escape(w) for w in old.split())
+    hit = re.search(pat, ORIGINAL)
+    if not hit:
         print(f"    {'ANCHOR MISSING':<16} {label}")
         survived.append((label, "anchor not found in manuscript"))
         continue
-    mutated = ORIGINAL.replace(old, new, 1)
+    mutated = ORIGINAL[:hit.start()] + new + ORIGINAL[hit.end():]
     res, out = run_audit(mutated)
     if res is None:
         print(f"    {'AUDIT CRASHED':<16} {label}")

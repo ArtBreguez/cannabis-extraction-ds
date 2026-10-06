@@ -1,0 +1,34 @@
+rows: 37344   features: 19
+
+=== B. the 2.3 missingness probe, both metrics ===
+  missingness-only probe: plain acc=69.8%  balanced_acc=56.8%  (majority baseline plain 65.8%, balanced 50.0%)
+  main model, random split: plain acc=84.1% (+/-0.3)  balanced_acc=81.0% (+/-0.4)
+
+=== C. dual-class rows: random split on the SAME rows ===
+  rows=27751  random 5-fold 80.3% (+/-0.7)   grouped by producer 54.6% (+/-2.6)   gap 25.6 points
+
+=== D. grouped schemes with SHUFFLED group-to-fold assignment ===
+  seed      1: unseen-producer 55.9% (+/-3.6)   dual-class 53.0% (+/-5.5)
+  seed      7: unseen-producer 52.2% (+/-5.0)   dual-class 53.1% (+/-8.2)
+  seed  12345: unseen-producer 53.5% (+/-4.0)   dual-class 52.2% (+/-2.3)
+
+=== E. duplicate rows ===
+  exact duplicate rows (all columns): 581
+  duplicates on product_name+lab+producer+19 analytes: 1813 (4.9% of usable rows)
+  after dropping them: rows=35531  random 80.8% (+/-0.6)  unseen-producer 55.2% (+/-4.1)  gap 25.6 points
+
+=== H/P. unseen-producer and dual-class: macro F1 per fold, pooled matrix ===
+  unseen-producer: macro_F1 folds=[48.1, 46.0, 46.5, 54.0, 56.9] mean=50.3% (+/-4.3)
+  unseen-producer: pooled balanced_acc=51.6%  pooled macro_F1=51.4%
+  dual-class:      macro_F1 folds=[51.1, 46.5, 50.1, 56.0, 49.6] mean=50.7% (+/-3.1)
+  macro_F1 baselines on the producer rows: majority 39.8%  stratified shuffle 49.8%
+
+=== K. pure missingness patterns INSIDE each producer-less laboratory ===
+  Cannalytics RI, LLC            {(1, 'hydrocarbon'): 51, (4, 'hydrocarbon'): 51, (6, 'solventless'): 656}
+  Green Peaks Analytical         {(6, 'solventless'): 100}
+  Lifted Testing Laboratories    {(0, 'solventless'): 2, (1, 'hydrocarbon'): 22, (4, 'hydrocarbon'): 22, (6, 'solventless'): 74}
+  PureVita Labs, LLC             {(0, 'solventless'): 12, (1, 'hydrocarbon'): 1230, (4, 'hydrocarbon'): 1230, (6, 'solventless'): 665}
+  (key = analytes reported, class)
+
+=== Z. controlled data: distinct design cells ===
+  long rows=648  distinct (method, variety, t, T, P) cells=162

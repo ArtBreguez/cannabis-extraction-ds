@@ -17,7 +17,9 @@ top strain keys:
     153  raw
 
 === ALARM: chemistry -> strain key (>=30 samples) ===
-strains=109 rows=12829  acc=19.5%  baseline=22.5%  lift=-3.0pts
+strains=109 rows=12829  acc=32.4%  baseline=22.5%  lift=+9.9pts
+  folds=[32.9, 31.0, 37.8, 31.1, 29.3]  (learning_rate=0.05)
+  at the 0.1 default: acc=19.5%  folds=[19.6, 12.8, 21.5, 18.3, 25.3]  (diverges)
 
 === METHOD TASK, GROUPED BY STRAIN KEY ===
 unseen-strain (all)    folds=5  balanced_acc= 66.2% (+/-1.6)  macro_F1= 65.0%
