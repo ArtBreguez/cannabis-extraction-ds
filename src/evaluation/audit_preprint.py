@@ -644,6 +644,47 @@ check("name-path comparison scope stated",
 check("introduction no longer defines the classes as rosin vs BHO",
       "separating solventless extracts (rosin" not in FLAT)
 
+# ---------- the controlled experiment's robustness checks ----------
+# audit_phase5_controlled.py recomputes 3.3 from the raw xlsx and adds the
+# seed sweep, the random-group control and the permutation tests that
+# phase5_controlled.txt cannot provide. Every figure 3.3 quotes from it is
+# read here from that log.
+logp = (EV / "audit_phase5_controlled.txt").read_text()
+k5 = re.search(r"k=5: mean=([\d.]+)% sd=([\d.]+)", logp)
+pct = re.search(r"sits at the (\d+)th percentile", logp)
+ctl = re.search(r"mean=([\d.]+)% sd=[\d.]+ 2\.5-97\.5pct=\[[\d.]+,[\d.]+\]\s*\n\s*real LOVO", logp)
+pc = re.search(r"P\(random-group LOVO <= real LOVO\) = ([\d.]+)", logp)
+pr5 = re.search(r"r5\s+obs=[\d.]+%.*?p=([\d.]+)", logp)
+plo = re.search(r"lovo\s+obs=[\d.]+%.*?p=([\d.]+)", logp)
+gap = re.search(r"gap = ([\d.]+) pts", logp)
+ttp = re.search(r"if t/T/P were included: bal=([\d.]+)%", logp)
+check("seed sweep mean anchored",
+      bool(k5) and f"average {k5.group(1)}% (sd {k5.group(2)})" in FLAT,
+      k5.group(0) if k5 else None)
+check("seed percentile anchored",
+      bool(pct) and f"sits at the {pct.group(1)}th percentile" in FLAT,
+      pct.group(0) if pct else None)
+lovo = from_log(log5, "leave-one-variety-out")
+check("seed-robust gap recomputes",
+      bool(k5 and lovo) and f"is {float(k5.group(1)) - float(lovo[1]):.1f} points rather than" in FLAT,
+      f"{float(k5.group(1)) - float(lovo[1]):.1f}" if k5 and lovo else None)
+check("single-seed gap anchored",
+      bool(gap) and f"rather than {gap.group(1)}" in FLAT, gap.group(0) if gap else None)
+check("random-group control anchored",
+      bool(ctl and pc) and f"averages {ctl.group(1)}% over 200 draws" in FLAT
+      and float(pc.group(1)) == 0.0 and "never falls to 38.9%" in FLAT,
+      (ctl.group(1), pc.group(1)) if ctl and pc else None)
+check("permutation p-values anchored",
+      bool(pr5 and plo) and f"p = {float(pr5.group(1)):.3f} for the random split" in FLAT
+      and f"p = {float(plo.group(1)):.2f} for leave-one-variety-out" in FLAT,
+      (pr5.group(1), plo.group(1)) if pr5 and plo else None)
+check("process-settings leak anchored",
+      bool(ttp) and f"lifts the random\nsplit to {ttp.group(1)}%" in TEXT,
+      ttp.group(1) if ttp else None)
+check("discussion carries the seed-averaged gap",
+      bool(k5 and lovo) and f"{round(float(k5.group(1)) - float(lovo[1]))} once the random" in FLAT
+      and f"{round(float(k5.group(1)) - float(lovo[1]))} to 18 on a designed experiment" in FLAT)
+
 # ---------- references ----------
 refs = TEXT.split("## References")[1]
 for n in range(1, 13):

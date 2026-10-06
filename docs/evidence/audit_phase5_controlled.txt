@@ -1,0 +1,52 @@
+== 2b. SEED SWEEP: random CV at k=5 and k=6, 200 seeds each ==
+  k=5: mean=54.3% sd=2.7 median=54.4 2.5-97.5pct=[48.8,59.1]
+  paper's 56.7% sits at the 80th percentile of the k=5 seed distribution
+  k=6: mean=54.4% sd=2.6 median=54.3 2.5-97.5pct=[49.4,59.3]
+
+== 2c. CONTROL: 6 RANDOM groups of 27 (fold count + grouping kept, ==
+        variety link broken), 200 draws ==
+  mean=54.0% sd=3.0 2.5-97.5pct=[48.6,60.5]
+  real LOVO = 38.9%; P(random-group LOVO <= real LOVO) = 0.000
+  -> if this is ~0.0x, the variety structure (not the fold count) causes the drop
+
+== 3. CONFIDENCE INTERVALS AND TESTS VS CHANCE ==
+  random 5-fold   56.7%  folds=[66.7, 57.6, 48.8, 66.7, 43.9]
+                 95%CI=[43.9,69.5] contains 33.3%? False   t=5.08 p=0.0071
+                 paper's mean+/-sd band = [47.5,65.9] contains chance? False
+  LOVO            38.9%  folds=[33.3, 25.9, 37.0, 59.3, 51.9, 25.9]
+                 95%CI=[24.4,53.4] contains 33.3%? True   t=0.99 p=0.3696
+                 paper's mean+/-sd band = [26.3,51.5] contains chance? True
+  variety         60.7%  folds=[50.6, 66.7, 50.6, 66.1, 69.4]
+                 95%CI=[49.1,72.2] contains 16.7%? False   t=10.56 p=0.0005
+                 paper's mean+/-sd band = [52.3,69.0] contains chance? False
+
+== 3b. POOLED-PREDICTION BINOMIAL CI ==
+  method random5   92/162 plain acc=56.8% CI=[49.1,64.2] pooled bal_acc=56.8%  p(>chance 33.3%)=7.88e-10 CI_contains_chance=False
+  method LOVO      63/162 plain acc=38.9% CI=[31.7,46.6] pooled bal_acc=38.9%  p(>chance 33.3%)=7.95e-02 CI_contains_chance=True
+  variety random5  98/162 plain acc=60.5% CI=[52.8,67.7] pooled bal_acc=60.5%  p(>chance 16.7%)=5.57e-36 CI_contains_chance=False
+
+== 3c. PERMUTATION TESTS (300 reps) ==
+  r5    obs=56.7%  null mean=33.2% sd=4.6 95pct=41.3%  p=0.0033
+  lovo  obs=38.9%  null mean=33.2% sd=4.5 95pct=40.8%  p=0.1096
+  variety obs=60.7% null mean=16.2% 95pct=21.6% p=0.0033
+
+== 3d. IS 56.7% vs 38.9% DISTINGUISHABLE? ==
+  gap = 17.8 pts (paper says 18)
+  Welch t=2.45 p=0.0370  Mann-Whitney p=0.0407
+  honest gap vs k=6 random (54.4%): 15.5 pts
+  P(random 5-fold seed <= LOVO 38.9%) = 0.000
+
+== 4. VARIETY TASK ==
+  class counts: {'Cherry Bubblegum': 27, 'Cherry Oregon': 27, 'EM16': 27, 'EM19': 27, 'Lemonge': 27, 'Titan': 27}
+  60.7/16.667 = 3.64x chance; paper: 'nearly four times'
+
+== 5/6. PREPROCESSING & LEAK CHECKS ==
+  duplicate (keys,C) cells needing aggfunc=mean: 0
+  raw Variedad labels: ['Cherry Bubblegum ', 'Cherry Oregon', 'EM16', 'EM19', 'Lemonge', 'Titan']
+  P ranges per method (perfect method separator, NOT in X):
+                 min     max  nunique
+Metodo                               
+Maceracion      0.72    0.72        1
+Supercritico  300.00  350.00        3
+Ultrasonido     0.72    0.72        1
+  if t/T/P were included: bal=88.3% (paper correctly excludes them)

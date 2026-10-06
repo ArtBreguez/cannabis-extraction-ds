@@ -201,7 +201,10 @@ than market data: six named varieties, each extracted by three laboratory
 methods (maceration, ultrasound, supercritical CO2) under varied
 time, temperature and pressure, with cannabinoids quantified by HPLC. The
 design is fully balanced at 54 samples per method and 27 per variety, 162 total,
-with four features (CBD, CBG, CBN, THC) and no missing values.
+with four features (CBD, CBG, CBN, THC) and no missing values. The process
+settings (time, temperature, pressure) are not features: pressure alone
+identifies supercritical CO2, and adding the three settings lifts the random
+split to 88.3%.
 
 ### 2.2 Feature construction
 
@@ -524,6 +527,17 @@ better than they predict the extraction method they were measured to compare.
 Even in an experiment built specifically to isolate method, with fixed genetics
 per group and clean HPLC numbers, genetics dominates the cannabinoid signal.
 
+Three checks bound these figures, each recomputed from the raw file. First,
+the random-split score depends on the seed: over 200 seeds, five-fold scores
+average 54.3% (sd 2.7) and the reported 56.7% sits at the 80th percentile, so
+the seed-robust gap to leave-one-variety-out is 15.4 points rather than 17.8.
+Second, the drop comes from the variety structure and not from the fold count:
+holding out six groups of 27 samples assigned at random, which keeps the fold
+geometry and breaks the variety link, averages 54.0% over 200 draws and never
+falls to 38.9%. Third, a permutation test over 300 label shuffles gives
+p = 0.003 for the random split and p = 0.11 for leave-one-variety-out, so the
+grouped score is, as in the market data, not distinguishable from chance.
+
 This matters for interpretation. The Cannlytics result alone could be dismissed
 as a consequence of messy market data. The controlled experiment removes that
 explanation.
@@ -555,8 +569,8 @@ predicts the confounder better than the target.
 
 This gives a concrete magnitude to the concern raised abstractly in [8]: in this
 domain the inflation is 27 points on market data, 24.4 of which survive a
-same-sample comparison, and 18 on a controlled experiment, not a rounding
-error.
+same-sample comparison, and 18 on a controlled experiment, 15 once the random
+split is averaged over seeds, not a rounding error.
 
 ### 4.2 What this does not establish
 
@@ -675,7 +689,8 @@ four times chance.
 The field's published accuracies, 95% and 100%, are obtained under validation
 that leaves the group structure intact, the family of protocols for which we
 measure 27 points of inflation on market data, 24.4 of them on a same-sample
-comparison, and 18 on a designed experiment. We ran random cross-validation,
+comparison, and 15 to 18 on a designed experiment. We ran random
+cross-validation,
 not Kennard-Stone selection, so the magnitude we report is specific to the
 former; what the two share is that neither holds out the producer, the genotype
 or the laboratory. We do not claim the published chemical conclusions are
