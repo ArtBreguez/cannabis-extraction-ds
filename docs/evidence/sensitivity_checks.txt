@@ -1,0 +1,35 @@
+rows: 37344   features: 19
+
+=== REFERENCE: the two schemes as reported in 3.2 ===
+random (all rows)        81.0% (+/-0.4)
+unseen-producer          54.0% (+/-5.6)
+gap                      27.0 points
+
+=== 4.2: WITHOUT THE 64 PRE-ROLL ROWS ===
+pre-roll rows dropped: 64 {'Infused Pre-Rolls (Non-Solvent)': 64}
+random (all rows)        80.6% (+/-0.4)
+unseen-producer          54.0% (+/-5.6)
+gap                      26.6 points
+
+=== 2.2: WITHOUT total_terpenes ===
+features: 18
+random (all rows)        80.7% (+/-0.5)
+cost of dropping it      0.3 points
+
+=== 3.2: DUAL-CLASS SCHEME, FOLD SCORES AND INTERVAL ===
+producers: 53   rows: 27751
+dual-class+unseen        54.6% (+/-2.6)
+folds: [54.1, 58.5, 53.2, 56.4, 50.9]
+95% CI [51.0, 58.3]  p=0.024  (one-sample t against 50.0%)
+CI includes 50%: False
+
+=== 3.2: UNSEEN-PRODUCER, PER-FOLD SOLVENTLESS RECALL ===
+the fold-averaged recall and the pooled matrix differ because
+the folds carry very unequal numbers of solventless rows
+fold 0: test rows=  6646  solventless= 1301  solventless recall=28.2%
+fold 1: test rows=  6646  solventless= 4413  solventless recall=25.3%
+fold 2: test rows=  6646  solventless= 1609  solventless recall=28.5%
+fold 3: test rows=  6645  solventless= 2988  solventless recall=31.1%
+fold 4: test rows=  6646  solventless=  951  solventless recall=48.5%
+mean of fold recalls: 32.3%   min 25.3%   max 48.5%
+solventless rows per fold: min 951   max 4413

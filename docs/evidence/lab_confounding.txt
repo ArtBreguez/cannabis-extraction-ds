@@ -1,16 +1,16 @@
-labeled rows: 37374
-class balance: {'hydrocarbon': 24576, 'solventless': 12798}
+labeled rows (conflicts excluded): 37344
+class balance: {'hydrocarbon': 24573, 'solventless': 12771}
 majority-class baseline: 65.8%
 
 === CLASS MIX PER LAB ===
 a lab that tests only one class cannot be separated from it
 lab                                 rows  solventless    hydro    skew
-g3 labs llc                        15035         5608     9427   62.7%
-nv cann labs llc                   12539         4063     8476   67.6%
+g3 labs llc                        15018         5594     9424   62.8%
+nv cann labs llc                   12531         4055     8476   67.6%
 purevita labs, llc                  3137          677     2460   78.4%
-db labs llc                         2156          469     1687   78.2%
-certified ag lab llc                1808          483     1325   73.3%
-dpl nv llc                           820          434      386   52.9%
+db labs llc                         2155          468     1687   78.3%
+certified ag lab llc                1807          482     1325   73.3%
+dpl nv llc                           817          431      386   52.8%
 cannalytics ri, llc                  758          656      102   86.5%
 374 labs llc                         560          178      382   68.2%
 erp llc                              273            6      267   97.8%
@@ -32,7 +32,7 @@ lift over baseline:              +4.1 points
 a stratum whose rows are ALL one class hands the label over
 outright, before any measured value is read
 patterns that are 100% one class: 7 of 13
-rows they cover:                  4123 (11.03%)
+rows they cover:                  4123 (11.04%)
   n= 1495  all solventless (6 of 19 analytes reported)
   n= 1303  all hydrocarbon (1 of 19 analytes reported)
   n= 1303  all hydrocarbon (4 of 19 analytes reported)
@@ -43,6 +43,6 @@ rows they cover:                  4123 (11.03%)
 accuracy from lab + missingness:  70.5%
 
 === PRODUCERS SPANNING BOTH CLASSES ===
-producers in both classes: 55 of 96
-rows belonging to them:    28927 (77.4% of labeled data)
+producers in both classes: 53 of 96
+rows belonging to them:    27751 (74.3% of labeled data)
 this subset is where a model cannot win by memorising producer

@@ -36,7 +36,10 @@ must = ["37,374", "37,344", "81.0%", "54.0%", "54.6%", "68.3%", "18.6",
         "99.3%", "78.5%", "24.4", "84.4%",
         "Arthur Gonçalves Breguez", "0009-0005-8551-731X",
         "arthurbreguez@gmail.com", "Competing interests",
-        "Kennard-Stone", "HiddenTerps", "1.50%", "13.5%", "78.4%"]
+        "Kennard-Stone", "HiddenTerps", "1.50%", "13.5%", "78.4%",
+        "[51.0, 58.3]", "p = 0.024", "left-censored", "max_iter=120",
+        "European Archives of Psychiatry", "15,018", "11.04%",
+        "Király", "Guignard", "Birenboim", "Solís García"]
 missing = [m for m in must if m not in full]
 print(f"\n  key strings present: {len(must)-len(missing)}/{len(must)}")
 if missing:

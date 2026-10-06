@@ -30,6 +30,7 @@ Each of these is measured here. The point is not to defend the paper, it is to
 find out which objections are fatal, which need a caveat, and which are
 already fine.
 """
+import sys
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -39,6 +40,28 @@ from sklearn.model_selection import GroupKFold, StratifiedKFold, cross_val_score
 
 ROOT = Path(__file__).resolve().parents[2]
 SEED = 20260921
+OUT = ROOT / "docs/evidence/review7_statistical.txt"
+
+
+class _Tee:
+    """Mirror stdout into the evidence log, so the figures 3.2 quotes from
+    this pass (same-sample gap, producer-ID probe, interval, reseeds) have a
+    committed source like every other run."""
+
+    def __init__(self, path):
+        self._fh = open(path, "w", encoding="utf-8")
+        self._out = sys.stdout
+
+    def write(self, s):
+        self._out.write(s)
+        self._fh.write(s)
+
+    def flush(self):
+        self._out.flush()
+        self._fh.flush()
+
+
+sys.stdout = _Tee(OUT)
 
 df = pd.read_csv(ROOT / "data/labeled/master.csv", low_memory=False)
 df = df[df["label_conflict"] == 0].copy()
@@ -129,7 +152,7 @@ for name, scores in (("unseen-producer", grp_sub),):
                               scale=stats.sem(scores))
     print(f"    {name}: mean {100*scores.mean():.1f}%  "
           f"95% CI [{100*lo:.1f}, {100*hi:.1f}]  p={p:.3f}")
-    print(f"      folds: {[round(100*s,1) for s in scores]}")
+    print(f"      folds: {[round(100*float(s),1) for s in scores]}")
     print(f"      CI includes 50%: {lo <= 0.5 <= hi}")
 
 # ---------- D. does the gap survive reseeding? ----------

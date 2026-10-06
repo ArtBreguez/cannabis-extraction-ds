@@ -260,32 +260,92 @@ check("4,254 of 4,284", "4,254" in TEXT and "4,284" in TEXT)
 # subset separately from those outside it. An earlier version of this table
 # derived 102,340 by subtraction, which was wrong: 64 labelled rows are
 # pre-rolls and sit outside the 139,714 altogether.
-check("102,404 undeclared within concentrates",
-      "102,404" in TEXT and "73.3%" in TEXT)
-check("37,310 declared within concentrates",
-      "37,310" in TEXT and "26.7%" in TEXT)
-check("the subset arithmetic closes", 37310 + 102404 == 139714)
-check("the labelled total closes", 37310 + 64 == 37374)
+logc = (EV / "count_label_subset.txt").read_text()
+
+
+def cnum(label):
+    m = re.search(rf"{re.escape(label)}\s+(\d+)", logc)
+    return int(m.group(1)) if m else None
+
+
+c_conc = cnum("concentrate or extract rows:")
+c_dec = cnum("product_type declares the family:")
+c_und = cnum("product_type does not:")
+c_out = cnum("labelled rows outside that subset:")
+c_tot = cnum("total labelled rows:")
+check("reduction table: concentrate subset anchored",
+      c_conc and f"concentrate or extract rows                     {c_conc:,}" in TEXT,
+      c_conc)
+check("reduction table: declared anchored",
+      c_dec and f"extraction family    {c_dec:,}   ({100*c_dec/c_conc:.1f}%)" in TEXT,
+      c_dec)
+check("reduction table: undeclared anchored",
+      c_und and f"does not                         {c_und:,}   ({100*c_und/c_conc:.1f}%)" in TEXT,
+      c_und)
+check("reduction table: outside-subset rows anchored",
+      c_out == 64 and f"outside that subset                    {c_out}" in TEXT, c_out)
+check("reduction table: total anchored",
+      c_tot == len(all_rows) and f"total labelled rows                              {c_tot:,}" in TEXT,
+      c_tot)
+check("the subset arithmetic closes", c_dec + c_und == c_conc)
+check("the labelled total closes", c_dec + c_out == c_tot)
 check("the 64 pre-roll rows are disclosed",
       "64" in TEXT and "pre-rolls" in TEXT and "0.17%" in TEXT)
-check("0.17% is correct", abs(100 * 64 / 37374 - 0.17) < 0.005,
-      f"{100*64/37374:.3f}")
-# robustness: dropping the 64 pre-rolls must not move the headline
-check("pre-roll sensitivity reported",
-      "80.6%" in TEXT and "26.6" in TEXT)
+check("0.17% is correct", abs(100 * c_out / c_tot - 0.17) < 0.005,
+      f"{100*c_out/c_tot:.3f}")
 check("abstract does not call them all concentrates",
       "37,374 concentrate certificates" not in TEXT)
+check("abstract counts the usable rows",
+      f"Using {len(rows):,} cannabis certificates" in FLAT)
+for t, n in (("extracts", 34034), ("concentrate, product inhalable", 30586),
+             ("concentrate", 26030), ("marijuana extract for inhalation", 3901)):
+    m = re.search(rf"^\s+(\d+)\s+{re.escape(t)}$", logc, re.M)
+    check(f"undeclared value {t} anchored",
+          bool(m) and int(m.group(1)) == n and f"({n:,}" in TEXT or
+          (bool(m) and int(m.group(1)) == n and f"({n:,})" in TEXT),
+          m.group(1) if m else None)
 check("undeclared breakdown fits inside the total",
-      34034 + 30586 + 26030 + 3901 <= 102404 and "34,034" in TEXT)
+      34034 + 30586 + 26030 + 3901 <= c_und)
+mv = re.search(r"^\s+(\d+)\s+non-solvent concentrate$", logc, re.M)
 check("regex variant documented",
-      "1,445" in TEXT and "non[- ]?solvent" in TEXT)
+      bool(mv) and f"`non-solvent concentrate` ({int(mv.group(1)):,} rows)" in FLAT
+      and "non[- ]?solvent" in TEXT, mv.group(1) if mv else None)
+
+# robustness figures, each read from docs/evidence/sensitivity_checks.txt
+logs = (EV / "sensitivity_checks.txt").read_text()
+blk = logs.split("=== 4.2: WITHOUT THE 64 PRE-ROLL ROWS ===")[1].split("===")[0]
+pr_r = re.search(r"random \(all rows\)\s+([\d.]+)%", blk)
+pr_g = re.search(r"unseen-producer\s+([\d.]+)%", blk)
+pr_gap = re.search(r"gap\s+([\d.]+) points", blk)
+check("pre-roll sensitivity: random anchored",
+      bool(pr_r) and f"from 81.0% to {pr_r.group(1)}%" in FLAT,
+      pr_r.group(1) if pr_r else None)
+check("pre-roll sensitivity: grouped unchanged",
+      bool(pr_g) and pr_g.group(1) == gb[1]
+      and f"unseen-producer unchanged at {pr_g.group(1)}%" in FLAT,
+      pr_g.group(1) if pr_g else None)
+check("pre-roll sensitivity: gap anchored",
+      bool(pr_gap) and f"27-point gap becomes {pr_gap.group(1)}" in FLAT,
+      pr_gap.group(1) if pr_gap else None)
+abl = re.search(r"cost of dropping it\s+([\d.]+) points", logs)
+check("total_terpenes ablation cost anchored",
+      bool(abl) and f"costs {abl.group(1)} points of balanced accuracy" in FLAT,
+      abl.group(1) if abl else None)
 
 # statistical qualifications added in pass seven
-check("same-sample gap reported", "78.5%" in TEXT and "24.4" in TEXT)
-# The protocol-only gap must equal the two scores the paper states, so a
-# mutated gap contradicts its own arithmetic.
+log7 = (EV / "review7_statistical.txt").read_text()
+r7_sub = re.search(r"random, producer rows only\s+([\d.]+)%", log7)
+r7_gap = re.search(r"gap on a SINGLE sample\s+([\d.]+) points", log7)
 ss = re.search(r"rows\* scores ([\d.]+)%, so the protocol-only gap is\s*"
                r"\*\*([\d.]+) points\*\*", FLAT)
+check("same-sample random score anchored to its log",
+      bool(ss and r7_sub) and ss.group(1) == r7_sub.group(1),
+      r7_sub.group(1) if r7_sub else None)
+check("protocol-only gap anchored to its log",
+      bool(ss and r7_gap) and ss.group(2) == r7_gap.group(1),
+      r7_gap.group(1) if r7_gap else None)
+# The protocol-only gap must equal the two scores the paper states, so a
+# mutated gap contradicts its own arithmetic.
 gscore = float(gb[1]) if gb else None
 check("protocol-only gap recomputes",
       bool(ss) and gscore is not None
@@ -293,15 +353,77 @@ check("protocol-only gap recomputes",
       f"{ss.group(1)}-{gscore}={float(ss.group(1))-gscore:.1f} "
       f"vs stated {ss.group(2)}" if ss and gscore else None)
 check("89.0% producer coverage stated", "33,229" in TEXT and "89.0%" in TEXT)
-check("CI on the grouped score", "46.3" in TEXT and "61.8" in TEXT
-      and "0.22" in TEXT)
-check("fold-level scores given", all(v in TEXT for v in
-      ("48.6", "57.6", "46.7", "55.7", "61.5")))
-check("reseeding reported", "24.6" in TEXT and "24.5" in TEXT)
-check("producer-ID-only leakage disclosed",
-      "reaches 84.4% balanced" in FLAT and "0.35" in TEXT)
+r7_ci = re.search(r"unseen-producer: mean [\d.]+%\s+95% CI \[([\d.]+), ([\d.]+)\]"
+                  r"\s+p=([\d.]+)", log7)
+check("CI on the grouped score anchored to its log",
+      bool(r7_ci) and f"[{r7_ci.group(1)}, {r7_ci.group(2)}]" in TEXT
+      and f"p = {float(r7_ci.group(3)):.2f}" in TEXT,
+      r7_ci.group(0) if r7_ci else None)
+r7_folds = re.search(r"folds: \[([\d., ]+)\]", log7)
+check("fold-level scores anchored to its log",
+      bool(r7_folds) and all(v.strip() in TEXT
+                             for v in r7_folds.group(1).split(",")),
+      r7_folds.group(1) if r7_folds else None)
+r7_seeds = re.findall(r"seed\s+\d+: random [\d.]+%\s+grouped ([\d.]+)%\s+gap ([\d.]+)",
+                      log7)
+check("reseeding anchored to its log",
+      len(r7_seeds) == 3 and all(g == gb[1] for g, _ in r7_seeds)
+      and f"gaps of {r7_seeds[0][1]}, {r7_seeds[1][1]} and {r7_seeds[2][1]} points" in FLAT,
+      r7_seeds)
+r7_pid = re.search(r"producer ID alone predicts label at ([\d.]+)%", log7)
+r7_sh = re.search(r"min ([\d.]+)\s+median ([\d.]+)\s+max ([\d.]+)", log7)
+check("producer-ID-only leakage anchored to its log",
+      bool(r7_pid) and f"reaches {r7_pid.group(1)}% balanced" in FLAT,
+      r7_pid.group(1) if r7_pid else None)
+check("producer share range anchored to its log",
+      bool(r7_sh) and f"median of {r7_sh.group(2)}" in FLAT
+      and f"to {r7_sh.group(3)} with" in FLAT
+      and "from below 0.01 to" in FLAT,
+      r7_sh.group(0) if r7_sh else None)
+# "0.00" would read as a producer with no solventless rows, which contradicts
+# the subset's definition; the smallest share is 3 of 1,801.
+check("share range does not print a 0.00 minimum",
+      "ranges from 0.00" not in FLAT)
 check("'by construction' claim removed",
       "nothing about the label by construction" not in TEXT)
+
+# ---------- the dual-class scheme is above chance, and the text says so ----------
+# Pass seven computed an interval for unseen-producer only. The dual-class
+# scheme's five folds give an interval that EXCLUDES 50%, so the earlier
+# sentence "no gate that requires beating chance by more than the
+# between-fold spread is passed" was false for that scheme.
+d_ci = re.search(r"dual-class\+unseen\s+([\d.]+)% \(\+/-([\d.]+)\)\s*\n"
+                 r"folds: \[([\d., ]+)\]\s*\n95% CI \[([\d.]+), ([\d.]+)\]\s+p=([\d.]+)",
+                 logs)
+check("dual-class folds anchored to the sensitivity log",
+      bool(d_ci) and all(v.strip() in TEXT for v in d_ci.group(3).split(","))
+      and d_ci.group(1) == db[1], d_ci.group(3) if d_ci else None)
+check("dual-class interval anchored",
+      bool(d_ci) and f"[{d_ci.group(4)}, {d_ci.group(5)}] that excludes 50.0%" in FLAT
+      and f"(p = {d_ci.group(6)})" in FLAT, d_ci.group(0)[-60:] if d_ci else None)
+check("dual-class residual recomputes",
+      bool(db) and f"residual of {float(db[1])-50:.1f} points" in FLAT
+      and bool(rb) and f"sits {float(rb[1])-float(db[1]):.1f} points below the random split" in FLAT,
+      f"{float(db[1])-50:.1f} / {float(rb[1])-float(db[1]):.1f}" if db and rb else None)
+# The per-fold recall extremes quoted in 3.2 (48.5% best, 25.3% worst) had
+# no committed source either; sensitivity_checks.py now prints each fold.
+fr = re.search(r"mean of fold recalls: ([\d.]+)%\s+min ([\d.]+)%\s+max ([\d.]+)%",
+               logs)
+check("per-fold recall extremes anchored to the sensitivity log",
+      bool(fr) and f"({fr.group(3)}% against {fr.group(2)}% in the fold with the most)" in FLAT
+      and fr.group(1) == "32.3", fr.group(0) if fr else None)
+# The folds are equal in SIZE (GroupKFold balances them); what differs is the
+# solventless count per fold. An earlier sentence said "folds of very unequal
+# size", which the log contradicts.
+fs = re.search(r"solventless rows per fold: min (\d+)\s+max (\d+)", logs)
+check("per-fold solventless counts anchored",
+      bool(fs) and f"from {int(fs.group(1)):,} to {int(fs.group(2)):,}" in FLAT
+      and "folds are of very unequal size" not in FLAT,
+      fs.group(0) if fs else None)
+check("the false 'no gate is passed' sentence is gone",
+      "No gate that requires" not in FLAT)
+check("the chance claim is scoped to the unseen-producer scheme",
+      "on this scheme the collapse goes all the way to chance" in FLAT)
 
 # ---------- the 2.3 pre-check must match its own evidence log ----------
 # This block exists because 2.3 previously claimed a +0.0-point lift from a
@@ -339,6 +461,15 @@ check("pure-stratum coverage anchored",
       pr.group(0) if pr else None)
 check("pure strata attributed to reporting convention",
       "laboratory reporting convention" in FLAT)
+lab_n = Counter((r.get("lab") or "").strip() for r in rows).most_common(2)
+check("two largest laboratories counted on the usable rows",
+      f"{lab_n[0][1]:,} and {lab_n[1][1]:,} rows" in FLAT
+      and f"{lab_n[0][1]:,}" in log2.replace("15018", "15,018"),
+      lab_n)
+check("stale 37,374-population lab counts are gone",
+      "15,035" not in TEXT and "12,539" not in TEXT)
+check("pre-check log runs on the usable rows",
+      f"labeled rows (conflicts excluded): {len(rows)}" in log2)
 
 # ---------- 2.2 feature-construction disclosures ----------
 check("total_terpenes collinearity disclosed",
@@ -458,6 +589,76 @@ check("4.1 quotes the negative market-data lift",
       "minus 3.0 points (4.3)" in FLAT)
 check("4.1 supports producer dominance with both figures",
       "84.4% while the chemistry" in FLAT)
+
+# ---------- statements about the pipeline that were wrong ----------
+# Non-detects are LEFT-censored (true value below the limit); the text said
+# "right-censored". No model script feeds the `_tested` flags to the
+# estimator: the 19 value columns carry NaN, which HistGradientBoosting
+# routes natively. phase3_alarms.py uses max_iter=120, not 200.
+check("censoring direction is left", "left-censored" in FLAT
+      and "right-censored" not in FLAT)
+check("the model is described as receiving 19 value columns",
+      "The classifier receives the 19 value columns" in FLAT)
+check("the false '_tested flags are excluded' claim is gone",
+      "flags are excluded from these probes" not in FLAT)
+check("alarm probes disclose max_iter=120", "`max_iter=120`" in TEXT)
+check("alarm probes disclose plain accuracy",
+      "report plain accuracy against the explicit majority-class baseline" in FLAT)
+check("strain columns described as populated for 0 rows",
+      "populated for **0 of 37,344**" in FLAT and "empty for **0 of" not in FLAT)
+sa = re.search(r"strains=(\d+) rows=(\d+)\s+acc=[\d.]+%\s+baseline=[\d.]+%"
+               r"\s+lift=(-?[\d.]+)pts", log4b)
+check("strain alarm probe subset anchored",
+      bool(sa) and f"the {sa.group(1)} keys with at least 30 rows "
+      f"({int(sa.group(2)):,} rows)" in FLAT
+      and f"minus {abs(float(sa.group(3))):.1f} points" in FLAT,
+      sa.group(0) if sa else None)
+check("name path described as cross-check only",
+      "The name path never adds a row" in FLAT)
+
+# ---------- what the declared classes contain ----------
+# The label is the regulator's category. Under NAC 453D.780 CO2 extraction is
+# "nonsolvent", so the class is wider than rosin-and-hash; 2.1 says so and
+# quotes the composition from docs/evidence/label_composition.txt.
+logl = (EV / "label_composition.txt").read_text()
+for fam, key in (("distillate", "distillate"),
+                 ("co2 / supercritical", "co2 / supercritical"),
+                 ("ethanol", "ethanol"),
+                 ("hydrocarbon words", "hydrocarbon words"),
+                 ("mechanical words", "mechanical words")):
+    m = re.search(rf"^{re.escape(key)}.*?(\d+) \(\s*([\d.]+)%\)\s+(\d+) \(\s*([\d.]+)%\)$",
+                  logl, re.M)
+    check(f"composition row anchored: {fam}",
+          bool(m) and f"{int(m.group(1)):,} ({m.group(2):>4}%)" in TEXT
+          and f"{int(m.group(3)):,} ({m.group(4):>4}%)" in TEXT,
+          m.group(0)[-40:] if m else None)
+check("2.1 quotes the regulatory definition",
+      "including concentrated marijuana extracted with CO2" in FLAT
+      and "[12]" in TEXT)
+check("the task is scoped to the declared category",
+      "not rosin against BHO specifically" in FLAT
+      and "declared extraction category" in FLAT)
+check("name-path comparison scope stated",
+      abs(100 * 4284 / len(all_rows) - 11.5) < 0.05 and "11.5% of labelled rows" in FLAT,
+      f"{100*4284/len(all_rows):.2f}")
+check("introduction no longer defines the classes as rosin vs BHO",
+      "separating solventless extracts (rosin" not in FLAT)
+
+# ---------- references ----------
+refs = TEXT.split("## References")[1]
+for n in range(1, 13):
+    m = re.search(rf"^\[{n}\] (.+?)(?=^\[\d+\]|\Z)", refs, re.M | re.S)
+    body_ = " ".join(m.group(1).split()) if m else ""
+    has_doi = "doi:" in body_
+    check(f"reference [{n}] present with a DOI or dataset pointer",
+          bool(m) and (has_doi or n in (9, 12)), body_[:60])
+check("reference [1] names the right journal",
+      "European Archives of Psychiatry and Clinical Neuroscience" in FLAT
+      and "Journal of Cannabis Research" not in FLAT)
+check("every reference carries authors",
+      all(re.match(r"\[\d+\] [A-ZÁ-Ž][^.]*?, ", " ".join(ln.split()))
+          for ln in re.findall(r"^\[\d+\] .+", refs, re.M)
+          if not ln.startswith(("[9]", "[12]"))))
 
 # ---------- prose hygiene ----------
 body = re.sub(r"```[\s\S]*?```", "", TEXT)

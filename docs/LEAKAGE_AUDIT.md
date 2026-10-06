@@ -8,6 +8,11 @@ Scripts: `src/preprocessing/measure_nondetects.py`,
 Raw logs: `docs/evidence/nondetect_encoding.txt`,
 `docs/evidence/lab_confounding.txt`.
 
+Sections 3 to 5 were regenerated on 2026-10-06 after `measure_lab_confounding.py`
+was changed to exclude the 30 rows whose `product_name` contradicts
+`product_type`, so that their denominator (37,344) matches every model run.
+Sections 1 and 2 still describe the 37,374-row labelled file.
+
 ## 1. Non-detects are already numeric — with one trap
 
 Decision from `HANDOFF.md`, now answerable with data:
@@ -73,11 +78,11 @@ quantity: a probe must see exactly the feature set the model sees. Adding lab
 identity on top reaches 70.5%, a further 0.6 points.
 
 The lift is not evenly spread. 7 of the 13 distinct missingness patterns are
-**100% one class**, covering 4,123 rows (11.03%):
+**100% one class**, covering 4,123 rows (11.04%):
 
 ```
 patterns that are 100% one class: 7 of 13
-rows they cover:                  4123 (11.03%)
+rows they cover:                  4123 (11.04%)
   n= 1495  all solventless (6 of 19 analytes reported)
   n= 1303  all hydrocarbon (1 of 19 analytes reported)
   n= 1303  all hydrocarbon (4 of 19 analytes reported)
@@ -98,7 +103,7 @@ says so.
 ## 4. Labs are not entangled with class either
 
 Only **373 rows (1.0%)** sit in labs that are ≥90% one class. The two largest
-labs — `g3 labs llc` (15,035 rows) and `nv cann labs llc` (12,539) — are both
+labs — `g3 labs llc` (15,018 rows) and `nv cann labs llc` (12,531) — are both
 close to the overall 66/34 split.
 
 One lab to watch: `green peaks analytical`, 100 rows, 100% solventless. Small,
@@ -107,12 +112,12 @@ but it should never be the only lab in a test fold.
 ## 5. Group-split feasibility
 
 ```
-producers in both classes: 55 of 96
-rows belonging to them:    28,927 (77.4% of labeled data)
-class balance:             24,576 hydrocarbon / 12,798 solventless (65.8/34.2)
+producers in both classes: 53 of 96
+rows belonging to them:    27,751 (74.3% of labeled data)
+class balance:             24,573 hydrocarbon / 12,771 solventless (65.8/34.2)
 ```
 
-77.4% of the labeled data comes from producers that make **both** solventless
+74.3% of the labeled data comes from producers that make **both** solventless
 and hydrocarbon extracts. Inside that subset, memorising the producer cannot
 separate the classes — it is the strongest available test of whether the model
 reads process rather than brand, and it is large enough to train on alone.
@@ -126,7 +131,7 @@ with these constraints:
 
 - value + `*_tested` mask per analyte; empty is never zero
 - drop `alpha_terpinene` (never populated)
-- primary evaluation on the 55 dual-class producers
+- primary evaluation on the 53 dual-class producers
 - `GroupKFold` by producer, plus an unseen-lab split
 - majority-class baseline is **65.8%** — accuracy below that is worthless, and
   accuracy near it means nothing was learned

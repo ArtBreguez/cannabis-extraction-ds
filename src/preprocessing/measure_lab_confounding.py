@@ -33,6 +33,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "data/raw/cannlytics/all-results-latest.csv"
 
+# The models drop the 30 rows whose product_name contradicts product_type
+# (build_master.py flags them as label_conflict). An earlier version of this
+# probe ran on all 37,374 labelled rows, so its percentages used a different
+# denominator from every other figure in the manuscript. Apply the same rule
+# here so this log and the model logs describe one population.
+sys.path.insert(0, str(ROOT))
+from src.preprocessing.build_master import name_label  # noqa: E402
+
 NON_SOLVENT = re.compile(r"non[- ]?solvent")
 
 # The missingness probe MUST see the same columns the model sees, or it is a
@@ -76,6 +84,9 @@ def main() -> int:
                 cls = "hydrocarbon"
             else:
                 continue
+            _, by_name, _ = name_label((row[idx["product_name"]] or "").lower())
+            if by_name and by_name != cls:
+                continue  # label_conflict, excluded from every model run
             lab = (row[idx["lab"]] or "").strip().lower() or "(blank)"
             producer = (row[idx["producer"]] or "").strip().lower()
             # The missingness fingerprint: which analytes carry a number.
@@ -84,7 +95,7 @@ def main() -> int:
             rows.append((cls, lab, producer, pattern))
 
     out = []
-    out.append(f"labeled rows: {len(rows)}")
+    out.append(f"labeled rows (conflicts excluded): {len(rows)}")
     total = Counter(c for c, _, _, _ in rows)
     out.append(f"class balance: {dict(total)}")
     majority = max(total.values()) / len(rows)

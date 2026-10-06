@@ -1,0 +1,30 @@
+rows (conflicts excluded): 37344
+
+=== DECLARED product_type VALUES PER CLASS ===
+solventless:
+   11185  Non-Solvent Based Concentrate
+    1445  Non-Solvent Concentrate
+      77  Non-Solvent Based Concentrate (Each)
+      64  Infused Pre-Rolls (Non-Solvent)
+hydrocarbon:
+   23218  Solvent Based Concentrate
+    1303  Solvent Based Concentrate/Extract
+      52  Solvent Based Concentrate (Each)
+
+=== PRODUCT-NAME WORD FAMILIES PER CLASS (a name may hit several) ===
+family                                                              solventless  hydrocarbon
+distillate                                                          5805 (45.5%)  8258 (33.6%)
+co2 / supercritical                                                  225 ( 1.8%)    19 ( 0.1%)
+ethanol                                                              163 ( 1.3%)   214 ( 0.9%)
+hydrocarbon words (bho, butane, live resin, shatter, badder, wax)     43 ( 0.3%)  3805 (15.5%)
+mechanical words (rosin, hash, kief, bubble, ice water)              559 ( 4.4%)   114 ( 0.5%)
+cartridge / vape / pen                                               144 ( 1.1%)   959 ( 3.9%)
+
+=== LABORATORIES CARRYING THE NON-SOLVENT + DISTILLATE NAMES ===
+    2742  G3 LABS LLC
+    2487  NV CANN LABS LLC
+     249  DPL NV LLC
+     186  CERTIFIED AG LAB LLC
+      58  DB LABS LLC
+      45  MA & ASSOCIATES LLC
+      38  374 LABS LLC

@@ -21,8 +21,9 @@ O rótulo vem do campo `product_type` do Cannlytics, **declarado na origem** —
 não é inferência sobre nome comercial. Base total: 808.407 linhas, 139.714
 concentrados.
 
-**55 produtores aparecem nas duas classes**, o que permite testar se o modelo
-aprende processo ou apenas memoriza marca.
+**53 produtores aparecem nas duas classes** (após excluir as 30 linhas com
+rótulo contraditório), o que permite testar se o modelo aprende processo ou
+apenas memoriza marca.
 
 Medições em [`docs/DATASET_AUDIT.md`](docs/DATASET_AUDIT.md).
 Próxima etapa em [`ROADMAP.md`](ROADMAP.md): construir o dataset master.

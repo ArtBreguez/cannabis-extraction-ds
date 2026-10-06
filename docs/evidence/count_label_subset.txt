@@ -1,0 +1,27 @@
+source rows:                         808407
+concentrate or extract rows:         139714
+  product_type declares the family:  37310 (26.7%)
+  product_type does not:             102404 (73.3%)
+labelled rows outside that subset:   64
+total labelled rows:                 37374
+
+declared product_type values:
+    23221  solvent based concentrate
+    11210  non-solvent based concentrate
+     1445  non-solvent concentrate
+     1303  solvent based concentrate/extract
+       79  non-solvent based concentrate (each)
+       52  solvent based concentrate (each)
+
+labelled values outside the subset:
+       64  infused pre-rolls (non-solvent)
+
+largest undeclared product_type values:
+    34034  extracts
+    30586  concentrate, product inhalable
+    26030  concentrate
+     3901  marijuana extract for inhalation
+     1806  concentrate (each)
+      958  extracts (each)
+      818  infused, concentrated liquid edible
+      719  concentrate, colorado concentrate/extract

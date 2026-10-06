@@ -23,8 +23,15 @@ MASTER = ROOT / "data/labeled/master.csv"
 EV = ROOT / "docs/evidence"
 
 csv.field_size_limit(10_000_000)
-rows = list(csv.DictReader(MASTER.open()))
-print(f"  master.csv rows: {len(rows)}")
+all_rows = list(csv.DictReader(MASTER.open()))
+# Every analysis drops the 30 rows whose product_name contradicts
+# product_type before doing anything else, so the figures here are computed
+# on that same view. Computing them on the unfiltered file gives 55 dual-class
+# producers and 28,927 rows, which is not what any model saw.
+rows = [r for r in all_rows
+        if (r.get("label_conflict") or "").strip() == "0"]
+print(f"  master.csv rows: {len(all_rows)}  (labelled)")
+print(f"  usable rows    : {len(rows)}  (label_conflict == 0)")
 print(f"  columns        : {len(rows[0])}")
 
 # ---------- class balance ----------
@@ -73,7 +80,9 @@ print(f"    their class balance           : "
       + ", ".join(f"{k} {v}" for k, v in dl.most_common()))
 
 # ---------- analytes and censoring ----------
-flags = sorted(c for c in rows[0] if c.endswith("_tested"))
+# `date_tested` ends in "_tested" but is a date, not an analyte mask.
+flags = sorted(c for c in rows[0]
+               if c.endswith("_tested") and c != "date_tested")
 analytes = [c[: -len("_tested")] for c in flags]
 usable = [a for a in analytes
           if a in rows[0] and any((r.get(a) or "").strip() for r in rows)]

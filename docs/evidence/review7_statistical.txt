@@ -1,0 +1,28 @@
+  rows usable               : 37,344
+  rows with a producer      : 33,229 (89.0%)
+
+  === A. same-sample comparison: is the gap real? ===
+    random, ALL rows            81.0% (+/-0.4)   <- what the paper reports as 81.0
+    random, producer rows only  78.5% (+/-0.4)   <- the honest comparator
+    grouped, producer rows only 54.0% (+/-5.6)
+    gap as published            27.0 points
+    gap on a SINGLE sample      24.4 points
+
+  === B. the dual-class subset: 'no label information' ===
+    dual-class producers        : 53
+    rows                        : 27,751
+    solventless share per producer:
+      min 0.00   median 0.35   max 0.99
+      producers outside 0.2-0.8 : 30 of 53
+    producer ID alone predicts label at 84.4% (+/-0.5)
+    -> if this is well above 50, the 'by construction' claim is wrong
+
+  === C. is the grouped score above chance at all? ===
+    unseen-producer: mean 54.0%  95% CI [46.3, 61.8]  p=0.222
+      folds: [48.6, 57.6, 46.7, 55.7, 61.5]
+      CI includes 50%: True
+
+  === D. three more seeds ===
+    seed      1: random 78.7%  grouped 54.0%  gap 24.6
+    seed      7: random 78.5%  grouped 54.0%  gap 24.5
+    seed  12345: random 78.6%  grouped 54.0%  gap 24.6
