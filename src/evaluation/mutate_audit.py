@@ -103,6 +103,31 @@ MUTATIONS = [
     # label agreement
     ("agreement 99.3 -> 99.4", "4,254 of 4,284 rows, 99.3%",
      "4,254 of 4,284 rows, 99.4%"),
+    # 2.3 pre-check: the defect was a probe narrower than the feature set,
+    # which reported a +0.0 lift. Each figure must be pinned to the log.
+    ("missingness accuracy 69.9 -> 70.9", "reaches 69.9% accuracy",
+     "reaches 70.9% accuracy"),
+    ("missingness lift 4.1 -> 3.1", "lift of **+4.1 points**",
+     "lift of **+3.1 points**"),
+    ("lift silently reverted to +0.0", "lift of **+4.1 points**",
+     "lift of **+0.0 points**"),
+    ("pure strata 7 of 13 -> 6 of 13",
+     "patterns that are 100% one class: 7 of 13",
+     "patterns that are 100% one class: 6 of 13"),
+    ("pure stratum rows 4123 -> 4124",
+     "rows they cover:                  4123 (11.03%)",
+     "rows they cover:                  4124 (11.03%)"),
+    # 2.2 disclosures
+    ("total_terpenes R2 0.984 -> 0.994", "R² = 0.984", "R² = 0.994"),
+    ("total_terpenes mask 33,229 -> 33,228", "33,229 / 33,229 rows",
+     "33,228 / 33,229 rows"),
+    ("analyte columns 34 -> 35", "carries 34 analyte columns",
+     "carries 35 analyte columns"),
+    ("empty dropped Fifteen -> Sixteen", "Fifteen are empty",
+     "Sixteen are empty"),
+    # 3.2 recall reconciliation: the pooled figure must match the matrix
+    ("pooled recall 29.6 -> 30.6", "3,332 / 11,262 = **29.6%**",
+     "3,332 / 11,262 = **30.6%**"),
     # prose hygiene: an em-dash must be caught
     ("em-dash introduced", "The task is a good\ntest case for three reasons.",
      "The task is a good test case \u2014 for three reasons."),

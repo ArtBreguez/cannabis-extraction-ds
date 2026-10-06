@@ -51,7 +51,11 @@ def model():
 
 
 def features(df: pd.DataFrame) -> list[str]:
-    flags = [c for c in df.columns if c.endswith("_tested")]
+    # `date_tested` also ends in "_tested" but is a date string, not an
+    # analyte mask. Exclude it by name: the `c in df.columns` guard below
+    # only saves us because no column is literally called "date".
+    flags = [c for c in df.columns
+             if c.endswith("_tested") and c != "date_tested"]
     cols = [c[: -len("_tested")] for c in flags]
     return sorted(c for c in cols
                   if c in df.columns and df[c].notna().sum() > 0)

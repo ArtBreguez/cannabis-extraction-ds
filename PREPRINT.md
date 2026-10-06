@@ -163,9 +163,9 @@ with four features (CBD, CBG, CBN, THC) and no missing values.
 
 ### 2.2 Feature construction
 
-The source file carries 35 analyte columns. Sixteen are empty for every labelled
-row and are dropped rather than imputed, since imputing a never-populated column
-fabricates a feature. Nineteen analytes remain.
+The source file carries 34 analyte columns. Fifteen are empty for every
+labelled row and are dropped rather than imputed, since imputing a
+never-populated column fabricates a feature. Nineteen analytes remain.
 
 Non-detects require care. The corpus has already normalised `ND` and `<LOQ`
 strings away, so no such strings survive, which collapses a four-way
@@ -196,6 +196,40 @@ Terpene panels are requested at similar rates for both classes, a gap of
 extracts report a non-zero terpene value far more often. That is a property of
 the extracts or of their reporting, not of which test was ordered.
 
+Two properties of these columns are worth stating because they bound what the
+features can mean.
+
+First, `total_terpenes` is not an independent measurement. It is a near-exact
+sum of the ten terpenes that survive the empty-column drop (R² = 0.984 against
+their sum, Pearson r = 0.992), so it is collinear with features already in the
+matrix and any per-feature importance attributed to it is split credit rather
+than chemistry. Its residual against that sum is laboratory-specific:
+`CERTIFIED AG LAB` reports an exact sum on 99.7% of rows, `MA & ASSOCIATES` on
+none, which makes the residual a laboratory fingerprint in its own right.
+Dropping the column costs 0.3 points of balanced accuracy, so nothing in this
+paper depends on keeping it; we keep it because the published literature does.
+
+Second, whether `total_terpenes` is populated at all is a laboratory
+convention, not a per-sample decision. Every laboratory is at 0% or 100%, with
+no intermediate value, and the populated set is *exactly* the set of rows that
+carry a producer:
+
+```
+total_terpenes populated == producer present:  33,229 / 33,229 rows, no exceptions
+laboratories at 100%:  G3, NV CANN, DB, CERTIFIED AG, DPL NV, ERP, 374, MA
+laboratories at   0%:  PureVita, Cannalytics RI, Lifted Testing, Green Peaks
+```
+
+So `total_terpenes` being blank is an exact in-model indicator of "this row
+will be dropped by the unseen-producer scheme". That coupling is why 3.2
+reports a same-sample comparison rather than resting on the headline gap.
+
+Finally, 101 rows carry a `total_thc` above 100%, which is impossible as a
+percentage; the largest is 686,400, a milligram figure in a percent column.
+Ninety-four come from a single laboratory. They are 0.27% of the corpus and we
+leave them in place rather than silently editing source measurements, but they
+are unit artefacts rather than chemistry and no claim here rests on them.
+
 ### 2.3 The leakage pre-check
 
 A detection gap of 18 to 25 points is a candidate shortcut. If the pattern of
@@ -204,17 +238,43 @@ classifier could score well while reading the reporting convention rather than
 the chemistry. We measured this before modelling rather than assuming it away.
 
 A classifier given **only the missingness pattern**, with every measured value
-discarded, reaches 65.8% accuracy against a 65.8% majority-class baseline: a
-lift of **+0.0 points**. Adding laboratory identity as an explicit feature
-reaches 67.8%, a lift of 2.0 points.
+discarded, reaches 69.9% accuracy against a 65.8% majority-class baseline: a
+lift of **+4.1 points**. Adding laboratory identity as an explicit feature
+reaches 70.5%, a further 0.6 points.
+
+The probe sees exactly the 19 analyte columns the model sees, which matters:
+an earlier version of it looked at 6 terpenes only and reported a +0.0-point
+lift, understating the available shortcut by four points. A probe narrower
+than the feature set is a lower bound on the wrong quantity.
+
+That 4.1-point lift is not spread evenly. The 19 columns take only 13 distinct
+missingness patterns, and 7 of them are **100% one class**:
+
+```
+patterns that are 100% one class: 7 of 13
+rows they cover:                  4123 (11.03%)
+  n= 1495  all solventless (6 of 19 analytes reported)
+  n= 1303  all hydrocarbon (1 of 19 analytes reported)
+  n= 1303  all hydrocarbon (4 of 19 analytes reported)
+```
+
+For 11% of the corpus the label is recoverable with certainty from which cells
+are blank, before any number is read. These rows come from four laboratories
+(`PureVita`, `Cannalytics RI`, `Lifted Testing`, `Green Peaks`) that report a
+restricted analyte panel and no producer at all, so the shortcut is a
+laboratory reporting convention and not chemistry. They are also exactly the
+rows that the unseen-producer scheme must drop, which is why the same-sample
+comparison in 3.2 matters.
 
 Laboratory and class are also not entangled. Only 373 rows, 1.0%, sit in
 laboratories that are more than 90% one class. The two largest laboratories,
 15,035 and 12,539 rows, both sit close to the overall 65.8/34.2 split.
 
-The cheapest shortcuts therefore buy almost nothing, and any model that performs
-well must do so on measured chemistry. This is what made the main experiment
-worth running.
+The cheapest shortcut therefore buys 4.1 points, concentrated in 11% of the
+rows and attributable to reporting convention. That is small enough that a
+model scoring in the eighties cannot be running on it alone, which is what
+made the main experiment worth running, but it is not nothing, and 3.2
+reports what happens when those rows are excluded.
 
 ### 2.4 Model and split schemes
 
@@ -354,9 +414,14 @@ unseen-producer     true hydrocarbon: 16,149 correct /  5,818 wrong
                     true solventless:  3,332 correct /  7,930 wrong
 ```
 
-Solventless recall is **32.3%**. The model mostly answers with the majority
-class and its residual skill lives on the easy side. A single balanced-accuracy
-number would have concealed this; per-class recall does not.
+Solventless recall is **32.3%** as the mean of the five per-fold recalls, the
+figure the fold-averaged table above is built from. Pooling the matrix instead
+gives 3,332 / 11,262 = **29.6%**; the two differ because the folds are of very
+unequal size and the smallest carries the highest recall (48.5% against 25.3%
+in the worst). We quote both so the matrix and the percentage can be
+reconciled. Either way the model mostly answers with the majority
+class and its residual skill lives on the easy side. A single
+balanced-accuracy number would have concealed this; per-class recall does not.
 
 The `unseen-lab` scheme deserves separate comment. Its mean, 68.3%, is the
 highest of the three honest schemes, but its fold-to-fold standard deviation is

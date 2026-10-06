@@ -43,7 +43,8 @@ SEED = 20260921
 df = pd.read_csv(ROOT / "data/labeled/master.csv", low_memory=False)
 df = df[df["label_conflict"] == 0].copy()
 
-flags = [c for c in df.columns if c.endswith("_tested")]
+flags = [c for c in df.columns
+         if c.endswith("_tested") and c != "date_tested"]
 analytes = sorted({c[: -len("_tested")] for c in flags})
 feats = [a for a in analytes if a in df.columns and df[a].notna().sum() > 0]
 cols = feats + [f"{a}_tested" for a in feats if f"{a}_tested" in df.columns]

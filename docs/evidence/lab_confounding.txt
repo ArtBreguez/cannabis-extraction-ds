@@ -21,14 +21,26 @@ ma & associates llc                   68           48       20   70.6%
 rows in labs that are >=90% one class: 373 (1.0%)
 
 === LEAKAGE PROBE: predict class from MISSINGNESS ALONE ===
-no measured value is used — only which terpenes were reported
-distinct missingness patterns: 5
-accuracy from missingness alone: 65.8%
+no measured value is used — only which of the 19 modelled
+analytes carry a number, exactly the columns the model sees
+distinct missingness patterns: 13
+accuracy from missingness alone: 69.9%
 (majority-class baseline:         65.8%)
-lift over baseline:              +0.0 points
+lift over baseline:              +4.1 points
+
+=== HOW MUCH OF THAT IS DETERMINISTIC ===
+a stratum whose rows are ALL one class hands the label over
+outright, before any measured value is read
+patterns that are 100% one class: 7 of 13
+rows they cover:                  4123 (11.03%)
+  n= 1495  all solventless (6 of 19 analytes reported)
+  n= 1303  all hydrocarbon (1 of 19 analytes reported)
+  n= 1303  all hydrocarbon (4 of 19 analytes reported)
+  n=   14  all solventless (0 of 19 analytes reported)
+  n=    6  all hydrocarbon (17 of 19 analytes reported)
 
 === SAME PROBE, USING LAB IDENTITY ===
-accuracy from lab + missingness:  67.8%
+accuracy from lab + missingness:  70.5%
 
 === PRODUCERS SPANNING BOTH CLASSES ===
 producers in both classes: 55 of 96

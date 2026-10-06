@@ -59,7 +59,9 @@ def strain_key(name: str) -> str:
 
 
 def features(df: pd.DataFrame) -> list[str]:
-    flags = [c for c in df.columns if c.endswith("_tested")]
+    # `date_tested` matches the "_tested" suffix but is a date, not a mask.
+    flags = [c for c in df.columns
+             if c.endswith("_tested") and c != "date_tested"]
     cols = [c[: -len("_tested")] for c in flags]
     return sorted(c for c in cols
                   if c in df.columns and df[c].notna().sum() > 0)

@@ -56,25 +56,44 @@ world.
 
 So it was measured directly rather than assumed.
 
-## 3. Leakage probe — the good news
+## 3. Leakage probe — a real but bounded shortcut
 
-A classifier built on **missingness alone** (which terpenes were reported,
-ignoring every measured value):
+A classifier built on **missingness alone** (which of the 19 modelled analytes
+carry a number, ignoring every measured value):
 
 ```
-accuracy from missingness alone: 65.8%
+accuracy from missingness alone: 69.9%
 majority-class baseline:         65.8%
-lift over baseline:              +0.0 points
+lift over baseline:              +4.1 points
 ```
 
-**Zero.** The cheapest lab-shaped shortcut buys nothing. Adding lab identity
-on top reaches only 67.8% — +2.0 points over always guessing the majority.
+**+4.1 points.** An earlier version of this probe looked at 6 terpene columns
+while the model saw 19, and reported +0.0. That was a lower bound on the wrong
+quantity: a probe must see exactly the feature set the model sees. Adding lab
+identity on top reaches 70.5%, a further 0.6 points.
 
-So the coverage gap in §2 is real but **not a usable shortcut**. Any model
-that performs well will have to do it on measured chemistry.
+The lift is not evenly spread. 7 of the 13 distinct missingness patterns are
+**100% one class**, covering 4,123 rows (11.03%):
 
-This is a genuine result, not an assumption, and it is what makes Phase 4
-worth running.
+```
+patterns that are 100% one class: 7 of 13
+rows they cover:                  4123 (11.03%)
+  n= 1495  all solventless (6 of 19 analytes reported)
+  n= 1303  all hydrocarbon (1 of 19 analytes reported)
+  n= 1303  all hydrocarbon (4 of 19 analytes reported)
+```
+
+For those rows the label is recoverable with certainty from which cells are
+blank. They come from four labs (`PureVita`, `Cannalytics RI`,
+`Lifted Testing`, `Green Peaks`) that run a restricted panel and record no
+producer, so the shortcut is a reporting convention, not chemistry. Those are
+also exactly the rows the unseen-producer scheme must drop, which is why the
+same-sample comparison in PREPRINT §3.2 matters.
+
+So the coverage gap in §2 is real and buys 4.1 points, concentrated in 11% of
+the corpus. That is too small to explain a score in the eighties, which is
+what makes Phase 4 worth running, but it is not zero and the manuscript now
+says so.
 
 ## 4. Labs are not entangled with class either
 

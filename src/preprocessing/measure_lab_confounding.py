@@ -35,9 +35,16 @@ SRC = ROOT / "data/raw/cannlytics/all-results-latest.csv"
 
 NON_SOLVENT = re.compile(r"non[- ]?solvent")
 
-TERPENES = [
-    "beta_myrcene", "d_limonene", "beta_caryophyllene",
-    "alpha_pinene", "beta_pinene", "caryophyllene_oxide",
+# The missingness probe MUST see the same columns the model sees, or it is a
+# lower bound on the wrong quantity. phase4_generalisation.features() keeps
+# every analyte that carries at least one number for a labelled row; that is
+# these 19. An earlier version of this script probed only the 6 terpenes
+# below the fold, which understated the available shortcut by 4 points.
+PROBE_ANALYTES = [
+    "alpha_bisabolol", "alpha_humulene", "alpha_pinene", "beta_caryophyllene",
+    "beta_myrcene", "beta_pinene", "caryophyllene_oxide", "cbd", "cbda",
+    "cbn", "d_limonene", "delta_8_thc", "delta_9_thc", "linalool",
+    "terpinolene", "thca", "total_cbd", "total_terpenes", "total_thc",
 ]
 
 
@@ -71,8 +78,9 @@ def main() -> int:
                 continue
             lab = (row[idx["lab"]] or "").strip().lower() or "(blank)"
             producer = (row[idx["producer"]] or "").strip().lower()
-            # The missingness fingerprint: which terpenes carry a number.
-            pattern = tuple(is_numeric(row[idx[t]]) for t in TERPENES)
+            # The missingness fingerprint: which analytes carry a number.
+            pattern = tuple(is_numeric(row[idx[t]]) for t in PROBE_ANALYTES
+                            if t in idx)
             rows.append((cls, lab, producer, pattern))
 
     out = []
@@ -103,7 +111,8 @@ def main() -> int:
 
     out.append("")
     out.append("=== LEAKAGE PROBE: predict class from MISSINGNESS ALONE ===")
-    out.append("no measured value is used — only which terpenes were reported")
+    out.append("no measured value is used — only which of the 19 modelled")
+    out.append("analytes carry a number, exactly the columns the model sees")
     # Majority vote per missingness pattern. This is the crudest possible
     # shortcut; whatever it scores is available to any model for free.
     by_pattern: dict[tuple, Counter] = defaultdict(Counter)
@@ -115,6 +124,23 @@ def main() -> int:
     out.append(f"(majority-class baseline:         {100*majority:.1f}%)")
     lift = 100 * correct / len(rows) - 100 * majority
     out.append(f"lift over baseline:              {lift:+.1f} points")
+
+    out.append("")
+    out.append("=== HOW MUCH OF THAT IS DETERMINISTIC ===")
+    out.append("a stratum whose rows are ALL one class hands the label over")
+    out.append("outright, before any measured value is read")
+    pure_pat = [p for p, c in by_pattern.items() if len(c) == 1]
+    pure_rows = sum(sum(by_pattern[p].values()) for p in pure_pat)
+    out.append(f"patterns that are 100% one class: {len(pure_pat)} "
+               f"of {len(by_pattern)}")
+    out.append(f"rows they cover:                  {pure_rows} "
+               f"({100*pure_rows/len(rows):.2f}%)")
+    for p in sorted(pure_pat, key=lambda q: -sum(by_pattern[q].values()))[:5]:
+        c = by_pattern[p]
+        cls = next(iter(c))
+        n_present = sum(p)
+        out.append(f"  n={sum(c.values()):>5}  all {cls:<11} "
+                   f"({n_present} of {len(p)} analytes reported)")
 
     out.append("")
     out.append("=== SAME PROBE, USING LAB IDENTITY ===")

@@ -49,7 +49,9 @@ def load():
 
 
 def analyte_columns(df: pd.DataFrame) -> list[str]:
-    flags = {c for c in df.columns if c.endswith("_tested")}
+    # `date_tested` matches the "_tested" suffix but is a date, not a mask.
+    flags = {c for c in df.columns
+             if c.endswith("_tested") and c != "date_tested"}
     cols = [c[: -len("_tested")] for c in flags]
     # Keep only columns that actually carry numbers; a column that is never
     # populated is not a feature, it is noise with a name.

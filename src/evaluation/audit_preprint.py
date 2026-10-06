@@ -107,16 +107,21 @@ check("dual split 17,312/10,439",
       and "17,312" in TEXT and "10,439" in TEXT,
       f"{dl['hydrocarbon']}/{dl['solventless']}")
 
-# analytes
-flags = [c for c in rows[0] if c.endswith("_tested")]
+# analytes. `date_tested` ends in "_tested" but is a date, not an analyte
+# mask; counting it inflated both figures below by one and made the
+# manuscript's "35 analyte columns / Sixteen empty" read as correct.
+flags = [c for c in rows[0]
+         if c.endswith("_tested") and c != "date_tested"]
 an = [c[: -len("_tested")] for c in flags]
 usable = [a for a in an if a in rows[0]
           and any((r.get(a) or "").strip() for r in rows)]
-check("35 analyte columns", len(flags) == 35 and "35 analyte" in TEXT, len(flags))
+check("34 analyte columns", len(flags) == 34 and "34 analyte" in TEXT, len(flags))
 check("19 analytes remain", len(usable) == 19 and "Nineteen analytes" in TEXT,
       len(usable))
-check("16 empty dropped", len(an) - len(usable) == 16 and "Sixteen" in TEXT,
+check("15 empty dropped", len(an) - len(usable) == 15 and "Fifteen" in TEXT,
       len(an) - len(usable))
+check("date_tested is not counted as an analyte",
+      "date" not in an and "date_tested" not in flags)
 
 # coverage: tested vs detected, the distinction the paper makes
 def cov(a, mode):
@@ -297,6 +302,68 @@ check("producer-ID-only leakage disclosed",
       "84.4%" in TEXT and "0.35" in TEXT)
 check("'by construction' claim removed",
       "nothing about the label by construction" not in TEXT)
+
+# ---------- the 2.3 pre-check must match its own evidence log ----------
+# This block exists because 2.3 previously claimed a +0.0-point lift from a
+# probe that looked at 6 terpenes while the model saw 19 columns. The figures
+# are now read out of the regenerated log so prose and evidence cannot drift.
+log2 = (EV / "lab_confounding.txt").read_text()
+mp = re.search(r"accuracy from missingness alone:\s*([\d.]+)%", log2)
+mb = re.search(r"majority-class baseline:\s*([\d.]+)%", log2)
+ml = re.search(r"lift over baseline:\s*\+?(-?[\d.]+) points", log2)
+check("missingness probe accuracy anchored",
+      bool(mp) and f"{mp.group(1)}% accuracy" in FLAT,
+      mp.group(1) if mp else None)
+check("missingness probe lift anchored",
+      bool(ml) and f"**+{ml.group(1)} points**" in TEXT,
+      ml.group(1) if ml else None)
+check("missingness lift recomputes from its own two figures",
+      bool(mp and mb and ml)
+      and abs((float(mp.group(1)) - float(mb.group(1))) - float(ml.group(1)))
+      < 0.11,
+      f"{mp.group(1)}-{mb.group(1)} vs {ml.group(1)}" if mp and mb and ml
+      else None)
+check("the discredited +0.0 claim is gone",
+      "+0.0 points" not in TEXT and "lift of **+0.0" not in TEXT)
+check("probe scope stated as the full feature set",
+      "19 analyte columns the model sees" in FLAT)
+# The deterministic part of the shortcut, which the old probe could not see.
+pp = re.search(r"patterns that are 100% one class:\s*(\d+) of (\d+)", log2)
+pr = re.search(r"rows they cover:\s*(\d+) \(([\d.]+)%\)", log2)
+check("pure-stratum count anchored",
+      bool(pp) and f"{pp.group(1)} of {pp.group(2)}" in TEXT,
+      pp.group(0) if pp else None)
+check("pure-stratum coverage anchored",
+      bool(pr) and pr.group(1) in TEXT.replace(",", "")
+      and f"{pr.group(2)}%" in TEXT,
+      pr.group(0) if pr else None)
+check("pure strata attributed to reporting convention",
+      "laboratory reporting convention" in FLAT)
+
+# ---------- 2.2 feature-construction disclosures ----------
+check("total_terpenes collinearity disclosed",
+      "0.984" in TEXT and "0.992" in TEXT)
+check("total_terpenes ablation cost disclosed", "0.3 points" in FLAT)
+check("total_terpenes population is a lab convention",
+      "33,229 / 33,229" in TEXT)
+check("impossible potency values disclosed",
+      "686,400" in TEXT and "101 rows" in FLAT)
+
+# ---------- the confusion matrix must reconcile with its own recall ----------
+# 3.2 quotes a pooled matrix and a fold-averaged recall; they differ and the
+# paper now states both. Recompute the pooled figure from the quoted cells.
+cm = re.search(r"true solventless:\s*([\d,]+) correct /\s*([\d,]+) wrong", TEXT)
+po = re.search(r"=\s*\*\*([\d.]+)%\*\*", TEXT)
+if cm and po:
+    tp = int(cm.group(1).replace(",", ""))
+    fn = int(cm.group(2).replace(",", ""))
+    check("pooled recall recomputes from the quoted matrix",
+          abs(100 * tp / (tp + fn) - float(po.group(1))) < 0.1,
+          f"{100*tp/(tp+fn):.1f} vs stated {po.group(1)}")
+else:
+    check("pooled recall recomputes from the quoted matrix", False, "no match")
+check("both recall conventions labelled",
+      "mean of the five per-fold recalls" in FLAT and "Pooling the matrix" in FLAT)
 
 # ---------- prose hygiene ----------
 body = re.sub(r"```[\s\S]*?```", "", TEXT)
