@@ -551,12 +551,15 @@ check("headline AUC figures anchored, each paired with its own interval",
 _lu = _R.get(("logistic", "unweighted"), (0, 0, 0, 0, 0, 0))
 _lu = _R.get(("logistic", "unweighted"), (0, 0, 0, 0, 0, 0))
 _bp, _lp = _P[("producer", "boosting", "unweighted")][0], _P[("producer", "logistic", "unweighted")][0]
+_lw, _lwp = _R[("logistic", "class-weighted")], _P[("producer", "logistic", "class-weighted")][0]
 _fr = [(_bu[3] - 0.5) / (_bu[1] - 0.5), (_bp - 0.5) / (_bu[1] - 0.5), (_lu[3] - 0.5) / (_lu[1] - 0.5), (_lp - 0.5) / (_lu[1] - 0.5)]
 check("surviving share of above-chance AUC stated per estimator and statistic",
       all(0.25 <= f_ <= 0.35 for f_ in _fr[:2]) and all(0.40 <= f_ <= 0.55 for f_ in _fr[2:])
       and f"{_bu[3]-0.5:.3f} of {_bu[1]-0.5:.3f} on fold means and {_bp-0.5:.3f} of {_bu[1]-0.5:.3f} pooled for the reported one" in FLAT
-      and f"{_lu[3]-0.5:.3f} and {_lp-0.5:.3f} of {_lu[1]-0.5:.3f}" in FLAT
-      and FLAT.count("about 30% of") == 2 and FLAT.count("40 to 55%") == 2
+      and f"the unweighted logistic model {round(100*_fr[3])} to {round(100*_fr[2])}%, {_lu[3]-0.5:.3f} and {_lp-0.5:.3f} of {_lu[1]-0.5:.3f}" in FLAT
+      and f"the class-weighted one {round(100*(_lw[3]-0.5)/(_lw[1]-0.5))} to {round(100*(_lwp-0.5)/(_lw[1]-0.5))}%, {_lw[3]-0.5:.3f} and {_lwp-0.5:.3f} of {_lw[1]-0.5:.3f}" in FLAT
+      and FLAT.count("about 30% of") == 2
+      and f"an unweighted logistic regression {round(100*_fr[3])} to {round(100*_fr[2])}%" in FLAT
       and "less than a third" not in FLAT.lower(), [round(f_, 3) for f_ in _fr])
 _aucs = [v[3] for v in _R.values()]
 check("AUC range and pooled-AUC intervals described correctly",
@@ -568,7 +571,8 @@ check("losses per estimator and weighting anchored",
       len(_g) == 4 and bool(r7_gap) and abs(float(r7_gap.group(1)) - _g[('boosting','unweighted')]) < 0.15
       and f"{r7_gap.group(1)} points for unweighted boosting, {_g[('boosting','class-weighted')]:.1f} with class weights, "
       f"{_g[('logistic','unweighted')]:.1f} for an unweighted logistic regression and {_g[('logistic','class-weighted')]:.1f} for a class-weighted one" in FLAT
-      and f"whose held-out {_R[('logistic','class-weighted')][2]}% is the highest" in FLAT
+      and f"whose held-out {_R[('logistic','class-weighted')][2]}% is the highest fold-mean score of the four models" in FLAT
+      and _R[('logistic','class-weighted')][2] == max(v[2] for v in _R.values())
       and FLAT.count(f"by {round(min(_g.values()))} to {round(max(_g.values()))} points") == 2
       and f"{round(float(r7_gap.group(1)))} to {round(max(_g.values()))} points of balanced accuracy with gradient boosting" in FLAT
       and f"{round(float(r7_gap.group(1)))} to {round(max(_g.values()))} points of inflation on market data" in FLAT, _g)
@@ -1141,7 +1145,7 @@ check("tables are numbered consecutively and each is a code block",
 check("table cross-references point at the right tables",
       "changed within the period (Table 5)" in FLAT and "Table 4 counts them" in FLAT
       and "Table 12 varies what could be suspected" in FLAT and "(Table 2)" not in FLAT
-      and "fold spreads in Tables 10 and 12" in FLAT)
+      and "the fold spreads of the reported and logistic models are in Table 10" in FLAT)
 check("keywords agree with the data description",
       "certificates of analysis" not in TEXT.split("**Keywords:**")[1].split("---")[0]
       and "extraction category, laboratory testing data" in FLAT)
@@ -1159,6 +1163,21 @@ check("variety and method compared under the same split",
       "Under the same random split the four cannabinoids predict the **variety**" in FLAT
       and f"{float(from_log(log5, 'random 5-fold')[1])/33.333:.1f} and {float(lg.group(1))/33.333:.1f} times chance for the method" in FLAT)
 check("repository tag stated", "tagged `preprint-v1`" in FLAT)
+
+# ---------- pass fourteen: one-line errors a sixth referee found ----------
+_n_int = 2 * sum(len(v) for v in _p11.values()) + 2
+check("the number of producer bootstrap intervals is stated correctly",
+      _n_int == 18 and "We report eighteen such intervals, sixteen pooled (Table 11) and two on the fold mean" in FLAT, _n_int)
+_pd = [(r.get("date_tested") or "")[:4] for r in rows if (r.get("producer") or "").strip() and (r.get("date_tested") or "").strip()]
+check("the period of the producer rows is stated correctly",
+      min(_pd) == "2020" and max(_pd) == "2023" and "over four years (2020 to 2023)" in FLAT, (min(_pd), max(_pd)))
+check("methods define the reassignments, the temporal split and the positive control",
+      "`GroupKFold(5, shuffle=True)` with seeds 0 to 19" in FLAT
+      and "fits once on the earliest 80% and tests on the rest, without grouping" in FLAT
+      and "A positive control replaces the target with whether the product name says distillate" in FLAT)
+check("nothing is claimed about the protocol of [3]",
+      "the performance figures of [1] and [2] are obtained under validation that leaves group structure intact" in FLAT
+      and "We could not establish the protocol of [3] from its abstract." in FLAT)
 
 # ---------- references ----------
 refs = TEXT.split("## References")[1]

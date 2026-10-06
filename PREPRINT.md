@@ -26,7 +26,7 @@ Holding out the producer leaves 54.0% and 0.62. A signal survives: the pooled
 held-out AUC is 0.61, with a producer-level bootstrap interval of 0.54 to 0.70.
 But the reported model's pooled balanced accuracy does not separate from chance
 (51.6%, interval 47.3 to 56.6); it keeps about 30% of its above-chance AUC, and
-a logistic regression 40 to 55%.
+an unweighted logistic regression 41 to 53%.
 
 A designed experiment shows the same direction: with the random split averaged
 over 200 seeds, 162 HPLC-assayed samples fall from 54.3% to 38.9% under
@@ -88,16 +88,16 @@ laboratory and reports what happens to the score.
 We build that bridge on a concrete task. The question is whether a concentrate's
 cannabinoid and terpene profile carries enough information to recover how it was
 made, separating concentrates declared *non-solvent based*, which under the
-Nevada rule in force since November 2020 means mechanical separation (hash,
-kief, rosin) or extraction with ethanol or CO2 [11], from those declared
-*solvent based*, made with any other approved solvent. We keep the shorthand
-`solventless` and `hydrocarbon` for the two declared categories because the code
-and evidence logs use them; 2.1 reports what each category contains. The task is
-a good test case for three reasons. The label is declared at source rather than
-inferred. The group structure is explicit, since every row names a laboratory
-and most name a producer. And a substantial subset of producers make both
-classes, which permits a test where a held-out producer's label cannot be read
-off the training rows.
+Nevada rule in force since November 2020 means mechanical separation (hashish,
+bubble hash and the like) or extraction with ethanol or CO2 [11], from those
+declared *solvent based*, made with any other approved solvent. We keep the
+shorthand `solventless` and `hydrocarbon` for the two declared categories
+because the code and evidence logs use them; 2.1 reports what each category
+contains. The task is a good test case for three reasons. The label is declared
+at source rather than inferred. The group structure is explicit, since every row
+names a laboratory and most name a producer. And a substantial subset of
+producers make both classes, which permits a test where a held-out producer's
+label cannot be read off the training rows.
 
 We report a largely negative result for the chemical question and a quantitative
 result for the methodological one.
@@ -268,8 +268,8 @@ year    solvent-based   non-solvent
 ```
 
 The task this paper tests is therefore the regulator's category as the
-laboratories applied it over more than four years, mechanical, ethanol or CO2
-extraction against the remaining solvents, and not rosin against BHO
+laboratories applied it over four years (2020 to 2023), mechanical, ethanol or
+CO2 extraction against the remaining solvents, and not rosin against BHO
 specifically; 3.2 reports the headline pair on two narrower subsets.
 
 **Controlled data.** Zenodo record 13823859 [13] is a designed experiment rather
@@ -392,7 +392,8 @@ is 4.0 of 18.3 points on one metric and 6.8 of 31.0 on the other.
 That 4.1-point lift is not spread evenly. The 19 columns take only 13 distinct
 missingness patterns, and 7 of them are **100% one class**:
 
-**Table 7.** Missingness patterns that contain a single class, rows as stored.
+**Table 7.** Missingness patterns that contain a single class, rows as stored;
+the three largest of the seven are listed.
 
 ```
 patterns that are 100% one class: 7 of 13
@@ -471,6 +472,14 @@ from having seen that same producer in training, since every producer in the
 subset contributes both classes. It covers 27,751 rows, 74.3% of the usable
 data, with a 17,312 / 10,439 class split.
 
+Three further analyses in 3.2 run on the rows that name a producer. Twenty
+reassignments repeat scheme 2 with the producers shuffled into folds,
+`GroupKFold(5, shuffle=True)` with seeds 0 to 19. A temporal split sorts the
+dated producer rows by `date_tested`, fits once on the earliest 80% and tests on
+the rest, without grouping; rows dated on the boundary day can fall on either
+side. A positive control replaces the target with whether the product name says
+distillate and runs schemes 1 and 2 unchanged.
+
 On the controlled data, random five-fold is compared against
 leave-one-variety-out.
 
@@ -483,18 +492,19 @@ chance level of 50.0% for two classes and 33.3% for three. Because it is
 computed at the default decision threshold, which an unweighted model on
 unbalanced classes does not place well, 3.2 also reports ROC AUC, which needs no
 threshold and has a chance level of 0.5. We also report macro F1, per-class
-recall, confusion matrices, and the spread across folds. Every "+/-" in a table
+recall, a confusion matrix, and the spread across folds. Every "+/-" in a table
 is the population standard deviation of the fold scores (divisor n).
 Producer-level intervals are percentile intervals over 2,000 bootstrap draws of
 producers, computed from the held-out predictions of the reported partition
 without refitting. A draw that contains one class only is skipped, and for a
 fold-mean statistic a fold that loses a class in a draw is left out of that
-draw's mean. We report sixteen such intervals without a multiplicity correction
-and call a bound within two points of chance marginal. Two baselines are
-computed explicitly: most-frequent (balanced accuracy 50.0%) and stratified
-random (50.7% on the one draw made, 50.0% in expectation). The alarm probes of
-2.6 are multi-class and report plain accuracy against the explicit
-majority-class baseline of their target, with balanced accuracy beside it.
+draw's mean. We report eighteen such intervals, sixteen pooled (Table 11) and
+two on the fold mean (3.2, Figure 1b), without a multiplicity correction and
+call a bound within two points of chance marginal. Two baselines are computed
+explicitly: most-frequent (balanced accuracy 50.0%) and stratified random (50.7%
+on the one draw made, 50.0% in expectation). The alarm probes of 2.6 are
+multi-class and report plain accuracy against the explicit majority-class
+baseline of their target, with balanced accuracy beside it.
 
 Per-class recall matters here because a single aggregate figure hides which side
 of the problem the model actually solves.
@@ -627,16 +637,17 @@ the producer bootstrap interval of the pooled AUC excludes 0.5 for all four,
 marginally for the unweighted logistic model. Second, it is modest and does not
 always survive thresholding. The boosted models keep about 30% of the
 above-chance AUC the random split shows, 0.125 of 0.394 on fold means and 0.110
-of 0.394 pooled for the reported one, and the logistic models 40 to 55%, 0.134
-and 0.104 of 0.253, from a much lower start. The pooled balanced accuracy of
-both unweighted models has an interval that includes 50%, and the unweighted
-logistic model's point estimate, 49.0%, is below it; only the class-weighted
-models clear chance, the boosted one marginally. For the reported model the
-fold-mean balanced accuracy of 54.0% has a producer bootstrap interval of [50.2,
-58.9]. Third, the size of the loss depends on the estimator, on its capacity
-(Figure 1a) and on class weighting: 24.4 points for unweighted boosting, 24.8
-with class weights, 11.0 for an unweighted logistic regression and 8.3 for a
-class-weighted one, whose held-out 61.1% is the highest score any model reaches.
+of 0.394 pooled for the reported one, the unweighted logistic model 41 to 53%,
+0.134 and 0.104 of 0.253, and the class-weighted one 54 to 64%, 0.136 and 0.162
+of 0.252, both from a much lower start. The pooled balanced accuracy of both
+unweighted models has an interval that includes 50%, and the unweighted logistic
+model's point estimate, 49.0%, is below it; only the class-weighted models clear
+chance, the boosted one marginally. For the reported model the fold-mean
+balanced accuracy of 54.0% has a producer bootstrap interval of [50.2, 58.9].
+Third, the size of the loss depends on the estimator, on its capacity (Figure
+1a) and on class weighting: 24.4 points for unweighted boosting, 24.8 with class
+weights, 11.0 for an unweighted logistic regression and 8.3 for a class-weighted
+one, whose held-out 61.1% is the highest fold-mean score of the four models.
 
 The reported partition is one draw, and refitting on others moves the score.
 Twenty random reassignments of producers to folds (Figure 1b) give the reported
@@ -653,15 +664,15 @@ not a laboratory prior.
 **Figure 1.** Balanced accuracy on the rows that name a producer, unweighted
 models. (a) Random split and producer-held-out score, for a standardised
 logistic regression and for gradient boosting at four iteration counts; fold
-means, with fold spreads in Tables 10 and 12. (b) Mean score of each of twenty
-random assignments of producers to folds, for all producers and for the
-dual-class subset; the bar is the producer bootstrap 95% interval of the
-fold-mean score on the reported partition and the tick is that score. Every
-plotted value is parsed from the evidence logs by
+means; the fold spreads of the reported and logistic models are in Table 10. (b)
+Mean score of each of twenty random assignments of producers to folds, for all
+producers and for the dual-class subset; the bar is the producer bootstrap 95%
+interval of the fold-mean score on the reported partition and the tick is that
+score. Every plotted value is parsed from the evidence logs by
 `src/evaluation/make_figure.py`.
 
-**Table 12.** Robustness of the gap. Balanced accuracy; gap in points on
-unrounded means.
+**Table 12.** Robustness of the gap. Balanced accuracy of the reported model;
+gap in points on unrounded means. The last row replaces the target (2.4).
 
 ```
 check (producer rows, reported model)       random   held out    gap
@@ -718,7 +729,7 @@ two schemes, against 39.8% and 38.4% for the majority predictor and 49.6% and
 49.4% for a stratified shuffle on each scheme's own rows, so on that thresholded
 metric neither beats a stratified guess.
 
-The confusion matrices show where the apparent skill was concentrated:
+The confusion matrix shows where the apparent skill was concentrated:
 
 **Table 13.** Pooled confusion matrix of the reported model, producer held out.
 
@@ -844,8 +855,9 @@ the reported model; on the designed experiment 15 to 18 points with gradient
 boosting and 5 to 8 with logistic regression. The mechanisms differ. In the
 market data the same producers sit on both sides of a random split; the designed
 experiment has no replicates, and its drop is a shift between varieties. The
-market gap is not an effect of drift, since it is as large inside 2020 to 2022
-as overall. What the random split rewards is largely group identity, which the
+market gap is not produced by the 2023 change in labelling, since it is as large
+on the rows tested in 2020 to 2022 as overall; drift inside that window is not
+excluded. What the random split rewards is largely group identity, which the
 same profiles carry strongly: producer at 67.1% against a 14.4% baseline,
 laboratory at 92.3% against 40.3%, variety at 3.6 times chance.
 
@@ -882,11 +894,12 @@ laboratory together: the two largest laboratories hold 83% of the rows that
 carry a producer, so such a split cannot be built from this corpus.
 
 **Not** a claim about the correctness of the conclusions in [1], [2] or [3].
-Their chemical findings may well hold. What we show is that the reported
-performance figures are obtained under validation that leaves group structure
-intact, a family of protocols in which we measure substantial inflation for
-the random-split member, and so cannot be read as estimates of performance on
-a new producer, genotype or laboratory.
+Their chemical findings may well hold. What we show is that the performance
+figures of [1] and [2] are obtained under validation that leaves group structure
+intact, a family of protocols in which we measure substantial inflation for the
+random-split member, and so cannot be read as estimates of performance on a new
+producer, genotype or laboratory. We could not establish the protocol of [3]
+from its abstract.
 
 ### 4.3 The confounder we could not test cleanly
 
