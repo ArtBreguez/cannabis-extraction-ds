@@ -187,14 +187,14 @@ MUTATIONS = [
     ("dual-strain subset size 9,598 -> 9,599", "9,598 rows", "9,599 rows"),
     # 4.1 scope: strain dominance must not be asserted for the market corpus
     ("4.1 strain dominance unscoped again",
-     "Producer\nvariation dominates whatever method signal exists",
-     "Strain and\nproducer variation dominate whatever method signal exists"),
+     "Producer variation dominates\nwhatever method signal exists",
+     "Strain and producer variation dominate\nwhatever method signal exists"),
     ("4.1 drops the negative market lift", "minus 3.0 points (4.3)",
      "a weaker signal (4.3)"),
     ("4.1 producer-ID figure 84.4 -> 85.4", "84.4% while the chemistry",
      "85.4% while the chemistry"),
     # prose hygiene: an em-dash must be caught
-    ("em-dash introduced", "The task is\na good test case for three reasons.",
+    ("em-dash introduced", "The task is a good test case for three reasons.",
      "The task is a good test case \u2014 for three reasons."),
 ]
 

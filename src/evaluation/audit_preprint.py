@@ -581,7 +581,7 @@ check("2.6 and 4.3 agree that the cultivar probe ran",
 # probe there returns a negative lift, which 4.3 reports. The two datasets
 # disagree, so the claim is scoped or it contradicts 4.3.
 check("4.1 does not assert strain dominance unscoped",
-      "Strain and\nproducer variation dominate" not in TEXT)
+      "Strain and producer variation dominate" not in FLAT)
 check("4.1 scopes the cultivar claim to the controlled data",
       "datasets disagree on the evidence" in FLAT
       and "we do not claim it for the market corpus" in FLAT)

@@ -86,11 +86,11 @@ made, separating concentrates declared *non-solvent based*, which under Nevada's
 testing rule, the one regulatory definition of the pair we could locate, means
 mechanical separation (hash, kief, rosin) or supercritical CO2 extraction [12],
 from those declared *solvent based*, made with hydrocarbon or other chemical
-solvents. We keep the shorthand
-`solventless` and `hydrocarbon` for the two declared categories because the code
-and evidence logs use them; 2.1 reports what each category contains. The task is
-a good test case for three reasons. The label is declared at source rather than
-inferred. The group structure is explicit, since every sample names a producer
+solvents. We keep the shorthand `solventless` and `hydrocarbon` for the two
+declared categories because the code and evidence logs use them; 2.1 reports
+what each category contains. The task is a good test case for three reasons.
+The label is declared at source rather than inferred. The group structure is
+explicit, since every sample names a producer
 and a laboratory. And a substantial subset of producers make both classes, which
 permits a test where a held-out producer's label cannot be read off the
 training rows.
@@ -428,8 +428,8 @@ dual-class + unseen          54.6% (+/-2.6)   50.7%      5
 ```
 
 Under the protocol used in the published literature, the chemistry appears to
-separate solventless from hydrocarbon extracts at 81.0%. Holding out the
-producer leaves 54.0%, four points above coin-flipping.
+separate the two declared categories at 81.0%. Holding out the producer leaves
+54.0%, four points above coin-flipping.
 
 Two qualifications are needed before that 27-point gap can be read as a pure
 protocol effect, and both are measurable.
@@ -537,10 +537,10 @@ Two claims, of different kinds.
 The **chemical claim** is narrow: the analyte panels present in public cannabis
 COAs, 19 analytes and heavily left-censored, do not carry enough information to
 identify the declared extraction category, non-solvent against solvent-based
-(2.1), for a producer the model has never seen. Producer
-variation dominates whatever method signal exists: inside the dual-class subset
-a classifier given only an encoded producer ID reaches 84.4% while the chemistry
-grouped by producer reaches 54.6%. Cultivar plausibly does the same, but the two
+(2.1), for a producer the model has never seen. Producer variation dominates
+whatever method signal exists: inside the dual-class subset a classifier given
+only an encoded producer ID reaches 84.4% while the chemistry grouped by
+producer reaches 54.6%. Cultivar plausibly does the same, but the two
 datasets disagree on the evidence and we do not claim it for the market corpus:
 in the controlled experiment the four cannabinoids read variety at 60.7% against
 16.7% chance while reading method at 38.9% against 33.3%, whereas in the market
@@ -663,10 +663,10 @@ gigabytes and a separate build, not an extension of this work.
 
 The declared extraction category, non-solvent against solvent-based, is not
 identifiable from the cannabinoid and terpene panels in public cannabis
-certificates of analysis for an unseen producer: 54.0% balanced
-accuracy whose 95% confidence interval contains the 50.0% chance level, and
-54.6% on the strictest subset, a residual of a few points above chance, where
-a random split reports 81.0%. The same collapse appears in a designed HPLC
+certificates of analysis for an unseen producer: 54.0% balanced accuracy whose
+95% confidence interval contains the 50.0% chance level, and 54.6% on the
+strictest subset, a residual of a few points above chance, where a random split
+reports 81.0%. The same collapse appears in a designed HPLC
 experiment when variety is held out, 56.7% to 38.9% against 33.3% chance. In
 both datasets the chemistry reads the confounder better than the target,
 identifying the laboratory 15.3 points above baseline and the variety at nearly
