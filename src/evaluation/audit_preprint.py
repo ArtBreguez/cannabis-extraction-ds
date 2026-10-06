@@ -405,6 +405,19 @@ check("4.3 no longer claims the test was impossible",
       "The confounder we could not test cleanly" in TEXT
       and "We could not test it. " not in TEXT)
 
+# ---------- submission gates ----------
+# ChemRxiv requires AI-tool use to be disclosed in the text of the preprint
+# and forbids listing such tools as authors. Both halves are asserted.
+check("AI tool use is disclosed", "## Use of AI tools" in TEXT)
+check("AI disclosure denies authorship",
+      "do not meet authorship criteria" in TEXT)
+check("AI disclosure names the author as responsible",
+      "author is responsible for every claim" in FLAT)
+check("no AI tool in the author block",
+      not re.search(r"^(ChatGPT|Claude|GPT|Copilot|Gemini)", TEXT, re.M))
+check("competing interests declared", "## Competing interests" in TEXT)
+check("data availability declared", "## Data and code availability" in TEXT)
+
 # ---------- prose hygiene ----------
 body = re.sub(r"```[\s\S]*?```", "", TEXT)
 check("no em-dash outside code", "\u2014" not in body,

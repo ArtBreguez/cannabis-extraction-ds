@@ -637,6 +637,25 @@ This work reports a negative result about distinguishing that category from
 hydrocarbon extracts, which runs against that interest rather than supporting
 it. No funding was received.
 
+## Use of AI tools
+
+AI coding assistants were used throughout this work, under the author's
+direction and review. Their contribution was to the analysis code, the
+verification harness and the manuscript prose: writing and refactoring the
+scripts in `src/`, running the audit passes described above, and drafting and
+revising text that the author then checked against the evidence logs. Several
+defects corrected before posting were found by that review loop, among them a
+leakage pre-check that measured six analyte columns while the model saw
+nineteen, and a percentage whose numerator and denominator described different
+populations.
+
+AI tools do not meet authorship criteria and are not listed as authors. The
+author is responsible for every claim, number and conclusion in this
+manuscript. Every reported figure is recomputed from the raw data by
+`src/evaluation/rederive_paper_numbers.py` and asserted against this text by
+`src/evaluation/audit_preprint.py`, which exits non-zero on any disagreement,
+so no published value rests on an assistant's unverified output.
+
 ## A note on provenance
 
 An early version of this dataset audit concluded the research was not viable,
