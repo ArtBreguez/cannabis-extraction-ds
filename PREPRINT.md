@@ -5,7 +5,8 @@ Independent researcher
 ORCID: 0009-0005-8551-731X
 Correspondence: arthurbreguez@gmail.com
 
-Preprint. Code and evidence logs: `cannabis-extraction-ds`.
+Preprint. Code and evidence logs:
+`https://github.com/ArtBreguez/cannabis-extraction-ds`
 
 ---
 
@@ -36,9 +37,9 @@ level in the controlled experiment.
 
 We conclude that extraction method is not recoverable from the analyte panels in
 public cannabis COAs for an unseen producer. We did not rerun the published
-studies, so we make no claim about their chemical conclusions. We claim only
-that their figures are obtained under the protocol that inflates by 27 points on
-our data, and so do not estimate performance on a new producer or genotype.
+studies and make no claim about their chemical conclusions, only that their
+figures come from validation leaving group structure intact, the regime in which
+we measure 27 points of inflation.
 
 **Keywords:** cannabis, chemometrics, data leakage, group cross-validation,
 extraction method, certificates of analysis, negative result
@@ -106,13 +107,31 @@ extraction family directly as `non-solvent based concentrate` or
 from a commercial product name. Rows whose `product_type` is only `concentrate`
 remain unlabelled and are never assigned to a class.
 
+Most concentrate rows carry no such declaration and are therefore dropped at
+this step, which is where the bulk of the reduction happens:
+
+```
+concentrate or extract rows                     139,714
+  product_type declares the extraction family    37,374   (26.7%)
+  product_type does not                         102,340   (73.3%)
+```
+
+The discarded majority is dominated by values that name a format rather than a
+method: `extracts` (34,034 rows), `concentrate, product inhalable` (30,586),
+bare `concentrate` (26,030) and `marijuana extract for inhalation` (3,901).
+These are not missing labels to be recovered, since the extraction family was
+never recorded, so imputing one would invent the dependent variable. Matching
+is by regular expression (`non[- ]?solvent`) rather than exact string, which
+also admits regional variants such as `non-solvent concentrate` (1,445 rows).
+
 A secondary labelling path applies regular expressions to `product_name`
 (`hash rosin`, `live rosin`, `rosin` for solventless; `live resin`, `bho`,
 `shatter`, `badder`, `wax` for hydrocarbon). Where both paths produce a label
 they agree on 4,254 of 4,284 rows, 99.3%. The 30 contradictory rows are
 excluded.
 
-The resulting dataset is 37,374 rows:
+The resulting labelled dataset is 37,374 rows, of which 30 carry contradictory
+labels and are excluded from every analysis, leaving 37,344 rows in use:
 
 ```
 hydrocarbon   24,576   65.8%
@@ -238,6 +257,17 @@ identifies the laboratory is a profile that partially encodes instrumentation,
 calibration and reporting convention, which would compromise any score obtained
 while train and test share laboratories. A third target, cultivar, could not be
 probed and is treated separately in 4.3.
+
+Each probe keeps only classes with enough rows to be estimable, since a class
+with 20 members contributes noise rather than signal: at least 100 rows for the
+laboratory probe and 150 for the producer probe, the latter higher because
+producers are far more numerous. These floors, applied after the 30 conflicting
+rows are dropped, are why the probes in 3.1 run on 11 of 12 laboratories
+(37,276 rows) and 33 of 96 producers (30,416 rows) rather than on the full
+dataset. The `*_tested` flags are excluded from these probes, so that
+"the chemistry identifies the laboratory" is not conflated with
+"the missingness pattern identifies the laboratory", which 2.3 measures
+separately.
 
 ## 3. Results
 
@@ -431,11 +461,15 @@ both datasets the chemistry reads the confounder better than the target,
 identifying the laboratory 15.3 points above baseline and the variety at nearly
 four times chance.
 
-The field's published accuracies, 95% and 100%, are obtained under the protocol
-that inflates by 27 points on our data. We do not claim their chemical
-conclusions are wrong, and we did not rerun them. We claim their numbers do not
-answer the question a reader will assume they answer. Group-aware validation is
-not a refinement here. It changes the conclusion.
+The field's published accuracies, 95% and 100%, are obtained under validation
+that leaves the group structure intact, the family of protocols for which we
+measure 27 points of inflation on market data and 18 on a designed experiment.
+We ran random cross-validation, not Kennard-Stone selection, so the magnitude
+we report is specific to the former; what the two share is that neither holds
+out the producer, the genotype or the laboratory. We do not claim the published
+chemical conclusions are wrong, and we did not rerun those studies. We claim
+their numbers do not answer the question a reader will assume they answer.
+Group-aware validation is not a refinement here. It changes the conclusion.
 
 ## Data and code availability
 

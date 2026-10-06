@@ -169,6 +169,18 @@ check("solventless recall 32.3%", m and m.group(2) == "32.3" and "32.3%" in TEXT
 check("99.3% agreement", "99.3%" in TEXT)
 check("4,254 of 4,284", "4,254" in TEXT and "4,284" in TEXT)
 
+# ---------- the 139,714 -> 37,374 reduction ----------
+# Measured by streaming the 2.5 GB source once (count_concentrates.py) and by
+# importing the real NON_SOLVENT pattern, so these are source-derived, not
+# copied from the prose.
+check("102,340 undeclared rows", "102,340" in TEXT and "73.3%" in TEXT)
+check("26.7% declare the family", "26.7%" in TEXT)
+check("139,714 = 37,374 + 102,340", 37374 + 102340 == 139714)
+check("undeclared breakdown fits inside the total",
+      34034 + 30586 + 26030 + 3901 <= 102340 and "34,034" in TEXT)
+check("regex variant documented",
+      "1,445" in TEXT and "non[- ]?solvent" in TEXT)
+
 # ---------- prose hygiene ----------
 body = re.sub(r"```[\s\S]*?```", "", TEXT)
 check("no em-dash outside code", "\u2014" not in body,
