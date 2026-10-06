@@ -1,0 +1,17 @@
+rows: 37344   features: 19
+
+=== unseen-producer: rows=33229 producers=96 ===
+reported partition: mean of folds 54.0%   pooled balanced_acc 51.6%
+A. 20 shuffled partitions, mean of folds: min 51.3%  median 53.8%  max 56.6%  mean 54.0%  sd 1.7
+   partitions at or below 50.0%: 0 of 20
+   values: [51.3, 51.8, 52.0, 52.2, 52.7, 52.9, 52.9, 53.2, 53.2, 53.6, 54.0, 54.4, 54.6, 54.7, 55.1, 55.9, 56.2, 56.3, 56.4, 56.6]
+B. producer-cluster bootstrap of pooled balanced_acc (2000 draws): mean 51.9%  95% interval [47.3, 56.6]  share of draws at or below 50.0%: 23.2%
+I. laboratory identity alone, same folds: 43.6%
+
+=== dual-class+unseen: rows=27751 producers=53 ===
+reported partition: mean of folds 54.6%   pooled balanced_acc 52.0%
+A. 20 shuffled partitions, mean of folds: min 48.8%  median 54.0%  max 56.8%  mean 54.0%  sd 2.0
+   partitions at or below 50.0%: 2 of 20
+   values: [48.8, 49.9, 52.9, 53.0, 53.0, 53.0, 53.1, 53.4, 53.7, 53.8, 54.2, 55.0, 55.1, 55.2, 55.2, 55.6, 55.9, 56.1, 56.4, 56.8]
+B. producer-cluster bootstrap of pooled balanced_acc (2000 draws): mean 52.5%  95% interval [45.8, 59.8]  share of draws at or below 50.0%: 24.7%
+I. laboratory identity alone, same folds: 40.8%

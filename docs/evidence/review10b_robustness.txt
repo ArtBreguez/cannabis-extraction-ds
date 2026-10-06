@@ -1,0 +1,36 @@
+rows: 37344   features: 19
+
+=== C1. market data, standardised logistic regression ===
+  random, all rows            69.3% (+/-0.5)
+  random, producer rows       65.3% (+/-0.6)
+  unseen-producer             54.3% (+/-6.2)   same-sample gap 11.0 points
+  dual-class, random          65.7% (+/-0.7)
+  dual-class, unseen-producer 55.6% (+/-2.5)   gap 10.1 points
+
+=== C2. controlled data, two estimators ===
+  gradient boosting    method random 56.7% (+/-9.2)   method LOVO 38.9% (+/-12.6)   variety random 60.7% (+/-8.3)   gap 17.8 points
+  logistic regression  method random 54.3% (+/-2.5)   method LOVO 46.3% (+/-10.2)   variety random 46.9% (+/-5.5)   gap 8.0 points
+  logistic LOVO permutation: obs 46.3%  null mean 33.1% sd 3.3  shuffles at or above obs: 1 of 1000  p=0.002
+  logistic random 5-fold over 200 seeds: mean 51.8% sd 2.3   seed-averaged gap to LOVO 5.5 points
+
+=== D. gap against capacity (producer rows, gradient boosting) ===
+  max_iter=50   random 74.3% (+/-0.5)   unseen-producer 53.2% (+/-5.7)   gap 21.1 points
+  max_iter=100  random 76.6% (+/-0.4)   unseen-producer 53.8% (+/-5.9)   gap 22.7 points
+  max_iter=200  random 78.5% (+/-0.4)   unseen-producer 54.0% (+/-5.6)   gap 24.4 points
+  max_iter=400  random 80.1% (+/-0.6)   unseen-producer 54.0% (+/-5.3)   gap 26.1 points
+
+=== E. label-definition subsets (gradient boosting) ===
+  non-distillate rows: rows=23281 with producer=19166 producers=88 classes={'hydrocarbon': 13709, 'solventless': 5457}
+    random (producer rows) 84.1% (+/-0.6)   unseen-producer 60.6% (+/-8.7)   gap 23.5 points
+  named rows: mechanical-word solventless vs hydrocarbon-word hydrocarbon: rows=4345 with producer=4345 producers=61 classes={'hydrocarbon': 3786, 'solventless': 559}
+    random (producer rows) 77.0% (+/-1.8)   unseen-producer 60.3% (+/-6.2)   gap 16.8 points
+
+=== F. temporal split (train on the earliest 80% of dated rows) ===
+  dated rows=33765  train up to 2023-06-13  test rows=6753  balanced_acc 73.4%  test producers seen in training: 99.3% of test rows
+
+=== G. the binary task at learning_rate=0.05 ===
+  random, all rows 79.0% (+/-0.5)   unseen-producer 54.1% (+/-6.3)
+
+=== H. same-sample random splits for the strain-grouped subsets of 4.3 ===
+  rows with a strain key=32627  random 79.2% (+/-0.7)
+  dual-class strain rows=9598  random 83.6% (+/-0.4)

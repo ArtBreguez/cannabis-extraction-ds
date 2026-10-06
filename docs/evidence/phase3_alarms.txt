@@ -14,6 +14,7 @@ producer   classes=  33 rows= 30416  acc= 67.1% (+/-0.6)  baseline= 14.4%  lift=
 === WHY learning_rate=0.05: the lab probe at the 0.1 default ===
   learning_rate=0.1   folds=[66.2, 54.7, 47.1, 69.4, 40.6]  mean=55.6%
   learning_rate=0.05  folds=[92.6, 92.4, 92.3, 92.2, 92.0]  mean=92.3%
+  producer probe at 0.1: folds=[11.9, 11.7, 18.8, 68.7, 10.4]  mean=24.3%  lift=+9.9pts
 
 === LAB FROM THE MISSINGNESS PATTERN ALONE (no measured value) ===
   acc=57.3%  baseline=40.3%  (lookup table over 13 patterns, same 5 folds)

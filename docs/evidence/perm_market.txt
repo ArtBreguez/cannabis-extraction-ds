@@ -1,2 +1,0 @@
-unseen-producer    obs=54.0%  perms=40  null mean=50.0% sd=0.1  95pct=50.1%  p=0.024
-dual-class+unseen  obs=54.6%  perms=60  null mean=50.0% sd=0.2  95pct=50.3%  p=0.016

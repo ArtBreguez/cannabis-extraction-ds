@@ -104,7 +104,8 @@ check("dual producers anchored in the discussion",
 check("27,751 dual rows", drows == 27751 and "27,751" in TEXT, drows)
 check("dual rows anchored in 2.4 and 3.2",
       f"covers {drows:,} rows" in FLAT and f"on the same {drows:,} rows" in FLAT, drows)
-check("74.3% of usable", abs(100*drows/n - 74.3) < 0.1 and "74.3%" in TEXT,
+check("74.3% of usable", abs(100*drows/n - 74.3) < 0.1
+      and f"{100*drows/n:.1f}% of the usable data" in FLAT,
       f"{100*drows/n:.1f}")
 dl = Counter((r.get("label") or "").strip() for r in rows
              if (r.get("producer") or "").strip() in dual)
@@ -236,10 +237,9 @@ check("lab lift anchored in prose",
 ma = re.search(r"lab\s+classes=\s*\d+\s+rows=\s*\d+\s+acc=\s*([\d.]+)%\s*"
                r"\(\+/-([\d.]+)\)\s+baseline=\s*([\d.]+)%", log3)
 check("lab probe accuracy anchored in abstract, table and conclusion",
-      bool(ma) and f"laboratory on {ma.group(1)}% of market rows" in FLAT
-      and f"against a {ma.group(3)}% majority baseline" in FLAT
+      bool(ma) and f"testing laboratory at {ma.group(1)}% against {ma.group(3)}%" in FLAT
       and f"{ma.group(1)}% (+/-{ma.group(2)})    {ma.group(3)}%" in TEXT
-      and f"laboratory on {ma.group(1)}% of rows against a {ma.group(3)}% baseline" in FLAT,
+      and f"laboratory at {ma.group(1)}% against {ma.group(3)}%, and the variety" in FLAT,
       ma.groups() if ma else None)
 mp_ = re.search(r"producer\s+classes=\s*\d+\s+rows=\s*\d+\s+acc=\s*([\d.]+)%\s*"
                 r"\(\+/-([\d.]+)\)\s+baseline=\s*[\d.]+%\s+lift=\s*\+([\d.]+)pts", log3)
@@ -448,19 +448,49 @@ check("dual-class same-sample random split anchored",
       bool(c9) and f"against {c9.group(2)}% (+/-{c9.group(3)}) for a random split on the same {int(c9.group(1)):,} rows" in FLAT
       and f"a gap of {c9.group(5)} points" in FLAT and c9.group(4) == db[1], c9.groups() if c9 else None)
 d9 = re.findall(r"seed\s+\d+: unseen-producer ([\d.]+)% \(\+/-[\d.]+\)\s+dual-class ([\d.]+)%", log9)
-check("shuffled-assignment reseeds anchored",
-      len(d9) == 3 and f"gives {d9[0][0]}%, {d9[1][0]}% and {d9[2][0]}%" in FLAT
-      and f"give {d9[0][1]}%, {d9[1][1]}% and {d9[2][1]}%" in FLAT, d9)
-check("dual-class residual given as a range, not an effect",
-      "residual above chance is therefore 2 to 5 points" in FLAT
-      and "small but real" not in FLAT and "upper bound on the chemical signal" not in FLAT
-      and "real in the permutation sense, but small, unstable" in FLAT)
-logpm = (EV / "perm_market.txt").read_text() if (EV / "perm_market.txt").exists() else ""
-pd_ = re.search(r"dual-class\+unseen\s+obs=([\d.]+)%\s+perms=(\d+)\s+null mean=([\d.]+)% sd=([\d.]+).*?p=([\d.]+)", logpm)
-check("dual-class permutation test anchored",
-      bool(pd_) and pd_.group(1) == db[1]
-      and f"null is again {pd_.group(3)}% (sd {pd_.group(4)}) and {pd_.group(1)}% sits above it (p = {pd_.group(5)})" in FLAT,
-      pd_.groups() if pd_ else None)
+# pass ten: the producer is the independent unit. Twenty repeated partitions
+# and a producer-cluster bootstrap replace the three reassignments and the
+# row-level permutation test, whose null treated rows as exchangeable.
+log10a = (EV / "review10a_grouped.txt").read_text()
+def _blk(name):
+    return log10a.split(f"=== {name}:")[1].split("\n===")[0]
+def _grp(name):
+    b = _blk(name)
+    A = re.search(r"min ([\d.]+)%\s+median ([\d.]+)%\s+max ([\d.]+)%\s+mean ([\d.]+)%\s+sd ([\d.]+)", b)
+    K = re.search(r"at or below 50\.0%: (\d+) of (\d+)", b)
+    B = re.search(r"95% interval \[([\d.]+), ([\d.]+)\]\s+share of draws at or below 50\.0%: ([\d.]+)%", b)
+    L = re.search(r"laboratory identity alone, same folds: ([\d.]+)%", b)
+    return A, K, B, L
+uA, uK, uB, uL = _grp("unseen-producer")
+dA, dK, dB, dL = _grp("dual-class+unseen")
+check("unseen-producer: repeated partitions anchored",
+      bool(uA and uK) and uK.group(1) == "0"
+      and f"give means from {uA.group(1)}% to {uA.group(3)}% (median {uA.group(2)}%, sd {uA.group(5)}), none at or below 50.0%" in FLAT,
+      uA.groups() if uA else None)
+check("unseen-producer: producer-cluster bootstrap anchored",
+      bool(uB) and f"a 95% interval of [{uB.group(1)}, {uB.group(2)}], with {uB.group(3)}% of draws at or below chance" in FLAT,
+      uB.groups() if uB else None)
+check("unseen-producer: laboratory-prior control anchored",
+      bool(uL) and f"scores {uL.group(1)}%, so those few points are not a laboratory prior" in FLAT,
+      uL.group(1) if uL else None)
+check("dual-class: repeated partitions anchored",
+      bool(dA and dK) and dK.group(1) == "2"
+      and f"twenty reassignments give means from {dA.group(1)}% to {dA.group(3)}% (median {dA.group(2)}%), two of them at or below 50.0%" in FLAT,
+      dA.groups() if dA else None)
+check("dual-class: bootstrap and laboratory control anchored",
+      bool(dB and dL) and f"bootstrap interval is [{dB.group(1)}, {dB.group(2)}]" in FLAT
+      and f"Laboratory identity alone scores {dL.group(1)}% under the same folds" in FLAT,
+      (dB.groups() if dB else None, dL.group(1) if dL else None))
+check("abstract and conclusion carry the partition range",
+      bool(uA) and FLAT.count(f"{round(float(uA.group(1)))} to {round(float(uA.group(3)))}% across twenty") == 2,
+      uA.groups() if uA else None)
+check("grouped scores are not called a detected effect",
+      FLAT.count("not distinguishable from chance at the producer level") >= 1
+      and "small but real" not in FLAT and "real in the permutation sense" not in FLAT
+      and "upper bound on the chemical signal" not in FLAT
+      and "is real but small" not in FLAT)
+check("the invalid row-level permutation test is gone",
+      "permutation null is again" not in FLAT and not (EV / "perm_market.txt").exists())
 e9 = re.search(r"analytes: (\d+) \(([\d.]+)% of usable rows\)\s*\n\s*after dropping them: rows=\d+\s+random ([\d.]+)%.*?unseen-producer ([\d.]+)%.*?gap ([\d.]+) points", log9)
 check("duplicate count and sensitivity anchored",
       bool(e9) and f"{int(e9.group(1)):,} ({e9.group(2)}%) repeat" in FLAT
@@ -480,9 +510,10 @@ b9 = re.search(r"missingness-only probe: plain acc=([\d.]+)%\s+balanced_acc=([\d
 m9 = re.search(r"main model, random split: plain acc=([\d.]+)%", log9)
 mp9 = re.search(r"accuracy from missingness alone:\s*([\d.]+)%", (EV / "lab_confounding.txt").read_text())
 check("2.3 probe and main model given on both metrics",
-      bool(b9 and m9) and f"probe scores {b9.group(2)}% against 50.0%" in FLAT
-      and f"scores {m9.group(1)}% plain accuracy against the same 65.8% baseline" in FLAT
-      and f"{float(mp9.group(1))-65.8:.1f} of {float(m9.group(1))-65.8:.1f} points on one metric and {float(b9.group(2))-50:.1f} of {float(rb[1])-50:.1f}" in FLAT,
+      bool(b9 and m9) and f"the probe scores {b9.group(1)}% plain and {b9.group(2)}% balanced accuracy" in FLAT
+      and f"against {m9.group(1)}% plain and {rb[1]}% balanced" in FLAT
+      and f"{float(b9.group(1))-65.8:.1f} of {float(m9.group(1))-65.8:.1f} points on one metric and {float(b9.group(2))-50:.1f} of {float(rb[1])-50:.1f}" in FLAT
+      and "Those are in-sample figures for the lookup" in FLAT,
       (b9.groups() if b9 else None, m9.group(1) if m9 else None))
 k9 = re.search(r"PureVita Labs, LLC\s+\{\(0, 'solventless'\): \d+, \(1, 'hydrocarbon'\): (\d+), \(4, 'hydrocarbon'\): (\d+), \(6, 'solventless'\): (\d+)\}", log9)
 check("within-laboratory class-dependent panel anchored",
@@ -509,17 +540,12 @@ check("per-fold solventless counts anchored",
 check("the false 'no gate is passed' sentence is gone",
       "No gate that requires" not in FLAT)
 check("the chance claim is scoped and qualified",
-      "On this scheme the collapse goes to within a few points of chance" in FLAT
-      and "all the way to chance" not in FLAT
-      and "statistically indistinguishable from guessing" not in FLAT)
+      "all the way to chance" not in FLAT
+      and "statistically indistinguishable from guessing" not in FLAT
+      and "is not reliably recoverable" in FLAT and "is not reliably identifiable" in FLAT)
 # permutation test on the market schemes, docs/evidence/perm_market.txt
-logpm = (EV / "perm_market.txt").read_text() if (EV / "perm_market.txt").exists() else ""
-pu = re.search(r"unseen-producer\s+obs=([\d.]+)%\s+perms=(\d+)\s+null mean=([\d.]+)% sd=([\d.]+).*?p=([\d.]+)", logpm)
-check("unseen-producer permutation test anchored",
-      bool(pu) and pu.group(1) == gb[1]
-      and f"gives {pu.group(3)}% (sd {pu.group(4)}) in every one of {pu.group(2)} shuffles" in FLAT
-      and f"above that null (p = {pu.group(5)})" in FLAT, pu.groups() if pu else None)
-
+check("no market p-value is quoted from a row-level shuffle",
+      "above that null" not in FLAT)
 # ---------- the 2.3 pre-check must match its own evidence log ----------
 # This block exists because 2.3 previously claimed a +0.0-point lift from a
 # probe that looked at 6 terpenes while the model saw 19 columns. The figures
@@ -682,11 +708,11 @@ check("4.1 does not assert strain dominance unscoped",
 check("4.1 scopes the cultivar claim to the controlled data",
       "datasets disagree on the evidence" in FLAT
       and "we do not claim it for the market corpus" in FLAT)
-check("4.1 quotes the strain-probe lift against the laboratory lift",
-      bool(sa) and f"{sa.group(3).lstrip('+')} points above its baseline against" in FLAT)
+check("4.1 quotes the strain-probe lift",
+      bool(sa) and f"{sa.group(3).lstrip('+')} points above its baseline (4.3)" in FLAT
+      and "a fifth of the laboratory" not in FLAT)
 check("4.1 supports producer dominance with both figures",
-      "84.4% while the chemistry" in FLAT)
-
+      bool(r7_pid and c9) and f"reaches {r7_pid.group(1)}% and the chemistry {c9.group(2)}%" in FLAT)
 # ---------- statements about the pipeline that were wrong ----------
 # Non-detects are LEFT-censored (true value below the limit); the text said
 # "right-censored". No model script feeds the `_tested` flags to the
@@ -731,9 +757,10 @@ for fam, key in (("distillate", "distillate"),
           bool(m) and f"{int(m.group(1)):,} ({m.group(2):>4}%)" in TEXT
           and f"{int(m.group(3)):,} ({m.group(4):>4}%)" in TEXT,
           m.group(0)[-40:] if m else None)
-check("2.1 quotes the regulatory definition",
-      "including concentrated marijuana extracted with CO2" in FLAT
-      and "[12]" in TEXT)
+check("2.1 quotes the regulatory definition in force for the data period",
+      "including concentrated cannabis extracted with ethanol or CO2" in FLAT
+      and "by means other than with ethanol or CO2" in FLAT and "[12]" in TEXT
+      and "the 2018 rule it replaced named CO2 only" in FLAT)
 check("the task is scoped to the declared category",
       "not rosin against BHO specifically" in FLAT
       and "declared extraction category" in FLAT)
@@ -774,16 +801,16 @@ check("random-group control anchored",
       and float(pc.group(1)) == 0.0 and "never falls to 38.9%" in FLAT,
       (ctl.group(1), pc.group(1)) if ctl and pc else None)
 check("permutation p-values anchored",
-      bool(pr5 and plo) and f"p = {float(pr5.group(1)):.3f} for the random split" in FLAT
+      bool(pr5 and plo) and f"p ≤ {float(pr5.group(1)):.3f} for the random split, which no shuffle reaches" in FLAT
       and f"p = {float(plo.group(1)):.2f} for leave-one-variety-out" in FLAT,
       (pr5.group(1), plo.group(1)) if pr5 and plo else None)
 check("process-settings leak anchored",
       bool(ttp) and f"lifts the random split to {ttp.group(1)}%" in FLAT,
       ttp.group(1) if ttp else None)
-check("discussion carries the seed-averaged gap",
-      bool(k5 and lovo) and f"{round(float(k5.group(1)) - float(lovo[1]))} once the random" in FLAT
-      and f"{round(float(k5.group(1)) - float(lovo[1]))} to 18 on a designed experiment" in FLAT)
-
+check("discussion and conclusion carry the seed-averaged gap",
+      bool(k5 and lovo and gap)
+      and f"{round(float(k5.group(1)) - float(lovo[1]))} to {round(float(gap.group(1)))} points on the designed experiment" in FLAT
+      and f"{round(float(k5.group(1)) - float(lovo[1]))} to {round(float(gap.group(1)))} on a designed experiment" in FLAT)
 # ---------- markets and dates, from docs/evidence/lab_states.txt ----------
 logst = (EV / "lab_states.txt").read_text()
 nv = re.search(r"^\s+(\d+)\s+NV$", logst, re.M)
@@ -800,6 +827,92 @@ check("no other state appears in the data",
 check("date range anchored",
       bool(dr) and f"dated {dr.group(3)} to {dr.group(4)} on the {int(dr.group(1)):,} rows" in FLAT,
       dr.groups() if dr else None)
+
+# ---------- pass ten robustness, docs/evidence/review10b_robustness.txt ----------
+log10b = (EV / "review10b_robustness.txt").read_text()
+c1r = re.search(r"random, producer rows\s+([\d.]+)%", log10b)
+c1g = re.search(r"unseen-producer\s+([\d.]+)% \(\+/-[\d.]+\)\s+same-sample gap ([\d.]+) points", log10b)
+check("market data: logistic regression anchored",
+      bool(c1r and c1g) and f"scores {c1r.group(1)}% on the same-sample random split and {c1g.group(1)}% grouped: a gap of {c1g.group(2)} points" in FLAT,
+      (c1r.group(1), c1g.groups()) if c1r and c1g else None)
+lg = re.search(r"logistic regression\s+method random ([\d.]+)% \(\+/-([\d.]+)\)\s+method LOVO ([\d.]+)% \(\+/-([\d.]+)\)\s+variety random ([\d.]+)%.*?gap ([\d.]+) points", log10b)
+check("controlled data: logistic rows anchored in the table",
+      bool(lg) and f"random 5-fold                  {lg.group(1)}% (+/-{lg.group(2)})" in TEXT
+      and f"leave-one-variety-out          {lg.group(3)}% (+/-{lg.group(4)})" in TEXT, lg.groups() if lg else None)
+check("controlled data: logistic gap and variety anchored",
+      bool(lg and gap) and f"drops {lg.group(6)} points instead of {gap.group(1)}" in FLAT
+      and f"logistic regression ({lg.group(5)}%)" in FLAT
+      and f"from {lg.group(1)}% to {lg.group(3)}% with logistic regression" in FLAT
+      and FLAT.count(f"{lg.group(1)}% to {lg.group(3)}% with logistic regression") == 2,
+      lg.groups() if lg else None)
+lp = re.search(r"logistic LOVO permutation: obs ([\d.]+)%.*?at or above obs: (\d+) of (\d+)\s+p=([\d.]+)", log10b)
+check("controlled data: logistic permutation anchored",
+      bool(lp) and f"{lp.group(2)} of {int(lp.group(3)):,} label shuffles reaches {lp.group(1)}% (p = {lp.group(4)})" in FLAT,
+      lp.groups() if lp else None)
+ls = re.search(r"over 200 seeds: mean ([\d.]+)% sd ([\d.]+)\s+seed-averaged gap to LOVO ([\d.]+) points", log10b)
+check("controlled data: logistic seed sweep anchored",
+      bool(ls) and f"the 200-seed average is {ls.group(1)}% (sd {ls.group(2)}) and the gap {ls.group(3)}" in FLAT,
+      ls.groups() if ls else None)
+cap = re.findall(r"max_iter=(\d+)\s+random ([\d.]+)%.*?unseen-producer ([\d.]+)%.*?gap ([\d.]+) points", log10b)
+check("gap against capacity anchored",
+      len(cap) == 4
+      and f"scores {cap[0][1]}%, {cap[1][1]}%, {cap[2][1]}% and {cap[3][1]}% and the grouped one {cap[0][2]}%, {cap[1][2]}%, {cap[2][2]}% and {cap[3][2]}%" in FLAT
+      and f"from {cap[0][3]} to {cap[3][3]} points" in FLAT, cap)
+sub = re.findall(r"with producer=(\d+) producers=\d+.*?\n\s+random \(producer rows\) ([\d.]+)%.*?unseen-producer ([\d.]+)% \(\+/-([\d.]+)\)\s+gap ([\d.]+) points", log10b)
+check("label-definition subsets anchored",
+      len(sub) == 2
+      and f"On the {int(sub[0][0]):,} producer rows not named distillate, the random split scores {sub[0][1]}% and the grouped one {sub[0][2]}% (+/-{sub[0][3]}), a gap of {sub[0][4]} points" in FLAT
+      and f"On the {int(sub[1][0]):,} rows whose names" in FLAT
+      and f"they score {sub[1][1]}% and {sub[1][2]}% (+/-{sub[1][3]}), a gap of {sub[1][4]} points" in FLAT, sub)
+tmp = re.search(r"balanced_acc ([\d.]+)%\s+test producers seen in training: ([\d.]+)% of test rows", log10b)
+check("temporal split anchored",
+      bool(tmp) and f"scores {tmp.group(1)}% with {tmp.group(2)}% of its test rows from producers seen in training" in FLAT,
+      tmp.groups() if tmp else None)
+glr = re.search(r"random, all rows ([\d.]+)% \(\+/-([\d.]+)\)\s+unseen-producer ([\d.]+)%", log10b.split("=== G.")[1])
+check("binary task at the probe learning rate anchored",
+      bool(glr and rb and gb) and f"is {rb[2]} at the default rate and {glr.group(2)} at 0.05, with the grouped score at {gb[1]}% and {glr.group(3)}%" in FLAT,
+      glr.groups() if glr else None)
+hs = re.search(r"rows with a strain key=\d+\s+random ([\d.]+)%.*?\n\s+dual-class strain rows=\d+\s+random ([\d.]+)%", log10b)
+check("strain subsets: same-sample random anchored",
+      bool(hs) and f"{hs.group(1)}% for the keyed rows and {hs.group(2)}% for the dual-class keys" in FLAT,
+      hs.groups() if hs else None)
+p01 = re.search(r"producer probe at 0\.1: folds=\[([\d., ]+)\]\s+mean=[\d.]+%\s+lift=\+([\d.]+)pts", log3)
+check("producer probe at the 0.1 rate is logged and matches the text",
+      bool(p01) and f"{min(float(v) for v in p01.group(1).split(','))} to {max(float(v) for v in p01.group(1).split(','))}" in FLAT
+      and f"a {p01.group(2)}-point lift" in FLAT, p01.groups() if p01 else None)
+fl = re.findall(r"^\s+folds=\[([\d., ]+)\]\s+balanced_acc", log3, re.M)
+check("fold spans at the 0.05 rate anchored",
+      len(fl) == 2 and f"span {max(map(float, fl[0].split(','))) - min(map(float, fl[0].split(','))):.1f} points for the laboratory and "
+      f"{max(map(float, fl[1].split(','))) - min(map(float, fl[1].split(','))):.1f} for the producer" in FLAT, fl)
+rc = re.findall(r"recall\[hydro=([\d.]+)% solventless=([\d.]+)%\]", log4)
+check("per-class recalls of the other schemes anchored",
+      len(rc) == 4 and f"{rc[0][0]}% and {rc[0][1]}% under the random split, and {rc[3][0]}% and {rc[3][1]}% on the dual-class subset" in FLAT, rc)
+def _fam(key):
+    m = re.search(rf"^{re.escape(key)}.*?(\d+) \(\s*[\d.]+%\)\s+(\d+) \(\s*[\d.]+%\)$", logl, re.M)
+    return (int(m.group(1)), int(m.group(2))) if m else (None, None)
+_h, _e, _m, _c = _fam("hydrocarbon words"), _fam("ethanol"), _fam("mechanical words"), _fam("co2 / supercritical")
+check("label contradiction counts anchored",
+      f"{_h[0]} non-solvent rows name a hydrocarbon process, and {_e[1]} solvent-based rows name ethanol, {_m[1]} a mechanical process and {_c[1]} CO2" in FLAT
+      and round(100 * (_h[0] + _e[1] + _m[1] + _c[1]) / len(rows)) == 1, (_h, _e, _m, _c))
+_labc = Counter((r.get("lab") or "").strip() for r in rows if (r.get("producer") or "").strip())
+_top2 = sum(n for _, n in _labc.most_common(2))
+check("joint hold-out caveat: share of the two largest laboratories",
+      f"hold {round(100*_top2/pf)}% of the rows that carry a producer" in FLAT, f"{100*_top2/pf:.1f}")
+_hs = {}
+for r in rows:
+    _hs.setdefault((r.get("lab") or "").strip(), []).append((r.get("label") or "").strip() == "hydrocarbon")
+_sh = [100 * sum(v) / len(v) for v in _hs.values()]
+check("laboratory hydrocarbon-share range anchored",
+      f"runs from {min(_sh):.1f}% to {max(_sh):.1f}%" in FLAT and "also not entangled" not in FLAT,
+      f"{min(_sh):.1f}-{max(_sh):.1f}")
+check("sd convention stated", "population standard deviation of the fold scores" in FLAT)
+check("the logistic comparator and its inputs are described in methods",
+      "A standardised logistic regression is run beside it" in FLAT
+      and "log-transformed values with empty cells set to zero" in FLAT)
+check("[11] is not credited with the earliest demonstration",
+      "earliest quantitative demonstration" not in FLAT)
+check("the abstract gives the same-sample range of the inflation",
+      "we measure 24 to 27 points of inflation" in FLAT)
 
 # ---------- references ----------
 refs = TEXT.split("## References")[1]

@@ -7,18 +7,23 @@ reach a high score by riding that signal and would collapse on unseen brands.
 
 So the shortcuts get measured first, each against its own majority baseline:
 
-  chemistry -> lab       (does the assay fingerprint the instrument?)
-  chemistry -> state     (does it fingerprint the market?)
+  chemistry -> lab       (does the assay fingerprint the laboratory?)
   chemistry -> producer  (does it fingerprint the maker?)
+
+(`state` is also in the probe list but the column is absent from master.csv,
+so that probe never runs.)
 
 A model that beats its baseline by a wide margin is an alarm, not a result.
 
 Missing values are passed through as NaN on purpose: HistGradientBoosting
-handles them natively, so no imputation decision is smuggled in here. The
-`*_tested` flags are deliberately EXCLUDED from these probes — missingness was
-already measured (LEAKAGE_AUDIT.md, +0.0 points) and including it again would
-conflate "the chemistry identifies the lab" with "the missing-value pattern
-identifies the lab", which are different claims.
+handles them natively, so no imputation decision is smuggled in here. That
+also means the analyte PANEL is visible to the probes: a laboratory that never
+reports a terpene is identifiable from the NaN pattern alone. The probes
+therefore measure instrument and reporting convention together, and a
+missingness-only lookup is reported beside them to show how much of the
+signal is the panel (57.3% of the laboratory probe's 92.3%). An earlier
+version of this header said missingness had been measured at +0.0 points and
+was excluded here; both statements were wrong.
 
 Output: docs/evidence/phase3_alarms.txt
 """
@@ -142,6 +147,16 @@ def main() -> int:
             early_stopping=False), X, y, cv=cv, scoring="accuracy", n_jobs=-1)
         out.append(f"  learning_rate={lr:<5} folds={[round(100*float(v), 1) for v in sc]}"
                    f"  mean={100*sc.mean():.1f}%")
+    sp_ = df[df["producer"].notna() & (df["producer"].astype(str).str.strip() != "")]
+    cp_ = sp_["producer"].value_counts()
+    sp_ = sp_[sp_["producer"].isin(cp_[cp_ >= 150].index)]
+    sc = cross_val_score(HistGradientBoostingClassifier(
+        max_iter=120, learning_rate=0.1, random_state=SEED,
+        early_stopping=False), sp_[feats].astype(float).to_numpy(),
+        sp_["producer"].astype(str).to_numpy(), cv=cv, scoring="accuracy",
+        n_jobs=-1)
+    out.append(f"  producer probe at 0.1: folds={[round(100*float(v), 1) for v in sc]}"
+               f"  mean={100*sc.mean():.1f}%  lift={100*(sc.mean()-cp_[cp_>=150].max()/len(sp_)):+.1f}pts")
 
     # --- missingness-only lab probe --------------------------------------
     out.append("")
