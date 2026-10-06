@@ -17,16 +17,16 @@ profiles report near-perfect accuracy: above 95% for resin type, 100% for
 chemovar class. These figures come from random cross-validation or Kennard-Stone
 partitioning, which hold out no plant, producer or laboratory.
 
-We quantify the cost on a task whose group structure is explicit. On 33,229
-public laboratory-result rows for cannabis concentrates that name a producer,
-nearly all from Nevada, each with a source-declared extraction category
-(non-solvent against solvent-based), a gradient-boosted classifier scores 78.5%
-balanced accuracy and a ROC AUC of 0.89 under random five-fold cross-validation.
-Holding out the producer leaves 54.0% and 0.62. A signal survives: the pooled
-held-out AUC is 0.61, with a producer-level bootstrap interval of 0.535 to
-0.698. But the reported model's pooled balanced accuracy does not separate from
-chance (51.6%, interval 47.3 to 56.6); it keeps about 30% of its above-chance
-AUC, and an unweighted logistic regression 41 to 53%.
+We quantify the cost on a task with explicit group structure. On 33,229 public
+laboratory-result rows for cannabis concentrates that name a producer, nearly
+all from Nevada, each with a source-declared extraction category (non-solvent
+against solvent-based), a gradient-boosted classifier scores 78.5% balanced
+accuracy and a ROC AUC of 0.89 under random five-fold cross-validation. Holding
+out the producer leaves 54.0% and 0.62. A signal survives: the pooled held-out
+AUC is 0.61, with a producer-level bootstrap interval of 0.535 to 0.698. But the
+reported model's pooled balanced accuracy does not separate from chance (51.6%,
+interval 47.3 to 56.6); it keeps about 30% of its above-chance AUC, and an
+unweighted logistic regression 41 to 53%.
 
 A designed experiment shows the same direction: with the random split averaged
 over 200 seeds, 162 HPLC-assayed samples fall from 54.3% to 38.9% under
@@ -37,8 +37,8 @@ identify the producer at 67.1% against a 14.4% baseline and the laboratory at
 
 We conclude that the declared extraction category is only weakly recoverable
 from these analyte panels for an unseen producer, and that a random split
-overstates it by 8 to 25 points of balanced accuracy depending on the model. We
-did not rerun the published studies.
+overstates it by 8 to 26 points of balanced accuracy depending on the model and
+subset. We did not rerun the published studies.
 
 **Keywords:** cannabis, chemometrics, data leakage, group cross-validation,
 extraction category, laboratory testing data, model validation
@@ -185,7 +185,7 @@ may hit several families.
 33,229 named rows. Each family is a regular expression in
 `src/evaluation/label_composition.py`; besides the words listed, the hydrocarbon
 family matches `hydrocarbon` and `batter`, the mechanical one `solventless`, the
-ethanol one `etoh` and the distillate one `disty`.
+ethanol one `etoh`, the distillate one `disty` and the CO2 one `co 2`.
 
 ```
 word family in product_name              non-solvent     solvent-based
