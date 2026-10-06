@@ -127,6 +127,12 @@ li { margin-bottom: 3pt; text-align: justify; }
 strong { font-weight: bold; }
 em { font-style: italic; }
 hr { display: none; }
+/* A table caption stays with the table below it */
+p:has(+ pre) { page-break-after: avoid; text-align: left; margin-bottom: 3pt; }
+/* URLs, DOIs and code never hyphenate: a soft hyphen breaks copy and paste */
+code, a { hyphens: none; }
+a { color: #1a4f8b; text-decoration: none; overflow-wrap: anywhere; }
+h2#references ~ p { hyphens: none; }
 /* Figures: full text width, never split from the caption that follows */
 img { width: 100%; height: auto; display: block; margin: 8pt 0 3pt 0; }
 p:has(> img) { margin: 0; page-break-after: avoid; page-break-inside: avoid; }

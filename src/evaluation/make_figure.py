@@ -37,6 +37,7 @@ def parse():
     a = (EV / "review10a_grouped.txt").read_text()
     r7 = (EV / "review7_statistical.txt").read_text()
     r9 = (EV / "review9_checks.txt").read_text()
+    r11 = (EV / "review11_checks.txt").read_text()
     cap = [(int(m), float(r), float(g)) for m, r, g in re.findall(
         r"max_iter=(\d+)\s+random ([\d.]+)%.*?unseen-producer ([\d.]+)%", b)]
     lr = float(re.search(r"random, producer rows\s+([\d.]+)%", b).group(1))
@@ -45,9 +46,11 @@ def parse():
     for name in ("unseen-producer", "dual-class+unseen"):
         blk = a.split(f"=== {name}:")[1].split("\n===")[0]
         vals = [float(v) for v in re.search(r"values: \[([\d., ]+)\]", blk).group(1).split(",")]
-        lo, hi = map(float, re.search(r"95% interval \[([\d.]+), ([\d.]+)\]", blk).groups())
-        pooled = float(re.search(r"pooled balanced_acc ([\d.]+)%", blk).group(1))
-        parts[name] = {"values": vals, "boot": [lo, hi], "pooled": pooled}
+        # the dots are fold means, so the bar is the producer bootstrap of the
+        # fold-mean statistic (review11_checks.txt, section B), not of the pooled one
+        fm = re.search(rf"{re.escape(name)}\s+fold mean\s+observed ([\d.]+)%\s+95% interval \[([\d.]+), ([\d.]+)\]", r11)
+        parts[name] = {"values": vals, "boot": [float(fm.group(2)), float(fm.group(3))],
+                       "fold_mean": float(fm.group(1))}
     parts["unseen-producer"]["random"] = float(
         re.search(r"random, producer rows only\s+([\d.]+)%", r7).group(1))
     parts["dual-class+unseen"]["random"] = float(
@@ -66,6 +69,13 @@ def main() -> int:
         s.append(f'<text x="{x:.1f}" y="{y:.1f}" font-size="{size}" fill="{fill}" '
                  f'text-anchor="{anchor}" font-weight="{weight}">{t}</text>')
 
+    def mark(x, y_, col):
+        """Circle for the random split, square for the held-out series."""
+        if col == ORANGE:
+            return (f'<rect x="{x-4:.1f}" y="{y_-4:.1f}" width="8" height="8" fill="{col}" '
+                    f'stroke="#fff" stroke-width="2"/>')
+        return f'<circle cx="{x:.1f}" cy="{y_:.1f}" r="4" fill="{col}" stroke="#fff" stroke-width="2"/>'
+
     # ---------------- panel (a): capacity ----------------
     ax0, ax1, ay0, ay1 = 48, 318, 74, 272          # plot box
     ymin, ymax = 45.0, 85.0
@@ -81,7 +91,7 @@ def main() -> int:
     for i, (c, lab) in enumerate(((BLUE, "random split"), (ORANGE, "producer held out"))):
         lx = ax0 - 34 + i * 118
         s.append(f'<line x1="{lx}" y1="40" x2="{lx+18}" y2="40" stroke="{c}" stroke-width="2"/>')
-        s.append(f'<circle cx="{lx+9}" cy="40" r="4" fill="{c}" stroke="#fff" stroke-width="2"/>')
+        s.append(mark(lx + 9, 40, c))
         text(lx + 24, 43.5, lab, 10, MUTED)
     for v in (50, 60, 70, 80):
         s.append(f'<line x1="{ax0}" y1="{Y(v):.1f}" x2="{ax1}" y2="{Y(v):.1f}" stroke="{GRID}" stroke-width="1"/>')
@@ -101,9 +111,9 @@ def main() -> int:
         s.append(f'<polyline points="{pts}" fill="none" stroke="{col}" stroke-width="2" '
                  f'stroke-linejoin="round" stroke-linecap="round"/>')
         for x, v in zip(xs[1:], vals):
-            s.append(f'<circle cx="{x:.1f}" cy="{Y(v):.1f}" r="4" fill="{col}" stroke="#fff" stroke-width="2"/>')
+            s.append(mark(x, Y(v), col))
     for v, col in zip(d["logistic"], (BLUE, ORANGE)):
-        s.append(f'<circle cx="{xs[0]:.1f}" cy="{Y(v):.1f}" r="4" fill="{col}" stroke="#fff" stroke-width="2"/>')
+        s.append(mark(xs[0], Y(v), col))
     # selective direct labels: the two ends and the logistic pair
     text(xs[-1] + 8, Y(rnd[-1]) + 3.5, f"{rnd[-1]:.1f}", 10)
     text(xs[3], Y(rnd[2]) - 9, f"{rnd[2]:.1f}", 10, anchor="middle")
@@ -127,7 +137,7 @@ def main() -> int:
     text(lab_x + 13, 43.5, "one assignment", 10, MUTED)
     s.append(f'<line x1="{lab_x+112}" y1="40" x2="{lab_x+132}" y2="40" stroke="{BAND}" stroke-width="5" stroke-linecap="round"/>')
     s.append(f'<line x1="{lab_x+122}" y1="34" x2="{lab_x+122}" y2="46" stroke="{INK}" stroke-width="2"/>')
-    text(lab_x + 140, 43.5, "pooled score, producer bootstrap 95%", 10, MUTED)
+    text(lab_x + 140, 43.5, "reported partition, bootstrap 95%", 10, MUTED)
     for v in (45, 50, 55, 60):
         s.append(f'<line x1="{X(v):.1f}" y1="{ay0}" x2="{X(v):.1f}" y2="{ay1}" stroke="{GRID}" stroke-width="1"/>')
         text(X(v), ay1 + 15, f"{v}", 10, MUTED, "middle")
@@ -143,7 +153,7 @@ def main() -> int:
         text(lab_x, cy - 6, lab, 10)
         text(lab_x, cy + 7, sub, 9.5, MUTED)
         text(lab_x, cy + 22, f"{min(p['values']):.1f} to {max(p['values']):.1f}", 9.5, MUTED)
-        text(lab_x, cy + 35, f"pooled {p['pooled']:.1f} ({lo:.1f} to {hi:.1f})", 9.5, MUTED)
+        text(lab_x, cy + 35, f"reported {p['fold_mean']:.1f} ({lo:.1f} to {hi:.1f})", 9.5, MUTED)
         placed = []
         for v in sorted(p["values"]):
             x, lvl = X(v), 0
@@ -154,7 +164,7 @@ def main() -> int:
                      f'stroke="#fff" stroke-width="1.3"/>')
         s.append(f'<line x1="{X(lo):.1f}" y1="{cy+30}" x2="{X(hi):.1f}" y2="{cy+30}" '
                  f'stroke="{BAND}" stroke-width="5" stroke-linecap="round"/>')
-        s.append(f'<line x1="{X(p["pooled"]):.1f}" y1="{cy+24}" x2="{X(p["pooled"]):.1f}" y2="{cy+36}" '
+        s.append(f'<line x1="{X(p["fold_mean"]):.1f}" y1="{cy+24}" x2="{X(p["fold_mean"]):.1f}" y2="{cy+36}" '
                  f'stroke="{INK}" stroke-width="2"/>')
     s.append("</svg>")
 

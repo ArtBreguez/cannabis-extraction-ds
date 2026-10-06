@@ -1,0 +1,37 @@
+rows: 37344   features: 19
+
+=== A. temporal split, producer rows only ===
+  all years: dated producer rows=29650  train up to 2023-02-09  test rows=5930  bal_acc 58.3%  AUC 0.754  test rows from producers seen in training: 95.3%
+  producer-less rows with a date: 4115 of 4115, from 2022-12-07 to 2024-03-29
+
+=== B. the stable period: producer rows tested in 2020-2022 ===
+  2020-2022: rows=23461 producers=78  random 81.1% (+/-0.6) AUC 0.916   held out 52.6% (+/-2.3) AUC 0.639   gap 28.4 points
+  2023-2024: rows=6189 producers=44  random 83.5% (+/-0.9) AUC 0.919   held out 53.0% (+/-7.7) AUC 0.576   gap 30.5 points
+  2020-2022 only: dated producer rows=23461  train up to 2022-05-06  test rows=4693  bal_acc 64.6%  AUC 0.709  test rows from producers seen in training: 98.4%
+
+=== D. duplicates on product_name + lab + producer + 19 analytes ===
+  all usable rows: 1813   of which name a producer: 419   producer-less: 1394
+  producer rows without duplicates: rows=32810  random 78.9% (+/-0.3)   held out 55.2% (+/-4.1)   gap 23.7 points
+
+=== E. producer rows whose only reported analyte is total_terpenes = 0 ===
+  rows: 1071  classes: {'hydrocarbon': 754, 'solventless': 317}  of the duplicates above: 385
+  without them: rows=32158  random 79.4% (+/-0.4) AUC 0.900   held out 55.1% (+/-3.5) AUC 0.654   gap 24.3 points
+
+=== F. producer names that are spellings of one company ===
+  distinct producer strings: 96   after normalising case and punctuation: 95
+  merged: ['GB SCIENCES LAS VEGAS LLC', 'GB Sciences Las Vegas, LLC']  rows=260
+  held out with normalised producer groups: 54.7% (+/-4.6) AUC 0.635
+
+=== G. random split on the producer rows: per-class recall ===
+  bal_acc 78.5% (+/-0.4)  AUC 0.894  recall hydro/solventless 89.8/67.1%
+
+=== H. name-path agreement as recorded in master.csv ===
+  labelled rows: 37374   with a name-path label: 4289 (11.5%)   agree: 4259   conflict: 30   agreement 99.3%
+
+=== I. the reported model over twenty shuffled partitions: AUC ===
+  bal_acc min 51.3%  median 53.8%  max 56.6%   AUC min 0.603  median 0.634  max 0.658
+
+=== K-M. small counts ===
+  pre-roll rows: 64   of which name a producer: 0
+  ethanol-named non-solvent rows: 163  with a date: 143   ethanol-named solvent-based rows: 214  with a date: 214
+  mechanical-word non-solvent rows: 559   hydrocarbon-word solvent-based rows: 3805   of those also hitting a mechanical word (excluded from the named subset): 19
