@@ -478,8 +478,15 @@ Two claims, of different kinds.
 
 The **chemical claim** is narrow: the analyte panels present in public cannabis
 COAs, 19 analytes and heavily right-censored, do not carry enough information to
-identify extraction method for a producer the model has never seen. Strain and
-producer variation dominate whatever method signal exists.
+identify extraction method for a producer the model has never seen. Producer
+variation dominates whatever method signal exists: inside the dual-class subset
+a classifier given only an encoded producer ID reaches 84.4% while the chemistry
+grouped by producer reaches 54.6%. Cultivar plausibly does the same, but the two
+datasets disagree on the evidence and we do not claim it for the market corpus:
+in the controlled experiment the four cannabinoids read variety at 60.7% against
+16.7% chance while reading method at 38.9% against 33.3%, whereas in the market
+data the chemistry does not read our reconstructed strain key at all, a lift of
+minus 3.0 points (4.3).
 
 The **methodological claim** is general and, we think, the more useful one.
 Cannabis chemical data has group structure, and the field's standard validation

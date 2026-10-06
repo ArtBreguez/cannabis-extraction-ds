@@ -299,7 +299,7 @@ check("fold-level scores given", all(v in TEXT for v in
       ("48.6", "57.6", "46.7", "55.7", "61.5")))
 check("reseeding reported", "24.6" in TEXT and "24.5" in TEXT)
 check("producer-ID-only leakage disclosed",
-      "84.4%" in TEXT and "0.35" in TEXT)
+      "reaches 84.4% balanced" in FLAT and "0.35" in TEXT)
 check("'by construction' claim removed",
       "nothing about the label by construction" not in TEXT)
 
@@ -445,6 +445,19 @@ check("no 'exactly the rows' overclaim",
       and "no producer at all" not in TEXT)
 check("2.6 and 4.3 agree that the cultivar probe ran",
       "could not be\nprobed" not in TEXT and "could only be probed" in TEXT)
+
+# 4.1 must not claim strain dominates in the MARKET data: the strain alarm
+# probe there returns a negative lift, which 4.3 reports. The two datasets
+# disagree, so the claim is scoped or it contradicts 4.3.
+check("4.1 does not assert strain dominance unscoped",
+      "Strain and\nproducer variation dominate" not in TEXT)
+check("4.1 scopes the cultivar claim to the controlled data",
+      "datasets disagree on the evidence" in FLAT
+      and "we do not claim it for the market corpus" in FLAT)
+check("4.1 quotes the negative market-data lift",
+      "minus 3.0 points (4.3)" in FLAT)
+check("4.1 supports producer dominance with both figures",
+      "84.4% while the chemistry" in FLAT)
 
 # ---------- prose hygiene ----------
 body = re.sub(r"```[\s\S]*?```", "", TEXT)
