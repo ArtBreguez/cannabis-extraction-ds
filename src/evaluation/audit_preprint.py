@@ -79,7 +79,7 @@ labs = {(r.get("lab") or "").strip() for r in rows if (r.get("lab") or "").strip
 check("labs 12", len(labs) == 12 and "12 distinct" in TEXT, len(labs))
 
 sn = sum(1 for r in rows if (r.get("strain_name") or "").strip())
-check("strain_name 0 of 37,374", sn == 0 and "0 of 37,374" in TEXT, sn)
+check("strain_name 0 of 37,344", sn == 0 and "0 of 37,344" in TEXT, sn)
 
 # dual-class producers
 byp = {}
@@ -373,12 +373,12 @@ log4b = (EV / "phase4b_strain.txt").read_text()
 sj = re.search(r"of those, obvious non-cultivar:\s*(\d+) \(([\d.]+)% of keys\)",
                log4b)
 su = re.search(r"rows with no usable cultivar signal:\s*(\d+) "
-               r"\(([\d.]+)% of labelled\)", log4b)
+               r"\(([\d.]+)% of usable\)", log4b)
 check("strain junk-key share anchored",
       bool(sj) and f"{sj.group(2)}% of keys" in TEXT,
       sj.group(2) if sj else None)
 check("strain no-signal share anchored",
-      bool(su) and f"{su.group(2)}% of labelled" in TEXT,
+      bool(su) and f"{su.group(2)}% of usable" in TEXT,
       su.group(2) if su else None)
 check("strain junk count anchored",
       bool(sj) and f"{int(sj.group(1)):,}" in TEXT,

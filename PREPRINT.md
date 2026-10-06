@@ -523,38 +523,43 @@ cultivars that wash well, so the class label may partly encode which cultivar
 was used, and cultivar drives terpene profile directly.
 
 We could not test it cleanly. The `strain_name` and `strain_type` columns exist
-in the source file but are empty for **0 of 37,374** labelled rows. The only
+in the source file but are empty for **0 of 37,344** usable rows. The only
 remaining cultivar signal is inside `product_name`, and extracting a strain key
 from it leaves a key too dirty to carry a confounder probe:
 
 ```
-labelled rows                                   37,344
+usable rows                                     37,344
   no cultivar key extractable at all             4,717   (12.6%)
   key extracted                                 32,627   (87.4%)
     of those, an obvious non-cultivar word       7,386   (22.6% of keys)
     (oil, thc, lab sample, acres, ethanol, raw)
-rows yielding no usable cultivar signal         12,103   (32.4% of labelled)
+rows yielding no usable cultivar signal         12,103   (32.4% of usable)
 ```
 
-So roughly a third of the labelled corpus carries no cultivar signal, and
+So roughly a third of the usable corpus carries no cultivar signal, and
 nearly a quarter of the keys that do parse are packaging or process words
 rather than cultivar names. A probe built on a key that dirty cannot
 distinguish "cultivar leaks" from "my regex leaks".
 
-We ran it anyway, and report the output rather than withholding it. Grouping
-the method task by strain key gives 66.2% balanced accuracy
-(+/-1.6); restricting to the 214 keys that appear in both classes, 9,598 rows,
-gives 56.9% (+/-11.4) with a macro F1 of 42.8%, below the 50.0% chance level.
-Predicting the key itself from chemistry gave a *negative* lift, minus 3.0
-points, which if anything hints that strain is a weaker fingerprint here than
-laboratory was.
+We ran it anyway, and report the output rather than withholding it. Two of the
+figures are grouped method results: grouping the method task by strain key
+gives 66.2% balanced accuracy (+/-1.6), and restricting to the 214 keys that
+appear in both classes, 9,598 rows, gives 56.9% (+/-11.4) with a macro F1 of
+42.8%, below the 50.0% chance level. A third figure is a different quantity, an
+alarm probe in the sense of 2.6: predicting the key itself from chemistry gave
+a *negative* lift, minus 3.0 points, which if anything hints that strain is a
+weaker fingerprint here than laboratory was.
 
-The direction of all three figures agrees with 3.2: grouping by strain
-collapses the task toward chance just as grouping by producer does. We do not
-rest any conclusion on them, because a 22.6%-contaminated grouping key makes
-the fold composition partly arbitrary, and a macro F1 below chance with an
-11.4-point spread is instability rather than signal. The honest status of the
-strain question is open and unanswerable with this corpus alone.
+Both grouped figures fall below the 81.0% random split, and the dual-class one,
+at 6.9 points above chance, lands near the 4.0 and 4.6 points that the
+producer-grouped schemes reach. The unrestricted strain grouping is the
+exception: 66.2% sits 16.2 points above chance, four times the producer gap, so
+it does not collapse the way the producer schemes do and we do not present it
+as though it did. We rest no conclusion on any of the three, because a
+22.6%-contaminated grouping key makes the fold composition partly arbitrary,
+and a macro F1 below chance with an 11.4-point spread is instability rather
+than signal. The honest status of the strain question is open and unanswerable
+with this corpus alone.
 
 ### 4.4 Recommendations
 

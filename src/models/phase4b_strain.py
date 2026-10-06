@@ -112,7 +112,7 @@ def main() -> int:
     n_junk = int(df["strain_key"].isin(JUNK).sum())
 
     out: list[str] = []
-    out.append(f"labelled rows:                 {n_labelled}")
+    out.append(f"usable rows:                   {n_labelled}")
     out.append(f"  no cultivar key extractable: {n_empty} "
                f"({100*n_empty/n_labelled:.1f}%)")
     out.append(f"  key extracted:               {len(df)} "
@@ -120,7 +120,7 @@ def main() -> int:
     out.append(f"    of those, obvious non-cultivar: {n_junk} "
                f"({100*n_junk/len(df):.1f}% of keys)")
     out.append(f"rows with no usable cultivar signal: {n_empty + n_junk} "
-               f"({100*(n_empty+n_junk)/n_labelled:.1f}% of labelled)")
+               f"({100*(n_empty+n_junk)/n_labelled:.1f}% of usable)")
     out.append("")
     out.append(f"rows with a usable strain key: {len(df)}")
     out.append(f"distinct strain keys: {df['strain_key'].nunique()}")

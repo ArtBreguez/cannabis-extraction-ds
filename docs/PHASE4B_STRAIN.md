@@ -35,7 +35,7 @@ top extracted "strain" keys:
 
 22.6% of the extracted keys are clearly not cultivars (`oil`, `thc`,
 `lab sample`, `ethanol`, `acres`, `raw`), and a further 4,717 rows yield no key
-at all, so 32.4% of labelled rows carry no usable cultivar signal. Real strain
+at all, so 32.4% of usable rows carry no usable cultivar signal. Real strain
 names (`blue dream`, `jack herer`, `wedding cake`) exist but are a minority, and
 each appears in tens of rows at most. A confounder probe built on a key that
 dirty cannot separate "the cultivar leaks" from "the extraction

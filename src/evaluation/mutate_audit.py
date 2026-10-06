@@ -130,8 +130,8 @@ MUTATIONS = [
      "3,332 / 11,262 = **30.6%**"),
     # 4.3 strain: denominator repair and the two previously-withheld runs
     ("junk-key share 22.6 -> 23.6", "(22.6% of keys)", "(23.6% of keys)"),
-    ("no-signal share 32.4 -> 33.4", "(32.4% of labelled)",
-     "(33.4% of labelled)"),
+    ("no-signal share 32.4 -> 33.4", "(32.4% of usable)",
+     "(33.4% of usable)"),
     ("the bad 37.1% ratio reinstated", "nearly a quarter of the keys",
      "37.1% of the keys"),
     ("unseen-strain result withheld", "gives 66.2% balanced accuracy",
