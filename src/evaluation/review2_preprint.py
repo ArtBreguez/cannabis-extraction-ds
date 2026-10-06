@@ -10,7 +10,8 @@ import re
 from collections import Counter
 from pathlib import Path
 
-ROOT = Path("/home/arthur/cannabis-extraction-ds")
+# repo root, resolved from this file so the scripts work in any clone
+ROOT = Path(__file__).resolve().parents[2]
 T = (ROOT / "PREPRINT.md").read_text()
 EV = ROOT / "docs/evidence"
 csv.field_size_limit(10_000_000)

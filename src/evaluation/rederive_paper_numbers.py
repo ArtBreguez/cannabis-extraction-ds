@@ -17,7 +17,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-ROOT = Path("/home/arthur/cannabis-extraction-ds")
+# repo root, resolved from this file so the scripts work in any clone
+ROOT = Path(__file__).resolve().parents[2]
 MASTER = ROOT / "data/labeled/master.csv"
 EV = ROOT / "docs/evidence"
 

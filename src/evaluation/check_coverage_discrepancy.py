@@ -15,7 +15,8 @@ import csv
 from collections import Counter
 from pathlib import Path
 
-ROOT = Path("/home/arthur/cannabis-extraction-ds")
+# repo root, resolved from this file so the scripts work in any clone
+ROOT = Path(__file__).resolve().parents[2]
 csv.field_size_limit(10_000_000)
 rows = list(csv.DictReader((ROOT / "data/labeled/master.csv").open()))
 

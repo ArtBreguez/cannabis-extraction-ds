@@ -13,7 +13,8 @@ import re
 import subprocess
 from pathlib import Path
 
-ROOT = Path("/home/arthur/cannabis-extraction-ds")
+# repo root, resolved from this file so the scripts work in any clone
+ROOT = Path(__file__).resolve().parents[2]
 T = (ROOT / "PREPRINT.md").read_text()
 
 print("  === 1. every [n] marker has an entry, every entry is cited ===")

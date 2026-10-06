@@ -20,7 +20,8 @@ from pathlib import Path
 import markdown
 from weasyprint import HTML, CSS
 
-ROOT = Path("/home/arthur/cannabis-extraction-ds")
+# repo root, resolved from this file so the scripts work in any clone
+ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "PREPRINT.md"
 OUT = ROOT / "reports/preprint.pdf"
 OUT.parent.mkdir(parents=True, exist_ok=True)

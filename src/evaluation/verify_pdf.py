@@ -12,7 +12,8 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path("/home/arthur/cannabis-extraction-ds")
+# repo root, resolved from this file so the scripts work in any clone
+ROOT = Path(__file__).resolve().parents[2]
 PDF = ROOT / "reports/preprint.pdf"
 MD = ROOT / "PREPRINT.md"
 
